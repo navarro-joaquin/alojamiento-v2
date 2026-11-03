@@ -60,6 +60,25 @@
                             <x-button variant="secondary">Guardar</x-button>
                         </form>
                     @endcan
+
+                    @can('cambiarEstadoOperativo', $room)
+                        <details class="text-sm">
+                            <summary class="cursor-pointer text-gray-600 hover:text-gray-900">Estado operativo</summary>
+                            <form method="POST" action="{{ route('rooms.operational-status.update', $room) }}" class="mt-2 flex flex-col gap-2">
+                                @csrf
+                                @method('PUT')
+                                <label class="sr-only" for="operational-{{ $room->id }}">Estado operativo</label>
+                                <select id="operational-{{ $room->id }}" name="operational_status" class="rounded-md border border-gray-300 px-2 py-1.5">
+                                    @foreach ($operationalStatuses as $operationalStatus)
+                                        <option value="{{ $operationalStatus->value }}" @selected($room->operational_status === $operationalStatus)>{{ $operationalStatus->etiqueta() }}</option>
+                                    @endforeach
+                                </select>
+                                <label class="sr-only" for="operational-reason-{{ $room->id }}">Motivo</label>
+                                <input id="operational-reason-{{ $room->id }}" name="reason" placeholder="Motivo (obligatorio si sale de servicio)" class="rounded-md border border-gray-300 px-2 py-1.5">
+                                <x-button variant="secondary">Guardar</x-button>
+                            </form>
+                        </details>
+                    @endcan
                 </li>
             @endforeach
         </ul>

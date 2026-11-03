@@ -28,6 +28,7 @@ class OccupancyController extends Controller
                 'Fuera de servicio' => $rooms->where('operational_status', '!=', OperationalStatus::InService)->count(),
             ],
             'housekeepingStatuses' => HousekeepingStatus::cases(),
+            'operationalStatuses' => OperationalStatus::cases(),
         ]);
     }
 }

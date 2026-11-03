@@ -20,6 +20,19 @@ enum CashSessionStatus: string
     }
 
     /**
+     * Color of the status badge (see the badge Blade component).
+     */
+    public function color(): string
+    {
+        return match ($this) {
+            self::Open => 'green',
+            self::Closing => 'blue',
+            self::PendingReview => 'amber',
+            self::Closed => 'gray',
+        };
+    }
+
+    /**
      * Whether new payments, refunds or expenses may be recorded in the session.
      */
     public function aceptaMovimientos(): bool

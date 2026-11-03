@@ -14,6 +14,11 @@
             <nav class="flex items-center gap-6 text-sm font-medium">
                 <a href="{{ route('occupancy.index') }}" class="text-base font-semibold">{{ config('app.name') }}</a>
                 <a href="{{ route('occupancy.index') }}" @class(['hover:text-gray-900', 'text-gray-900' => request()->routeIs('occupancy.*'), 'text-gray-500' => ! request()->routeIs('occupancy.*')])>Ocupación</a>
+                @isset($activeBranch)
+                    @can('verCajas', [\App\Models\CashRegister::class, $activeBranch])
+                        <a href="{{ route('cash-registers.index') }}" @class(['hover:text-gray-900', 'text-gray-900' => request()->routeIs('cash-*'), 'text-gray-500' => ! request()->routeIs('cash-*')])>Cajas</a>
+                    @endcan
+                @endisset
             </nav>
 
             <div class="flex items-center gap-4 text-sm">

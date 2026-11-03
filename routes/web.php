@@ -2,11 +2,15 @@
 
 use App\Http\Controllers\ActiveBranchController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\CashRegisterController;
+use App\Http\Controllers\CashSessionClosingController;
+use App\Http\Controllers\CashSessionController;
 use App\Http\Controllers\CheckOutController;
 use App\Http\Controllers\OccupancyController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\RoomChangeController;
 use App\Http\Controllers\RoomHousekeepingStatusController;
+use App\Http\Controllers\RoomOperationalStatusController;
 use App\Http\Controllers\StayChargeController;
 use App\Http\Controllers\StayController;
 use App\Http\Controllers\StayDiscountController;
@@ -39,5 +43,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/estadias/{stay}/cambio-de-habitacion', [RoomChangeController::class, 'create'])->name('stays.room-changes.create');
         Route::post('/estadias/{stay}/cambio-de-habitacion', [RoomChangeController::class, 'store'])->name('stays.room-changes.store');
         Route::post('/estadias/{stay}/salida', [CheckOutController::class, 'store'])->name('stays.check-out');
+
+        Route::put('/habitaciones/{room}/estado-operativo', [RoomOperationalStatusController::class, 'update'])->name('rooms.operational-status.update');
+
+        Route::get('/cajas', [CashRegisterController::class, 'index'])->name('cash-registers.index');
+        Route::post('/cajas/{cashRegister}/sesiones', [CashSessionController::class, 'store'])->name('cash-sessions.store');
+        Route::get('/sesiones-de-caja/{cashSession}', [CashSessionController::class, 'show'])->name('cash-sessions.show');
+        Route::post('/sesiones-de-caja/{cashSession}/cierre', [CashSessionClosingController::class, 'store'])->name('cash-sessions.close');
     });
 });

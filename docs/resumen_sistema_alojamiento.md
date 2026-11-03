@@ -747,8 +747,13 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
    - Morph map estricto en `AppServiceProvider` (`payment`, `payment_refund`, `user`…): las columnas polimórficas guardan alias, no nombres de clase.
    - `Guest` cifra `document_number` y recalcula `document_number_hash` (HMAC con `APP_KEY`) al guardar. **Si se rota `APP_KEY`, hay que recifrar los documentos y recalcular todos los hashes.**
    - Las relaciones con columnas de actor usan el sufijo `ByUser` (`createdByUser()`, `openedByUser()`…).
-6. Implementar `StayBalanceService`, `RateService` y sus pruebas de cálculo.
-7. Implementar `CashService::abrirSesion()`, `cobrarPago()` y `cerrarSesion()`.
+6. ✅ `StayBalanceService::calcular()` (con `BcMath\Number`) y `RateService` (`resolverTarifa()`, `verificarSinSolapamiento()`).
+7. ✅ `CashService`: `abrirSesion()`, `cobrarPago()`, `devolverPago()`, `cerrarSesion()` y `calcularEfectivoEsperado()`, más `AuditService::registrar()`. Reglas implementadas:
+   - Tope de anticipo: tras un `deposit`, el saldo a favor no puede superar `deposit_limit_nights × rate_amount`, es decir, `importe ≤ saldo + noches × tarifa`.
+   - Valores globales por defecto en `config/lodging.php` (provisionales, a confirmar): diferencia de caja Bs 10.00, aprobación de gastos Bs 500.00 y 7 noches de anticipo.
+   - Una sesión pasa a revisión solo si la diferencia **supera** el umbral; igualarlo la cierra.
+   - Los servicios no comprueban permisos: eso lo harán las Policies (paso 9).
+   - Para el check-out, `ReceptionService` debe bloquear la sesión de caja **antes** que la estadía y luego llamar a `devolverPago()`, para respetar el orden de bloqueo canónico.
 8. Completar `ReceptionService` (check-in con primer cargo, cambio de habitación, check-out) y `NightAuditService`.
 9. Implementar auditoría y Policies/Gates por sucursal.
 10. Crear pruebas de concurrencia, idempotencia, autorización y consistencia financiera contra MySQL.

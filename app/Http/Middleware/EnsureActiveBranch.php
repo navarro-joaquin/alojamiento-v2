@@ -31,6 +31,10 @@ class EnsureActiveBranch
 
         $assignedBranches = $user->sucursalesAsignadas();
 
+        if ($assignedBranches->isEmpty() && $user->is_super_admin) {
+            return redirect()->route('branches.create');
+        }
+
         abort_if($assignedBranches->isEmpty(), Response::HTTP_FORBIDDEN, 'No tiene sucursales asignadas.');
 
         $activeBranch = $assignedBranches->firstWhere('id', $request->session()->get(self::SESSION_KEY))

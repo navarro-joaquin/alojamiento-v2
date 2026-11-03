@@ -33,7 +33,11 @@ enum BranchRole: string
     public function permisos(): array
     {
         return match ($this) {
-            self::Admin, self::Supervisor => BranchPermission::cases(),
+            self::Admin => BranchPermission::cases(),
+            self::Supervisor => array_values(array_filter(
+                BranchPermission::cases(),
+                fn (BranchPermission $permission): bool => ! $permission->esDeAdministracion(),
+            )),
             self::Receptionist => [
                 BranchPermission::CheckInStays,
                 BranchPermission::ChangeStayRooms,

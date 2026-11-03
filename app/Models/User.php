@@ -33,6 +33,7 @@ class User extends Authenticatable
      */
     protected $attributes = [
         'is_active' => true,
+        'is_super_admin' => false,
     ];
 
     /**
@@ -46,6 +47,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'is_super_admin' => 'boolean',
         ];
     }
 
@@ -75,12 +77,17 @@ class User extends Authenticatable
     }
 
     /**
-     * Active branches where the user holds at least one role.
+     * Active branches where the user may work: those where the user holds at
+     * least one role, or all of them for a super admin.
      *
      * @return Collection<int, Branch>
      */
     public function sucursalesAsignadas(): Collection
     {
+        if ($this->is_super_admin) {
+            return Branch::query()->where('is_active', true)->orderBy('name')->get();
+        }
+
         $assignedBranchIds = DB::table(config('permission.table_names.model_has_roles'))
             ->where('model_type', $this->getMorphClass())
             ->where('model_id', $this->id)

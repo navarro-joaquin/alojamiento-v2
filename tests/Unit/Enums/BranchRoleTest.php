@@ -13,6 +13,17 @@ it('keeps sensitive permissions away from the receptionist', function (BranchPer
     'operational status' => BranchPermission::UpdateOperationalStatus,
 ]);
 
+it('keeps branch configuration for the admin', function () {
+    $administrationPermissions = array_filter(BranchPermission::cases(), fn (BranchPermission $permission): bool => $permission->esDeAdministracion());
+
+    expect($administrationPermissions)->not->toBeEmpty()
+        ->and(BranchRole::Admin->permisos())->toContain(...$administrationPermissions);
+
+    foreach ([BranchRole::Supervisor, BranchRole::Receptionist, BranchRole::Housekeeping, BranchRole::Storekeeper] as $role) {
+        expect(array_intersect(array_map(fn ($permission) => $permission->value, $role->permisos()), array_map(fn ($permission) => $permission->value, $administrationPermissions)))->toBeEmpty();
+    }
+});
+
 it('limits housekeeping to the housekeeping status', function () {
     expect(BranchRole::Housekeeping->permisos())->toBe([BranchPermission::UpdateHousekeepingStatus]);
 });

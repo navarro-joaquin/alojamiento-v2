@@ -19,6 +19,15 @@
                         <a href="{{ route('cash-registers.index') }}" @class(['hover:text-gray-900', 'text-gray-900' => request()->routeIs('cash-*'), 'text-gray-500' => ! request()->routeIs('cash-*')])>Cajas</a>
                     @endcan
                 @endisset
+                @can('gestionar', \App\Models\Branch::class)
+                    <details class="relative">
+                        <summary class="cursor-pointer list-none text-gray-500 hover:text-gray-900">Administración</summary>
+                        <div class="absolute left-0 z-10 mt-2 flex w-56 flex-col rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+                            <a href="{{ route('branches.index') }}" class="px-3 py-2 hover:bg-gray-50">Sucursales</a>
+                            <a href="{{ route('room-types.index') }}" class="px-3 py-2 hover:bg-gray-50">Tipos de habitación</a>
+                        </div>
+                    </details>
+                @endcan
             </nav>
 
             <div class="flex items-center gap-4 text-sm">

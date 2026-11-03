@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ActiveBranchController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\BranchController;
 use App\Http\Controllers\CashRegisterController;
 use App\Http\Controllers\CashSessionClosingController;
 use App\Http\Controllers\CashSessionController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\RoomChangeController;
 use App\Http\Controllers\RoomHousekeepingStatusController;
 use App\Http\Controllers\RoomOperationalStatusController;
+use App\Http\Controllers\RoomTypeController;
 use App\Http\Controllers\StayChargeController;
 use App\Http\Controllers\StayController;
 use App\Http\Controllers\StayDiscountController;
@@ -27,6 +29,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/sucursal', [ActiveBranchController::class, 'edit'])->name('active-branch.edit');
     Route::put('/sucursal', [ActiveBranchController::class, 'update'])->name('active-branch.update');
+
+    // Global catalogs (super admin): outside the active branch, so the first branch can be created.
+    Route::resource('sucursales', BranchController::class)->except(['show', 'destroy'])->parameters(['sucursales' => 'branch'])->names('branches');
+    Route::resource('tipos-de-habitacion', RoomTypeController::class)->except(['show', 'destroy'])->parameters(['tipos-de-habitacion' => 'roomType'])->names('room-types');
 
     Route::middleware('active.branch')->group(function () {
         Route::get('/', [OccupancyController::class, 'index'])->name('occupancy.index');

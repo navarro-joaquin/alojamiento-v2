@@ -44,7 +44,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registrarMorphMap();
-        $this->denegarUsuariosDeshabilitados();
+        $this->resolverAccesoGlobal();
         $this->limitarIntentosDeIngreso();
     }
 
@@ -57,11 +57,16 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Inactive users are denied every ability before any policy runs.
+     * Inactive users are denied every ability and super admins are granted
+     * every ability before any policy runs.
      */
-    private function denegarUsuariosDeshabilitados(): void
+    private function resolverAccesoGlobal(): void
     {
-        Gate::before(fn (User $user): ?bool => $user->estaHabilitado() ? null : false);
+        Gate::before(fn (User $user): ?bool => match (true) {
+            ! $user->estaHabilitado() => false,
+            $user->is_super_admin => true,
+            default => null,
+        });
     }
 
     /**

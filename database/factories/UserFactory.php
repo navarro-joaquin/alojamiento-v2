@@ -33,6 +33,13 @@ class UserFactory extends Factory
         ];
     }
 
+    public function superAdministrador(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_super_admin' => true,
+        ]);
+    }
+
     public function inactivo(): static
     {
         return $this->state(fn (array $attributes) => [

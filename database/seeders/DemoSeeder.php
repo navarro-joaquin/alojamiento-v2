@@ -80,6 +80,12 @@ class DemoSeeder extends Seeder
             $user->asignarRolEnSucursal($role, $branch->id);
         }
 
+        User::query()->firstOrCreate(['email' => 'superadmin@alojamiento.test'], [
+            'name' => 'Superadministración',
+            'password' => 'password',
+            'email_verified_at' => now(),
+        ])->forceFill(['is_super_admin' => true])->save();
+
         User::query()->firstOrCreate(['email' => 'auditoria@alojamiento.test'], [
             'name' => 'Auditoría nocturna',
             'password' => str()->random(40),

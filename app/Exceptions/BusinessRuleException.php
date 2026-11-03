@@ -80,4 +80,59 @@ class BusinessRuleException extends Exception
     {
         return new self('Ya existe una tarifa con la misma prioridad que se solapa en fechas, ocupación y días.');
     }
+
+    public static function habitacionNoDisponible(): self
+    {
+        return new self('La habitación no está disponible: debe estar en servicio y limpia.');
+    }
+
+    public static function habitacionOcupada(): self
+    {
+        return new self('La habitación ya está ocupada.');
+    }
+
+    public static function habitacionDeOtraSucursal(): self
+    {
+        return new self('La habitación pertenece a otra sucursal.');
+    }
+
+    public static function mismaHabitacion(): self
+    {
+        return new self('La estadía ya está en esa habitación.');
+    }
+
+    public static function capacidadExcedida(int $capacity): self
+    {
+        return new self("La habitación admite como máximo {$capacity} huéspedes.");
+    }
+
+    public static function huespedRepetido(): self
+    {
+        return new self('Un huésped no puede figurar dos veces en la misma estadía.');
+    }
+
+    public static function salidaConDeuda(Number $balance): self
+    {
+        return new self("La estadía tiene un saldo pendiente de Bs {$balance}.");
+    }
+
+    public static function saldoAFavorNoReembolsable(Number $remainingAmount): self
+    {
+        return new self("No hay pagos suficientes para devolver el saldo a favor (faltan Bs {$remainingAmount}).");
+    }
+
+    public static function tipoDeCargoNoPermitido(): self
+    {
+        return new self('Ese tipo de cargo no se puede registrar manualmente.');
+    }
+
+    public static function cargoNoConfirmado(): self
+    {
+        return new self('El cargo ya está anulado.');
+    }
+
+    public static function cierreDiarioNoCorresponde(): self
+    {
+        return new self('La fecha de negocio ya está al día; no corresponde cerrarla todavía.');
+    }
 }

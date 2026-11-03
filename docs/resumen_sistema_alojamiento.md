@@ -487,6 +487,7 @@ El `cash_movement` hereda el `operation_uuid` de su operación de origen. Altern
 
 Todos los servicios que bloquean más de una fila lo hacen en este orden, y omiten las que no necesitan:
 
+0. `branches` (solo la auditoría nocturna)
 1. `cash_registers`
 2. `cash_sessions`
 3. `stays`
@@ -516,7 +517,7 @@ Solo cuentan movimientos con `affects_cash = true`. Los pagos con tarjeta, trans
 
 - La sucursal define `check_in_time` y `check_out_time`. El late check-out es **manual**: si el huésped sale después del horario, un operador con permiso registra un cargo `late_check_out` con el importe que corresponda. El sistema solo avisa en pantalla que la salida supera el horario.
 - La tarifa se resuelve al hacer el check-in (sucursal, tipo de habitación, ocupación, día de la semana, vigencia y prioridad) y se copia en `stays.rate_amount`. Los cambios de tarifa posteriores no afectan las estadías en curso.
-- **Auditoría nocturna:** un job programado por sucursal, que se ejecuta al cerrar la fecha de negocio, genera un cargo `lodging` por cada estadía activa con `service_date = business_date`, y luego avanza `branches.current_business_date`. Gracias a la restricción única es idempotente: un reintento no duplica noches.
+- **Auditoría nocturna:** el comando `lodging:night-audit` se programa cada hora y cierra cada fecha de negocio vencida. Una fecha D vence a la hora de corte del día D+1 en la zona horaria de la sucursal (`LODGING_NIGHT_AUDIT_HOUR`, por defecto 04:00), así que un huésped que llega de madrugada pertenece a la noche anterior. Al cerrar, genera un cargo `lodging` por cada estadía activa con `service_date = D` y avanza `branches.current_business_date`. Si el servidor estuvo caído, cierra los días atrasados uno por uno. Es idempotente: las noches ya cobradas (por ejemplo, en el check-in) se omiten. Se ejecuta como el usuario `LODGING_NIGHT_AUDIT_USER_EMAIL`, que queda como autor de los cargos.
 - El check-in genera el cargo de la primera noche.
 - **Anticipos:** se permite cobrar más que el saldo actual solo con `payment_type = deposit`, hasta un máximo de `deposit_limit_nights` de la sucursal (o el valor global por defecto) multiplicado por la tarifa pactada, descontando lo ya pagado. Un `settlement` no puede superar el saldo vigente.
 
@@ -754,7 +755,11 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
    - Una sesión pasa a revisión solo si la diferencia **supera** el umbral; igualarlo la cierra.
    - Los servicios no comprueban permisos: eso lo harán las Policies (paso 9).
    - Para el check-out, `ReceptionService` debe bloquear la sesión de caja **antes** que la estadía y luego llamar a `devolverPago()`, para respetar el orden de bloqueo canónico.
-8. Completar `ReceptionService` (check-in con primer cargo, cambio de habitación, check-out) y `NightAuditService`.
+8. ✅ `ReceptionService` (`registrarIngreso()`, `cambiarHabitacion()`, `registrarSalida()`), `ChargeService` (`registrarNocheAlojamiento()`, `registrarCargo()`, `registrarDescuento()`, `anularCargo()`), `HousekeepingService` (`cambiarEstadoLimpieza()`, `cambiarEstadoOperativo()`), `NightAuditService` y el comando `lodging:night-audit`. Notas:
+   - Hasta que existan las excepciones de deuda (fase 2), `registrarSalida()` rechaza toda salida con saldo pendiente.
+   - El saldo a favor se devuelve en la misma transacción, empezando por el pago más reciente y por su mismo método. Si los pagos no alcanzan (por ejemplo, un descuento mayor que los cargos), la salida se rechaza.
+   - `stays.rate_amount` siempre es la tarifa vigente: el cambio de habitación la actualiza, y la auditoría nocturna cobra con ella.
+   - El check-in y el cambio de habitación marcan la habitación como `dirty`; vuelve a `clean` mediante `HousekeepingService`.
 9. Implementar auditoría y Policies/Gates por sucursal.
 10. Crear pruebas de concurrencia, idempotencia, autorización y consistencia financiera contra MySQL.
 11. Recién entonces construir las pantallas y reportes.

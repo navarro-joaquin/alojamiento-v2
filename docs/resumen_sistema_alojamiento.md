@@ -499,6 +499,8 @@ Todos los servicios que bloquean más de una fila lo hacen en este orden, y omit
 
 Bloquear siempre en el mismo orden evita interbloqueos (deadlocks) entre cobro, devolución, check-out y cierre.
 
+**Nivel de aislamiento:** la conexión MySQL usa `READ COMMITTED` (`config/database.php`). Con el `REPEATABLE READ` por defecto, una transacción que espera un bloqueo conserva la *snapshot* tomada en su primera lectura, y al obtener el bloqueo calcula el saldo con datos viejos. Así se detectó que dos cobros simultáneos desde cajas distintas podían cobrar dos veces la misma deuda. Por la misma razón, la comprobación de `operation_uuid` se repite **después** de obtener los bloqueos.
+
 ### Saldo de una estadía
 
 `saldo = cargos débito confirmados - cargos crédito confirmados - pagos confirmados + devoluciones confirmadas`
@@ -769,7 +771,12 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
    - Un `Gate::before` deniega todo a usuarios inactivos o vinculados a un empleado inactivo.
    - No hay administrador global: el rol `admin` se asigna en cada sucursal (`User::asignarRolEnSucursal()`).
    - El middleware que fija la sucursal activa (`setPermissionsTeamId()`) se construye con las pantallas (paso 11), junto con la selección de sucursal.
-10. Crear pruebas de concurrencia, idempotencia, autorización y consistencia financiera contra MySQL.
+10. ✅ Pruebas de concurrencia reales contra MySQL en `tests/Feature/Concurrency`. Notas:
+   - `ConcurrentRace` lanza cada operación en un proceso PHP propio, con su propia conexión. La prueba bloquea antes la fila en disputa y la suelta solo cuando todas las operaciones están esperando un bloqueo. Si un servicio no bloqueara, la prueba falla con «no llegaron a esperar».
+   - Estas pruebas confirman sus datos (`DatabaseTruncation`) y vacían las tablas al terminar.
+   - Escenarios cubiertos: reintento simultáneo de un cobro y de una devolución (mismo `operation_uuid`), dos cobros desde cajas distintas que juntos superan el saldo, dos ingresos en la misma habitación, dos aperturas de la misma caja, salida contra cargo, cierre de caja contra cobro y dos auditorías nocturnas a la vez.
+   - Bugs encontrados y corregidos: el cobro doble desde dos cajas (aislamiento, ver sección 4) y el reintento simultáneo de un cobro o una devolución, que se rechazaba por saldo en vez de devolver la operación original.
+   - La autorización se cubrió en el paso 9 (`tests/Feature/Policies`).
 11. Recién entonces construir las pantallas y reportes.
 
 ## 11. Criterios mínimos para considerar el módulo financiero seguro

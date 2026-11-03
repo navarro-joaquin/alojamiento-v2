@@ -271,6 +271,12 @@ class CashService
         $lockedSession = $this->bloquearSesionAbierta($cashSession);
         $lockedStay = Stay::query()->with('branch')->lockForUpdate()->findOrFail($stay->id);
 
+        $concurrentPayment = Payment::query()->where('operation_uuid', $operationUuid)->first();
+
+        if ($concurrentPayment !== null) {
+            return $this->resolverReintento($concurrentPayment, $requestHash, $operationUuid);
+        }
+
         if ($lockedSession->cashRegister->branch_id !== $lockedStay->branch_id) {
             throw BusinessRuleException::sesionDeOtraSucursal();
         }
@@ -328,6 +334,12 @@ class CashService
     ): PaymentRefund {
         $lockedSession = $cashSession !== null ? $this->bloquearSesionAbierta($cashSession) : null;
         $lockedPayment = Payment::query()->with('stay')->lockForUpdate()->findOrFail($payment->id);
+
+        $concurrentRefund = PaymentRefund::query()->where('operation_uuid', $operationUuid)->first();
+
+        if ($concurrentRefund !== null) {
+            return $this->resolverReintento($concurrentRefund, $requestHash, $operationUuid);
+        }
 
         if ($lockedSession !== null && $lockedSession->cashRegister->branch_id !== $lockedPayment->stay->branch_id) {
             throw BusinessRuleException::sesionDeOtraSucursal();

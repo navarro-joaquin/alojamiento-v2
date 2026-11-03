@@ -59,6 +59,10 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // The services rely on row locks: once a lock is granted, every read
+            // must see what the previous holder committed. REPEATABLE READ would
+            // keep the snapshot taken before waiting (see the concurrency tests).
+            'isolation_level' => 'READ COMMITTED',
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],

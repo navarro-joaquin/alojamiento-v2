@@ -777,7 +777,11 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
    - Escenarios cubiertos: reintento simultáneo de un cobro y de una devolución (mismo `operation_uuid`), dos cobros desde cajas distintas que juntos superan el saldo, dos ingresos en la misma habitación, dos aperturas de la misma caja, salida contra cargo, cierre de caja contra cobro y dos auditorías nocturnas a la vez.
    - Bugs encontrados y corregidos: el cobro doble desde dos cajas (aislamiento, ver sección 4) y el reintento simultáneo de un cobro o una devolución, que se rechazaba por saldo en vez de devolver la operación original.
    - La autorización se cubrió en el paso 9 (`tests/Feature/Policies`).
-11. Recién entonces construir las pantallas y reportes.
+11. Pantallas de operación (en curso; los catálogos van después y, mientras tanto, `DemoSeeder` carga datos de prueba en el entorno `local`):
+   - ✅ Bloque 1: login propio (`/ingresar`, 5 intentos por minuto por correo e IP, rechaza usuarios deshabilitados), sucursal activa (`EnsureActiveBranch`: solo sucursales activas donde el usuario tiene un rol; si tiene una sola se elige sola) y panel de ocupación con cambio de estado de limpieza.
+   - Usuarios de demostración (contraseña `password`): `admin@`, `supervisor@`, `recepcion@` y `limpieza@alojamiento.test`; `auditoria@alojamiento.test` ejecuta la auditoría nocturna.
+   - Bloque 2: check-in y ficha de estadía (cargos, descuentos, anulaciones, cobros, salida y cambio de habitación).
+   - Bloque 3: caja (apertura, cierre) y estado operativo de las habitaciones.
 
 ## 11. Criterios mínimos para considerar el módulo financiero seguro
 

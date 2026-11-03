@@ -18,6 +18,18 @@ enum HousekeepingStatus: string
     }
 
     /**
+     * Color of the status badge (see the badge Blade component).
+     */
+    public function color(): string
+    {
+        return match ($this) {
+            self::Clean => 'gray',
+            self::Dirty => 'amber',
+            self::Inspected => 'green',
+        };
+    }
+
+    /**
      * Whether a room in this housekeeping state can receive a new guest.
      */
     public function permiteAsignacion(): bool

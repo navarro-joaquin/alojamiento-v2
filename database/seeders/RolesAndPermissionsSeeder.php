@@ -24,6 +24,9 @@ class RolesAndPermissionsSeeder extends Seeder
             Permission::findOrCreate($permission->value);
         }
 
+        // The roles look permissions up in the cache, which still holds the list from before they were created.
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
         foreach (BranchRole::cases() as $role) {
             Role::findOrCreate($role->value)->syncPermissions(
                 array_map(fn (BranchPermission $permission): string => $permission->value, $role->permisos()),

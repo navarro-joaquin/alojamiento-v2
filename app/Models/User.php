@@ -10,10 +10,12 @@ use Closure;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['employee_id', 'name', 'email', 'password', 'is_active'])]
@@ -72,6 +74,25 @@ class User extends Authenticatable
         return $this->enSucursal($branchId, fn (): bool => $this->checkPermissionTo($permission));
     }
 
+    /**
+     * Active branches where the user holds at least one role.
+     *
+     * @return Collection<int, Branch>
+     */
+    public function sucursalesAsignadas(): Collection
+    {
+        $assignedBranchIds = DB::table(config('permission.table_names.model_has_roles'))
+            ->where('model_type', $this->getMorphClass())
+            ->where('model_id', $this->id)
+            ->select(config('permission.column_names.team_foreign_key'));
+
+        return Branch::query()
+            ->where('is_active', true)
+            ->whereIn('id', $assignedBranchIds)
+            ->orderBy('name')
+            ->get();
+    }
+
     public function asignarRolEnSucursal(BranchRole $role, int $branchId): void
     {
         $this->enSucursal($branchId, fn () => $this->assignRole($role));
@@ -79,7 +100,8 @@ class User extends Authenticatable
 
     /**
      * Runs the callback with the branch as the active permissions team and
-     * restores the previous team afterwards.
+     * restores the previous team afterwards. The loaded roles always belong
+     * to the active team, so they are reused when the branch is already active.
      *
      * @template TResult
      *
@@ -89,6 +111,11 @@ class User extends Authenticatable
     private function enSucursal(int $branchId, Closure $callback): mixed
     {
         $previousTeamId = getPermissionsTeamId();
+
+        if ($previousTeamId === $branchId) {
+            return $callback();
+        }
+
         setPermissionsTeamId($branchId);
         $this->unsetRelation('roles')->unsetRelation('permissions');
 

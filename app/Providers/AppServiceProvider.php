@@ -18,9 +18,13 @@ use App\Models\Stay;
 use App\Models\StayCharge;
 use App\Models\StayRoomAssignment;
 use App\Models\User;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -41,6 +45,15 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->registrarMorphMap();
         $this->denegarUsuariosDeshabilitados();
+        $this->limitarIntentosDeIngreso();
+    }
+
+    /**
+     * Five login attempts per minute for each email and IP address.
+     */
+    private function limitarIntentosDeIngreso(): void
+    {
+        RateLimiter::for('login', fn (Request $request) => Limit::perMinute(5)->by(Str::lower((string) $request->input('email')).'|'.$request->ip()));
     }
 
     /**

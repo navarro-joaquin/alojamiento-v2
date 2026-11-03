@@ -1,209 +1,91 @@
 <?php
 
+use App\Models\CashMovement;
+use App\Models\CashRegister;
+use App\Models\CashSession;
+use App\Models\Guest;
+use App\Models\Payment;
+use App\Models\Room;
+use App\Models\Stay;
+use App\Models\StayCharge;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
-    $now = now();
-
-    $this->userId = DB::table('users')->insertGetId([
-        'name' => 'Operador',
-        'email' => 'operador@example.com',
-        'password' => bcrypt('password'),
-        'created_at' => $now,
-        'updated_at' => $now,
-    ]);
-
-    $this->branchId = DB::table('branches')->insertGetId([
-        'code' => 'LPZ',
-        'name' => 'La Paz',
-        'current_business_date' => $now->toDateString(),
-        'created_at' => $now,
-        'updated_at' => $now,
-    ]);
-
-    $roomTypeId = DB::table('room_types')->insertGetId([
-        'name' => 'Doble',
-        'default_capacity' => 2,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ]);
-
-    $this->roomId = DB::table('rooms')->insertGetId([
-        'branch_id' => $this->branchId,
-        'room_type_id' => $roomTypeId,
-        'room_number' => '101',
-        'capacity' => 2,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ]);
-
-    $this->cashRegisterId = DB::table('cash_registers')->insertGetId([
-        'branch_id' => $this->branchId,
-        'name' => 'Recepción',
-        'created_at' => $now,
-        'updated_at' => $now,
-    ]);
-});
-
-/**
- * @param  array<string, mixed>  $attributes
- */
-function insertarEstadia(int $branchId, int $roomId, int $userId, array $attributes = []): int
-{
-    return DB::table('stays')->insertGetId([
-        'branch_id' => $branchId,
-        'room_id' => $roomId,
-        'created_by' => $userId,
-        'check_in_at' => now(),
-        'rate_amount' => '250.00',
-        'created_at' => now(),
-        'updated_at' => now(),
-        ...$attributes,
-    ]);
-}
-
-/**
- * @param  array<string, mixed>  $attributes
- */
-function insertarSesionCaja(int $cashRegisterId, int $userId, array $attributes = []): int
-{
-    return DB::table('cash_sessions')->insertGetId([
-        'cash_register_id' => $cashRegisterId,
-        'opened_by' => $userId,
-        'business_date' => now()->toDateString(),
-        'opened_at' => now(),
-        'created_at' => now(),
-        'updated_at' => now(),
-        ...$attributes,
-    ]);
-}
-
-/**
- * @param  array<string, mixed>  $attributes
- */
-function insertarCargoAlojamiento(int $stayId, int $userId, array $attributes = []): int
-{
-    return DB::table('stay_charges')->insertGetId([
-        'stay_id' => $stayId,
-        'charge_type' => 'lodging',
-        'description' => 'Noche',
-        'service_date' => '2026-11-03',
-        'unit_price' => '250.00',
-        'total_amount' => '250.00',
-        'created_by' => $userId,
-        'created_at' => now(),
-        'updated_at' => now(),
-        ...$attributes,
-    ]);
-}
-
 test('a room cannot have two active stays', function () {
-    insertarEstadia($this->branchId, $this->roomId, $this->userId);
+    $room = Room::factory()->create();
+    Stay::factory()->for($room)->create();
 
-    insertarEstadia($this->branchId, $this->roomId, $this->userId);
+    Stay::factory()->for($room)->create();
 })->throws(QueryException::class, 'Duplicate entry');
 
 test('a room can have a new active stay once the previous one is completed', function () {
-    insertarEstadia($this->branchId, $this->roomId, $this->userId, ['status' => 'completed']);
-    insertarEstadia($this->branchId, $this->roomId, $this->userId);
+    $room = Room::factory()->create();
+    Stay::factory()->for($room)->finalizada()->create();
 
-    expect(DB::table('stays')->where('room_id', $this->roomId)->count())->toBe(2);
+    Stay::factory()->for($room)->create();
+
+    expect($room->stays()->count())->toBe(2);
 });
 
 test('a cash register cannot have two open sessions', function () {
-    insertarSesionCaja($this->cashRegisterId, $this->userId);
+    $cashRegister = CashRegister::factory()->create();
+    CashSession::factory()->for($cashRegister)->create();
 
-    insertarSesionCaja($this->cashRegisterId, $this->userId, ['status' => 'closing']);
+    CashSession::factory()->for($cashRegister)->enCierre()->create();
 })->throws(QueryException::class, 'Duplicate entry');
 
 test('a cash register can open a new session after the previous one is closed', function () {
-    insertarSesionCaja($this->cashRegisterId, $this->userId, ['status' => 'closed']);
-    insertarSesionCaja($this->cashRegisterId, $this->userId);
+    $cashRegister = CashRegister::factory()->create();
+    CashSession::factory()->for($cashRegister)->cerrada()->create();
 
-    expect(DB::table('cash_sessions')->count())->toBe(2);
+    CashSession::factory()->for($cashRegister)->create();
+
+    expect($cashRegister->sessions()->count())->toBe(2);
 });
 
 test('a stay cannot be charged twice for the same lodging night', function () {
-    $stayId = insertarEstadia($this->branchId, $this->roomId, $this->userId);
-    insertarCargoAlojamiento($stayId, $this->userId);
+    $stay = Stay::factory()->create();
+    StayCharge::factory()->for($stay)->create(['service_date' => '2026-11-03']);
 
-    insertarCargoAlojamiento($stayId, $this->userId);
+    StayCharge::factory()->for($stay)->create(['service_date' => '2026-11-03']);
 })->throws(QueryException::class, 'Duplicate entry');
 
 test('a voided lodging night can be charged again', function () {
-    $stayId = insertarEstadia($this->branchId, $this->roomId, $this->userId);
-    insertarCargoAlojamiento($stayId, $this->userId, ['status' => 'voided']);
-    insertarCargoAlojamiento($stayId, $this->userId);
+    $stay = Stay::factory()->create();
+    StayCharge::factory()->for($stay)->anulado()->create(['service_date' => '2026-11-03']);
 
-    expect(DB::table('stay_charges')->where('stay_id', $stayId)->count())->toBe(2);
+    StayCharge::factory()->for($stay)->create(['service_date' => '2026-11-03']);
+
+    expect($stay->charges()->count())->toBe(2);
 });
 
 test('a stay cannot have two primary guests', function () {
-    $stayId = insertarEstadia($this->branchId, $this->roomId, $this->userId);
+    $stay = Stay::factory()->create();
 
-    foreach (['111', '222'] as $documentNumber) {
-        $guestId = DB::table('guests')->insertGetId([
-            'document_type' => 'ci',
-            'document_number' => $documentNumber,
-            'issuing_country' => 'BO',
-            'document_number_hash' => hash('sha256', $documentNumber),
-            'first_name' => 'Huésped',
-            'last_name' => $documentNumber,
-        ]);
-
-        DB::table('stay_guests')->insert([
-            'stay_id' => $stayId,
-            'guest_id' => $guestId,
-            'is_primary' => true,
-        ]);
-    }
+    $stay->guests()->attach(Guest::factory()->create(), ['is_primary' => true]);
+    $stay->guests()->attach(Guest::factory()->create(), ['is_primary' => true]);
 })->throws(QueryException::class, 'Duplicate entry');
 
 test('payments reject non-positive amounts', function () {
-    $stayId = insertarEstadia($this->branchId, $this->roomId, $this->userId);
-    $cashSessionId = insertarSesionCaja($this->cashRegisterId, $this->userId);
-
-    DB::table('payments')->insert([
-        'stay_id' => $stayId,
-        'cash_session_id' => $cashSessionId,
-        'created_by' => $this->userId,
-        'payment_method' => 'cash',
-        'payment_type' => 'settlement',
-        'amount' => '0.00',
-        'operation_uuid' => (string) Str::uuid(),
-        'request_hash' => hash('sha256', 'payment'),
-        'paid_at' => now(),
-    ]);
+    Payment::factory()->create(['amount' => '0.00']);
 })->throws(QueryException::class, 'payments_amount_positive');
 
 test('cash movements reject an invalid direction', function () {
-    $cashSessionId = insertarSesionCaja($this->cashRegisterId, $this->userId);
+    $cashMovement = CashMovement::factory()->create();
 
-    DB::table('cash_movements')->insert([
-        'cash_session_id' => $cashSessionId,
-        'performed_by' => $this->userId,
-        'movement_type' => 'payment',
-        'direction' => 'sideways',
-        'amount' => '10.00',
-        'source_type' => 'payment',
-        'source_id' => 1,
-        'operation_uuid' => (string) Str::uuid(),
-        'occurred_at' => now(),
-    ]);
+    DB::table('cash_movements')->where('id', $cashMovement->id)->update(['direction' => 'sideways']);
 })->throws(QueryException::class, 'cash_movements_direction_valid');
 
 test('the activity log exposes the branch id from its properties', function () {
-    DB::table('activity_log')->insert([
-        'description' => 'payment.collected',
-        'properties' => json_encode(['branch_id' => $this->branchId]),
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    $stay = Stay::factory()->create();
 
-    expect(DB::table('activity_log')->value('branch_id'))->toBe($this->branchId);
+    activity('reception')
+        ->performedOn($stay)
+        ->withProperties(['branch_id' => $stay->branch_id])
+        ->log('stay.checked_in');
+
+    expect(DB::table('activity_log')->value('branch_id'))->toBe($stay->branch_id);
 });

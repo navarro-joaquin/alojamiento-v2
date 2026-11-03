@@ -742,8 +742,11 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
 2. ✅ Instalar `spatie/laravel-permission` 8.x (teams con `branch_id`) y `spatie/laravel-activitylog` 5.x.
 3. ✅ Migraciones de la fase 1, con `up()`/`down()`, FK `RESTRICT`, restricciones `CHECK` y columnas generadas únicas: `branches`, `employees`, ALTER `users`, índice por sucursal en `activity_log`, `room_types`, `rooms`, `room_status_logs`, `room_rates`, `guests`, `stays`, `stay_room_assignments`, `stay_guests`, `stay_charges`, `cash_registers`, `cash_sessions`, `payments`, `payment_refunds`, `cash_movements`. Las garantías de base de datos están cubiertas por `tests/Feature/DatabaseConstraintsTest.php`.
    - Quedan para fases posteriores: `cash_counts`, `expenses`, `checkout_exceptions`, recibos (fase 2) y las columnas `product_id`/`inventory_movement_id` de `stay_charges` (fase 3, mediante ALTER).
-4. Cerrar el esquema exacto de estados (enums) en `app/Enums/`.
-5. Crear y revisar los modelos Eloquent, sus relaciones, casts y factories.
+4. ✅ Enums de estados en `app/Enums/` (string-backed, con `etiqueta()` en español). Algunos incluyen reglas: `PaymentMethod::afectaEfectivo()`, `CashSessionStatus::aceptaMovimientos()` y `HousekeepingStatus::permiteAsignacion()`.
+5. ✅ Modelos Eloquent de la fase 1 con relaciones, casts a enums y decimales, scopes (`activas`, `confirmados`, `confirmadas`, `abiertas`) y factories con estados en español. Notas:
+   - Morph map estricto en `AppServiceProvider` (`payment`, `payment_refund`, `user`…): las columnas polimórficas guardan alias, no nombres de clase.
+   - `Guest` cifra `document_number` y recalcula `document_number_hash` (HMAC con `APP_KEY`) al guardar. **Si se rota `APP_KEY`, hay que recifrar los documentos y recalcular todos los hashes.**
+   - Las relaciones con columnas de actor usan el sufijo `ByUser` (`createdByUser()`, `openedByUser()`…).
 6. Implementar `StayBalanceService`, `RateService` y sus pruebas de cálculo.
 7. Implementar `CashService::abrirSesion()`, `cobrarPago()` y `cerrarSesion()`.
 8. Completar `ReceptionService` (check-in con primer cargo, cambio de habitación, check-out) y `NightAuditService`.

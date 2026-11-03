@@ -29,6 +29,9 @@
                                 @can('gestionar', [\App\Models\CashRegister::class, $activeBranch])
                                     <a href="{{ route('cash-registers.create') }}" class="px-3 py-2 hover:bg-gray-50">Nueva caja</a>
                                 @endcan
+                                @can('gestionarPersonal', [\App\Models\User::class, $activeBranch])
+                                    <a href="{{ route('staff-members.index') }}" class="px-3 py-2 hover:bg-gray-50">Personal</a>
+                                @endcan
                             </div>
                         </details>
                     @endcan
@@ -39,6 +42,7 @@
                         <div class="absolute left-0 z-10 mt-2 flex w-56 flex-col rounded-md border border-gray-200 bg-white py-1 shadow-lg">
                             <a href="{{ route('branches.index') }}" class="px-3 py-2 hover:bg-gray-50">Sucursales</a>
                             <a href="{{ route('room-types.index') }}" class="px-3 py-2 hover:bg-gray-50">Tipos de habitación</a>
+                            <a href="{{ route('users.index') }}" class="px-3 py-2 hover:bg-gray-50">Usuarios</a>
                         </div>
                     </details>
                 @endcan

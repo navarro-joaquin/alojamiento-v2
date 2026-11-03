@@ -106,6 +106,28 @@ class User extends Authenticatable
     }
 
     /**
+     * Leaves the user with exactly this role in the branch, without touching
+     * the roles held in other branches.
+     */
+    public function cambiarRolEnSucursal(BranchRole $role, int $branchId): void
+    {
+        $this->enSucursal($branchId, fn () => $this->syncRoles($role));
+    }
+
+    public function quitarRolesEnSucursal(int $branchId): void
+    {
+        $this->enSucursal($branchId, fn () => $this->syncRoles([]));
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function rolesEnSucursal(int $branchId): array
+    {
+        return $this->enSucursal($branchId, fn (): array => $this->roles->pluck('name')->all());
+    }
+
+    /**
      * Runs the callback with the branch as the active permissions team and
      * restores the previous team afterwards. The loaded roles always belong
      * to the active team, so they are reused when the branch is already active.

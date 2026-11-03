@@ -15,9 +15,11 @@ use App\Http\Controllers\RoomHousekeepingStatusController;
 use App\Http\Controllers\RoomOperationalStatusController;
 use App\Http\Controllers\RoomRateController;
 use App\Http\Controllers\RoomTypeController;
+use App\Http\Controllers\StaffMemberController;
 use App\Http\Controllers\StayChargeController;
 use App\Http\Controllers\StayController;
 use App\Http\Controllers\StayDiscountController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\VoidedStayChargeController;
 use Illuminate\Support\Facades\Route;
 
@@ -35,6 +37,7 @@ Route::middleware('auth')->group(function () {
     // Global catalogs (super admin): outside the active branch, so the first branch can be created.
     Route::resource('sucursales', BranchController::class)->except(['show', 'destroy'])->parameters(['sucursales' => 'branch'])->names('branches');
     Route::resource('tipos-de-habitacion', RoomTypeController::class)->except(['show', 'destroy'])->parameters(['tipos-de-habitacion' => 'roomType'])->names('room-types');
+    Route::resource('usuarios', UserController::class)->except(['show', 'destroy'])->parameters(['usuarios' => 'user'])->names('users');
 
     Route::middleware('active.branch')->group(function () {
         Route::get('/', [OccupancyController::class, 'index'])->name('occupancy.index');
@@ -58,6 +61,9 @@ Route::middleware('auth')->group(function () {
         Route::resource('habitaciones', RoomController::class)->except(['show', 'destroy'])->parameters(['habitaciones' => 'room'])->names('rooms');
         Route::resource('tarifas', RoomRateController::class)->except(['show', 'destroy'])->parameters(['tarifas' => 'roomRate'])->names('room-rates');
         Route::resource('cajas', CashRegisterController::class)->except(['show', 'destroy'])->parameters(['cajas' => 'cashRegister'])->names('cash-registers');
+        Route::get('/personal', [StaffMemberController::class, 'index'])->name('staff-members.index');
+        Route::post('/personal', [StaffMemberController::class, 'store'])->name('staff-members.store');
+        Route::delete('/personal/{user}', [StaffMemberController::class, 'destroy'])->name('staff-members.destroy');
         Route::post('/cajas/{cashRegister}/sesiones', [CashSessionController::class, 'store'])->name('cash-sessions.store');
         Route::get('/sesiones-de-caja/{cashSession}', [CashSessionController::class, 'show'])->name('cash-sessions.show');
         Route::post('/sesiones-de-caja/{cashSession}/cierre', [CashSessionClosingController::class, 'store'])->name('cash-sessions.close');

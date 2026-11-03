@@ -10,8 +10,10 @@ use App\Http\Controllers\CheckOutController;
 use App\Http\Controllers\OccupancyController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\RoomChangeController;
+use App\Http\Controllers\RoomController;
 use App\Http\Controllers\RoomHousekeepingStatusController;
 use App\Http\Controllers\RoomOperationalStatusController;
+use App\Http\Controllers\RoomRateController;
 use App\Http\Controllers\RoomTypeController;
 use App\Http\Controllers\StayChargeController;
 use App\Http\Controllers\StayController;
@@ -52,7 +54,10 @@ Route::middleware('auth')->group(function () {
 
         Route::put('/habitaciones/{room}/estado-operativo', [RoomOperationalStatusController::class, 'update'])->name('rooms.operational-status.update');
 
-        Route::get('/cajas', [CashRegisterController::class, 'index'])->name('cash-registers.index');
+        // Branch catalogs (branch admin).
+        Route::resource('habitaciones', RoomController::class)->except(['show', 'destroy'])->parameters(['habitaciones' => 'room'])->names('rooms');
+        Route::resource('tarifas', RoomRateController::class)->except(['show', 'destroy'])->parameters(['tarifas' => 'roomRate'])->names('room-rates');
+        Route::resource('cajas', CashRegisterController::class)->except(['show', 'destroy'])->parameters(['cajas' => 'cashRegister'])->names('cash-registers');
         Route::post('/cajas/{cashRegister}/sesiones', [CashSessionController::class, 'store'])->name('cash-sessions.store');
         Route::get('/sesiones-de-caja/{cashSession}', [CashSessionController::class, 'show'])->name('cash-sessions.show');
         Route::post('/sesiones-de-caja/{cashSession}/cierre', [CashSessionClosingController::class, 'store'])->name('cash-sessions.close');

@@ -54,7 +54,7 @@ class StayController extends Controller
 
     public function show(Request $request, Stay $stay, StayBalanceService $stayBalanceService): View
     {
-        abort_unless($stay->branch_id === $this->sucursalActiva($request)->id, 404);
+        $this->asegurarDeLaSucursalActiva($request, $stay->branch_id);
 
         $stay->load([
             'room.roomType',

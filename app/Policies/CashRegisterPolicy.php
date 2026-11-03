@@ -18,6 +18,11 @@ class CashRegisterPolicy
             || $user->tienePermisoEnSucursal(BranchPermission::CloseCashSessions, $branch->id);
     }
 
+    public function gestionar(User $user, Branch $branch): bool
+    {
+        return $user->tienePermisoEnSucursal(BranchPermission::ManageCashRegisters, $branch->id);
+    }
+
     public function abrirSesion(User $user, CashRegister $cashRegister): bool
     {
         return $user->tienePermisoEnSucursal(BranchPermission::OpenCashSessions, $cashRegister->branch_id);

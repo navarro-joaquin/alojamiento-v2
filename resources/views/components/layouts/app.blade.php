@@ -18,6 +18,20 @@
                     @can('verCajas', [\App\Models\CashRegister::class, $activeBranch])
                         <a href="{{ route('cash-registers.index') }}" @class(['hover:text-gray-900', 'text-gray-900' => request()->routeIs('cash-*'), 'text-gray-500' => ! request()->routeIs('cash-*')])>Cajas</a>
                     @endcan
+                    @can('gestionar', [\App\Models\Room::class, $activeBranch])
+                        <details class="relative">
+                            <summary class="cursor-pointer list-none text-gray-500 hover:text-gray-900">Configuración</summary>
+                            <div class="absolute left-0 z-10 mt-2 flex w-56 flex-col rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+                                <a href="{{ route('rooms.index') }}" class="px-3 py-2 hover:bg-gray-50">Habitaciones</a>
+                                @can('gestionar', [\App\Models\RoomRate::class, $activeBranch])
+                                    <a href="{{ route('room-rates.index') }}" class="px-3 py-2 hover:bg-gray-50">Tarifas</a>
+                                @endcan
+                                @can('gestionar', [\App\Models\CashRegister::class, $activeBranch])
+                                    <a href="{{ route('cash-registers.create') }}" class="px-3 py-2 hover:bg-gray-50">Nueva caja</a>
+                                @endcan
+                            </div>
+                        </details>
+                    @endcan
                 @endisset
                 @can('gestionar', \App\Models\Branch::class)
                     <details class="relative">

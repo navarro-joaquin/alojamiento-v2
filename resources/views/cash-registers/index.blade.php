@@ -1,4 +1,12 @@
 <x-layouts.app title="Cajas">
+    @php($canManageRegisters = auth()->user()->can('gestionar', [\App\Models\CashRegister::class, $activeBranch]))
+
+    @if ($canManageRegisters)
+        <div>
+            <a href="{{ route('cash-registers.create') }}" class="inline-flex rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-gray-700">Nueva caja</a>
+        </div>
+    @endif
+
     @if ($cashRegisters->isEmpty())
         <x-card>
             <p class="text-sm text-gray-600">La sucursal no tiene cajas activas.</p>
@@ -24,9 +32,22 @@
                             </form>
                         @endcan
                     @endif
+                    @if ($canManageRegisters)
+                        <a href="{{ route('cash-registers.edit', $cashRegister) }}" class="text-sm text-gray-600 underline">Editar caja</a>
+                    @endif
                 </x-card>
             @endforeach
         </div>
+    @endif
+
+    @if ($canManageRegisters && $inactiveCashRegisters->isNotEmpty())
+        <x-card title="Cajas inactivas">
+            <ul class="flex flex-col gap-2 text-sm">
+                @foreach ($inactiveCashRegisters as $inactiveCashRegister)
+                    <li><a href="{{ route('cash-registers.edit', $inactiveCashRegister) }}" class="underline">{{ $inactiveCashRegister->name }}</a></li>
+                @endforeach
+            </ul>
+        </x-card>
     @endif
 
     <x-card title="Últimos cierres">

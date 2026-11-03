@@ -536,9 +536,9 @@ En una transacción:
 
 ### Devolución
 
-1. Bloquear la sesión de caja (si es en efectivo) y el pago original.
+1. Bloquear la sesión de caja (si es en efectivo), la estadía y el pago original (orden canónico).
 2. Sumar las devoluciones confirmadas existentes.
-3. Rechazar si la nueva devolución excede el saldo reembolsable.
+3. Rechazar si la nueva devolución excede el saldo reembolsable del pago o el **saldo a favor** de la estadía. Una devolución nunca crea deuda: si un cargo estaba mal, primero se anula o se descuenta y después se devuelve el saldo a favor resultante.
 4. Validar sesión de caja abierta si se devuelve efectivo.
 5. Comprobar idempotencia.
 6. Crear `payment_refunds` y, cuando corresponda, `cash_movements`.
@@ -787,6 +787,15 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
    - Permisos de administración de sucursal (`rooms.manage`, `room_rates.manage`, `cash_registers.manage`, `staff.manage`): solo los tiene el rol `admin`; el supervisor conserva solo los operativos.
    - ✅ Bloque B: habitaciones, tarifas y cajas de la sucursal, a cargo de su admin (menú "Configuración"). Siempre se crean en la sucursal activa, y las de otra sucursal responden 404. El número de habitación y el nombre de la caja son únicos por sucursal. Una tarifa activa que se solapa con otra se rechaza como error del formulario (`RateService::verificarSinSolapamiento`, dentro de la transacción), y cada alta o cambio de tarifa queda auditado. Cambiar una tarifa no altera las estadías en curso. No se puede desactivar una caja con una sesión abierta.
    - ✅ Bloque C: cuentas de usuario y personal. El superadministrador crea y edita las cuentas (nombre, correo, contraseña y si está habilitada; una cuenta deshabilitada se desconecta en su siguiente petición) y no puede deshabilitar la suya. El admin de cada sucursal (`staff.manage`) asigna roles en su sucursal a cuentas existentes, por correo: cada persona tiene un solo rol por sucursal, y asignarle otro reemplaza el actual sin tocar sus roles en otras sucursales. También puede quitar a alguien de la sucursal, pero nunca cambiar ni quitar su propio rol. Las altas, cambios de cuenta y cambios de rol quedan auditados en el registro `security`, sin la contraseña.
+
+### Prioridad sugerida dentro de la fase 2
+
+1. ✅ Devoluciones manuales desde la ficha de estadía (supervisor y administrador): se elige el pago, el importe y el motivo; si el pago fue en efectivo, sale de una caja abierta. Solo se devuelve saldo a favor (sección 4). El formulario lleva `refund_operation_uuid`, así que un doble envío registra una sola devolución. Hay una prueba de concurrencia: dos devoluciones de pagos distintos no superan juntas el saldo a favor.
+2. Excepciones de deuda: solicitud, aprobación por un supervisor distinto y uso en el check-out (`checkout_exceptions`).
+3. Gastos con categorías, salida de caja y aprobación por umbral (`expense_categories`, `expenses`).
+4. Arqueos parciales y revisión de las sesiones en `pending_review` (`cash_counts`).
+5. Recibos internos con numeración correlativa por sucursal y número de factura externa (`receipt_sequences`, `receipts`).
+6. Reportes financieros por fecha de negocio y consulta de auditoría.
 
 ## 11. Criterios mínimos para considerar el módulo financiero seguro
 

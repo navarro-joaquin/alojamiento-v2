@@ -66,6 +66,11 @@ class BusinessRuleException extends Exception
         return new self("La devolución supera el importe reembolsable (Bs {$refundableAmount}).");
     }
 
+    public static function devolucionSuperaSaldoAFavor(Number $creditAmount): self
+    {
+        return new self("La devolución supera el saldo a favor del huésped (Bs {$creditAmount}). Anule o descuente primero lo cobrado de más.");
+    }
+
     public static function devolucionEnEfectivoSinSesion(): self
     {
         return new self('Una devolución en efectivo requiere una sesión de caja abierta.');

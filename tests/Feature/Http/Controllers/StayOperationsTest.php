@@ -159,3 +159,69 @@ it('forbids operations on stays of another branch', function () {
         ->post(route('stays.charges.store', $otherStay), ['charge_type' => 'product', 'description' => 'Agua', 'quantity' => '1', 'unit_price' => '5'])
         ->assertForbidden();
 });
+
+/**
+ * @param  array<string, mixed>  $overrides
+ * @return array<string, mixed>
+ */
+function datosDeDevolucion(Payment $payment, array $overrides = []): array
+{
+    return [
+        'refund_payment_id' => $payment->id,
+        'refund_cash_session_id' => '',
+        'refund_amount' => '50.00',
+        'refund_reason' => 'Se va un día antes',
+        'refund_operation_uuid' => (string) Str::uuid(),
+        ...$overrides,
+    ];
+}
+
+it('refunds the credit of a stay once even if the form is submitted twice', function () {
+    $payment = Payment::factory()->for($this->stay)->for($this->cashSession)->anticipo()->create(['amount' => '300.00']);
+    $supervisor = operadorConRol($this->branch, BranchRole::Supervisor);
+
+    $this->actingAs($supervisor)
+        ->get(route('stays.show', $this->stay))
+        ->assertSee('Devolver saldo a favor')
+        ->assertSee('Bs 300.00');
+
+    $data = datosDeDevolucion($payment, ['refund_cash_session_id' => $this->cashSession->id]);
+
+    $this->actingAs($supervisor)
+        ->post(route('stays.refunds.store', $this->stay), $data)
+        ->assertRedirect(route('stays.show', $this->stay))
+        ->assertSessionHas('status', 'Devolución de Bs 50.00 registrada.');
+    $this->actingAs($supervisor)->post(route('stays.refunds.store', $this->stay), $data)->assertSessionHasNoErrors();
+
+    expect($payment->refunds()->sole()->cash_session_id)->toBe($this->cashSession->id)
+        ->and(saldoDe($this->stay))->toBe('0.00');
+
+    $this->actingAs($supervisor)->get(route('stays.show', $this->stay))->assertDontSee('Devolver saldo a favor');
+});
+
+it('shows a refund above the credit as a form error', function () {
+    $payment = Payment::factory()->for($this->stay)->for($this->cashSession)->anticipo()->conTarjeta()->create(['amount' => '300.00']);
+
+    $this->actingAs(operadorConRol($this->branch, BranchRole::Supervisor))
+        ->from(route('stays.show', $this->stay))
+        ->post(route('stays.refunds.store', $this->stay), datosDeDevolucion($payment, ['refund_amount' => '50.01']))
+        ->assertRedirect(route('stays.show', $this->stay))
+        ->assertSessionHasErrors(['operation' => 'La devolución supera el saldo a favor del huésped (Bs 50.00). Anule o descuente primero lo cobrado de más.']);
+
+    expect($payment->refunds()->exists())->toBeFalse();
+});
+
+it('refunds only with the refund permission and only payments of the stay', function () {
+    $payment = Payment::factory()->for($this->stay)->for($this->cashSession)->anticipo()->conTarjeta()->create(['amount' => '300.00']);
+    $receptionist = operadorConRol($this->branch, BranchRole::Receptionist);
+
+    $this->actingAs($receptionist)->get(route('stays.show', $this->stay))->assertDontSee('Devolver saldo a favor');
+    $this->actingAs($receptionist)->post(route('stays.refunds.store', $this->stay), datosDeDevolucion($payment))->assertForbidden();
+
+    $otherStay = Stay::factory()->for(Room::factory()->for($this->branch))->create();
+    $this->actingAs(operadorConRol($this->branch, BranchRole::Supervisor))
+        ->post(route('stays.refunds.store', $otherStay), datosDeDevolucion($payment))
+        ->assertSessionHasErrors('refund_payment_id');
+
+    expect($payment->refunds()->exists())->toBeFalse();
+});

@@ -9,6 +9,7 @@ use App\Http\Controllers\CashSessionController;
 use App\Http\Controllers\CheckOutController;
 use App\Http\Controllers\OccupancyController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PaymentRefundController;
 use App\Http\Controllers\RoomChangeController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\RoomHousekeepingStatusController;
@@ -51,6 +52,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/estadias/{stay}/descuentos', [StayDiscountController::class, 'store'])->name('stays.discounts.store');
         Route::post('/cargos/{stayCharge}/anulacion', [VoidedStayChargeController::class, 'store'])->name('stay-charges.void');
         Route::post('/estadias/{stay}/pagos', [PaymentController::class, 'store'])->name('stays.payments.store');
+        Route::post('/estadias/{stay}/devoluciones', [PaymentRefundController::class, 'store'])->name('stays.refunds.store');
         Route::get('/estadias/{stay}/cambio-de-habitacion', [RoomChangeController::class, 'create'])->name('stays.room-changes.create');
         Route::post('/estadias/{stay}/cambio-de-habitacion', [RoomChangeController::class, 'store'])->name('stays.room-changes.store');
         Route::post('/estadias/{stay}/salida', [CheckOutController::class, 'store'])->name('stays.check-out');

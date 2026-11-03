@@ -200,6 +200,24 @@
                 </x-card>
             @endcan
 
+            @if ($balance < 0 && $refundablePayments->isNotEmpty())
+                @can('devolver', $refundablePayments->first())
+                    <x-card title="Devolver saldo a favor">
+                        <form method="POST" action="{{ route('stays.refunds.store', $stay) }}" class="flex flex-col gap-3">
+                            @csrf
+                            <input type="hidden" name="refund_operation_uuid" value="{{ old('refund_operation_uuid', (string) \Illuminate\Support\Str::uuid()) }}">
+                            <x-select label="Pago a devolver" name="refund_payment_id"
+                                :options="$refundablePayments->mapWithKeys(fn ($payment) => [$payment->id => $payment->payment_method->etiqueta().' · '.$payment->paid_at->timezone($activeBranch->timezone)->format('d/m H:i').' · Bs '.$payment->refundable_amount])" />
+                            <x-select label="Caja (solo si se devuelve efectivo)" name="refund_cash_session_id"
+                                :options="['' => 'Sin efectivo'] + $openCashSessions->mapWithKeys(fn ($cashSession) => [$cashSession->id => $cashSession->cashRegister->name])->all()" />
+                            <x-field label="Importe (Bs)" name="refund_amount" inputmode="decimal" :value="(string) ($balance * -1)" required />
+                            <x-field label="Motivo" name="refund_reason" required />
+                            <x-button variant="secondary">Devolver</x-button>
+                        </form>
+                    </x-card>
+                @endcan
+            @endif
+
             @can('registrarDescuento', $stay)
                 <x-card title="Aplicar descuento">
                     <form method="POST" action="{{ route('stays.discounts.store', $stay) }}" class="flex flex-col gap-3">

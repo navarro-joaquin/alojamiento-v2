@@ -17,6 +17,7 @@ use App\Models\Stay;
 use App\Models\StayCharge;
 use App\Models\User;
 use App\Services\CashService;
+use App\Services\StayBalanceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -42,14 +43,24 @@ function crearSesionAbiertaEn(Branch $branch): CashSession
         ->create(['opening_amount' => '200.00']);
 }
 
-function cobrarEfectivo(Stay $stay, CashSession $cashSession, string $amount, ?string $operationUuid = null): Payment
+/**
+ * An active stay without charges yet, so whatever it pays is credit.
+ */
+function crearEstadiaConSaldoAFavor(?Branch $branch = null): Stay
+{
+    $room = Room::factory()->for($branch ?? Branch::factory())->create();
+
+    return Stay::factory()->for($room)->create(['rate_amount' => '250.00']);
+}
+
+function cobrarEfectivo(Stay $stay, CashSession $cashSession, string $amount, ?string $operationUuid = null, PaymentType $paymentType = PaymentType::Settlement): Payment
 {
     return app(CashService::class)->cobrarPago(
         $stay,
         $cashSession,
         User::factory()->create(),
         PaymentMethod::Cash,
-        PaymentType::Settlement,
+        $paymentType,
         $amount,
         $operationUuid ?? (string) Str::uuid(),
     );
@@ -201,9 +212,9 @@ describe('cobrarPago', function () {
 
 describe('devolverPago', function () {
     it('refunds cash from the open session', function () {
-        $stay = crearEstadiaConDeuda();
+        $stay = crearEstadiaConSaldoAFavor();
         $cashSession = crearSesionAbiertaEn($stay->branch);
-        $payment = cobrarEfectivo($stay, $cashSession, '250.00');
+        $payment = cobrarEfectivo($stay, $cashSession, '250.00', paymentType: PaymentType::Deposit);
 
         $refund = app(CashService::class)->devolverPago(
             $payment, User::factory()->create(), '50.00', 'Cobro duplicado', (string) Str::uuid(), $cashSession,
@@ -217,9 +228,9 @@ describe('devolverPago', function () {
     });
 
     it('refunds a card payment without a session or cash movement', function () {
-        $stay = crearEstadiaConDeuda();
+        $stay = crearEstadiaConSaldoAFavor();
         $payment = app(CashService::class)->cobrarPago(
-            $stay, crearSesionAbiertaEn($stay->branch), User::factory()->create(), PaymentMethod::Card, PaymentType::Settlement, '250.00', (string) Str::uuid(),
+            $stay, crearSesionAbiertaEn($stay->branch), User::factory()->create(), PaymentMethod::Card, PaymentType::Deposit, '250.00', (string) Str::uuid(),
         );
 
         $refund = app(CashService::class)->devolverPago($payment, User::factory()->create(), '250.00', 'Cancelación', (string) Str::uuid());
@@ -229,25 +240,25 @@ describe('devolverPago', function () {
     });
 
     it('rejects refunds that together exceed the payment', function () {
-        $stay = crearEstadiaConDeuda();
+        $stay = crearEstadiaConSaldoAFavor();
         $cashSession = crearSesionAbiertaEn($stay->branch);
-        $payment = cobrarEfectivo($stay, $cashSession, '250.00');
+        $payment = cobrarEfectivo($stay, $cashSession, '250.00', paymentType: PaymentType::Deposit);
         app(CashService::class)->devolverPago($payment, User::factory()->create(), '200.00', 'Ajuste', (string) Str::uuid(), $cashSession);
 
         app(CashService::class)->devolverPago($payment, User::factory()->create(), '50.01', 'Ajuste', (string) Str::uuid(), $cashSession);
     })->throws(BusinessRuleException::class, 'supera el importe reembolsable (Bs 50.00)');
 
     it('rejects a cash refund without a session', function () {
-        $stay = crearEstadiaConDeuda();
-        $payment = cobrarEfectivo($stay, crearSesionAbiertaEn($stay->branch), '250.00');
+        $stay = crearEstadiaConSaldoAFavor();
+        $payment = cobrarEfectivo($stay, crearSesionAbiertaEn($stay->branch), '250.00', paymentType: PaymentType::Deposit);
 
         app(CashService::class)->devolverPago($payment, User::factory()->create(), '50.00', 'Ajuste', (string) Str::uuid());
     })->throws(BusinessRuleException::class, 'requiere una sesión de caja abierta');
 
     it('returns the original refund when the same request is retried', function () {
-        $stay = crearEstadiaConDeuda();
+        $stay = crearEstadiaConSaldoAFavor();
         $cashSession = crearSesionAbiertaEn($stay->branch);
-        $payment = cobrarEfectivo($stay, $cashSession, '250.00');
+        $payment = cobrarEfectivo($stay, $cashSession, '250.00', paymentType: PaymentType::Deposit);
         $operationUuid = (string) Str::uuid();
         $user = User::factory()->create();
 
@@ -257,6 +268,28 @@ describe('devolverPago', function () {
         expect($retriedRefund->is($firstRefund))->toBeTrue()
             ->and($payment->refunds()->count())->toBe(1);
     });
+
+    it('refunds only the credit of the stay', function () {
+        $stay = crearEstadiaConDeuda();
+        $cashSession = crearSesionAbiertaEn($stay->branch);
+        $payment = cobrarEfectivo($stay, $cashSession, '250.00', paymentType: PaymentType::Deposit);
+        cobrarEfectivo($stay, $cashSession, '30.00', paymentType: PaymentType::Deposit);
+
+        expect(fn () => app(CashService::class)->devolverPago($payment, User::factory()->create(), '30.01', 'Ajuste', (string) Str::uuid(), $cashSession))
+            ->toThrow(BusinessRuleException::class, 'supera el saldo a favor del huésped (Bs 30.00)');
+
+        app(CashService::class)->devolverPago($payment, User::factory()->create(), '30.00', 'Ajuste', (string) Str::uuid(), $cashSession);
+
+        expect((string) app(StayBalanceService::class)->calcular($stay))->toBe('0.00');
+    });
+
+    it('does not refund a settled stay', function () {
+        $stay = crearEstadiaConDeuda();
+        $cashSession = crearSesionAbiertaEn($stay->branch);
+        $payment = cobrarEfectivo($stay, $cashSession, '250.00');
+
+        app(CashService::class)->devolverPago($payment, User::factory()->create(), '0.01', 'Ajuste', (string) Str::uuid(), $cashSession);
+    })->throws(BusinessRuleException::class, 'supera el saldo a favor del huésped (Bs 0.00)');
 });
 
 describe('cerrarSesion', function () {
@@ -266,7 +299,7 @@ describe('cerrarSesion', function () {
         $cashSession = crearSesionAbiertaEn($stay->branch);
         $cashPayment = cobrarEfectivo($stay, $cashSession, '250.00');
         app(CashService::class)->cobrarPago(
-            $stay, $cashSession, User::factory()->create(), PaymentMethod::Card, PaymentType::Settlement, '250.00', (string) Str::uuid(),
+            $stay, $cashSession, User::factory()->create(), PaymentMethod::Card, PaymentType::Deposit, '280.00', (string) Str::uuid(),
         );
         app(CashService::class)->devolverPago($cashPayment, User::factory()->create(), '30.00', 'Ajuste', (string) Str::uuid(), $cashSession);
 

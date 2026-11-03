@@ -113,6 +113,28 @@ it('registers a full refund only once when the same request arrives twice at the
         ->and($payment->refunds()->count())->toBe(1);
 });
 
+it('does not let two refunds of different payments exceed the credit together', function () {
+    $stay = crearEstadiaEndeudada('250.00');
+    $firstPaymentId = Payment::factory()->for($stay)->anticipo()->conTarjeta()->create(['amount' => '250.00'])->id;
+    $secondPaymentId = Payment::factory()->for($stay)->anticipo()->conTarjeta()->create(['amount' => '250.00'])->id;
+    $userId = User::factory()->create()->id;
+
+    $devolver = function (int $paymentId) use ($userId): Closure {
+        return static fn () => app(CashService::class)->devolverPago(
+            Payment::findOrFail($paymentId), User::findOrFail($userId), '250.00', 'Anticipo no usado', (string) Str::uuid(),
+        )->id;
+    };
+
+    ['exitosas' => $succeeded, 'fallidas' => $failed] = separarResultados(ConcurrentRace::ejecutar('stays', $stay->id, [
+        'pago 1' => $devolver($firstPaymentId),
+        'pago 2' => $devolver($secondPaymentId),
+    ]));
+
+    expect($succeeded)->toHaveCount(1)
+        ->and(array_values($failed))->toBe(['La devolución supera el saldo a favor del huésped (Bs 0.00). Anule o descuente primero lo cobrado de más.'])
+        ->and((string) app(StayBalanceService::class)->calcular($stay))->toBe('0.00');
+});
+
 it('does not let two payments from different registers exceed the balance together', function () {
     $stay = crearEstadiaEndeudada('250.00');
     $firstSession = abrirSesionEnSucursal($stay->branch_id);

@@ -136,8 +136,9 @@ class CashService
 
     /**
      * Refund part or all of a confirmed payment through its original method.
-     * Cash refunds leave the register and therefore need an open session of the
-     * stay's branch.
+     * Only the stay's credit can be refunded, so a refund never creates debt:
+     * a wrong charge is voided or discounted first. Cash refunds leave the
+     * register and therefore need an open session of the stay's branch.
      *
      * @throws BusinessRuleException
      * @throws IdempotencyConflictException
@@ -333,7 +334,8 @@ class CashService
         string $requestHash,
     ): PaymentRefund {
         $lockedSession = $cashSession !== null ? $this->bloquearSesionAbierta($cashSession) : null;
-        $lockedPayment = Payment::query()->with('stay')->lockForUpdate()->findOrFail($payment->id);
+        $lockedStay = Stay::query()->lockForUpdate()->findOrFail($payment->stay_id);
+        $lockedPayment = Payment::query()->lockForUpdate()->findOrFail($payment->id)->setRelation('stay', $lockedStay);
 
         $concurrentRefund = PaymentRefund::query()->where('operation_uuid', $operationUuid)->first();
 
@@ -354,6 +356,12 @@ class CashService
 
         if ($amount > $refundableAmount) {
             throw BusinessRuleException::devolucionSuperaReembolsable($refundableAmount);
+        }
+
+        $creditAmount = $this->stayBalanceService->calcular($lockedStay) * -1;
+
+        if ($amount > $creditAmount) {
+            throw BusinessRuleException::devolucionSuperaSaldoAFavor($creditAmount > 0 ? $creditAmount : new Number('0.00'));
         }
 
         $refund = $lockedPayment->refunds()->create([

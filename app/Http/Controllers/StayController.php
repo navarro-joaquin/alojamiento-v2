@@ -4,15 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Enums\DocumentType;
 use App\Enums\PaymentMethod;
+use App\Enums\PaymentStatus;
 use App\Enums\PaymentType;
 use App\Http\Requests\StoreStayRequest;
 use App\Models\CashSession;
+use App\Models\Payment;
 use App\Models\Room;
 use App\Models\Stay;
 use App\Services\ChargeService;
 use App\Services\GuestService;
 use App\Services\ReceptionService;
 use App\Services\StayBalanceService;
+use BcMath\Number;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -73,6 +76,10 @@ class StayController extends Controller
                 ->whereHas('cashRegister', fn ($query) => $query->whereBelongsTo($stay->branch))
                 ->with('cashRegister')
                 ->get(),
+            'refundablePayments' => $stay->payments
+                ->filter(fn (Payment $payment): bool => $payment->status === PaymentStatus::Confirmed)
+                ->each(fn (Payment $payment) => $payment->refundable_amount = (string) (new Number($payment->amount) - new Number((string) ($payment->refunded_amount ?? '0'))))
+                ->filter(fn (Payment $payment): bool => new Number($payment->refundable_amount) > 0),
             'manualChargeTypes' => ChargeService::MANUAL_DEBIT_TYPES,
             'paymentMethods' => PaymentMethod::cases(),
             'paymentTypes' => PaymentType::cases(),

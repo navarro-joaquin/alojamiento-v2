@@ -18,6 +18,9 @@
                     @can('verCajas', [\App\Models\CashRegister::class, $activeBranch])
                         <a href="{{ route('cash-registers.index') }}" @class(['hover:text-gray-900', 'text-gray-900' => request()->routeIs('cash-*'), 'text-gray-500' => ! request()->routeIs('cash-*')])>Cajas</a>
                     @endcan
+                    @can('verPendientes', [\App\Models\CheckoutException::class, $activeBranch])
+                        <a href="{{ route('checkout-exceptions.index') }}" @class(['hover:text-gray-900', 'text-gray-900' => request()->routeIs('checkout-exceptions.*'), 'text-gray-500' => ! request()->routeIs('checkout-exceptions.*')])>Salidas con deuda</a>
+                    @endcan
                     @can('gestionar', [\App\Models\Room::class, $activeBranch])
                         <details class="relative">
                             <summary class="cursor-pointer list-none text-gray-500 hover:text-gray-900">Configuración</summary>

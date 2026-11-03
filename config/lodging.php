@@ -20,6 +20,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Checkout Exceptions
+    |--------------------------------------------------------------------------
+    |
+    | Minutes an approved checkout with debt stays valid. Past that, or if
+    | the debt changes, a new authorization must be requested.
+    |
+    */
+
+    'checkout_exception_minutes' => (int) env('LODGING_CHECKOUT_EXCEPTION_MINUTES', 120),
+
+    /*
+    |--------------------------------------------------------------------------
     | Night Audit
     |--------------------------------------------------------------------------
     |

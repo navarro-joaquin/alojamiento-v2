@@ -7,6 +7,9 @@ use App\Http\Controllers\CashRegisterController;
 use App\Http\Controllers\CashSessionClosingController;
 use App\Http\Controllers\CashSessionController;
 use App\Http\Controllers\CheckOutController;
+use App\Http\Controllers\CheckoutExceptionApprovalController;
+use App\Http\Controllers\CheckoutExceptionController;
+use App\Http\Controllers\CheckoutExceptionRejectionController;
 use App\Http\Controllers\OccupancyController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentRefundController;
@@ -56,6 +59,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/estadias/{stay}/cambio-de-habitacion', [RoomChangeController::class, 'create'])->name('stays.room-changes.create');
         Route::post('/estadias/{stay}/cambio-de-habitacion', [RoomChangeController::class, 'store'])->name('stays.room-changes.store');
         Route::post('/estadias/{stay}/salida', [CheckOutController::class, 'store'])->name('stays.check-out');
+        Route::post('/estadias/{stay}/salida-con-deuda', [CheckoutExceptionController::class, 'store'])->name('stays.checkout-exceptions.store');
+        Route::get('/salidas-con-deuda', [CheckoutExceptionController::class, 'index'])->name('checkout-exceptions.index');
+        Route::post('/salidas-con-deuda/{checkoutException}/aprobacion', [CheckoutExceptionApprovalController::class, 'store'])->name('checkout-exceptions.approve');
+        Route::post('/salidas-con-deuda/{checkoutException}/rechazo', [CheckoutExceptionRejectionController::class, 'store'])->name('checkout-exceptions.reject');
 
         Route::put('/habitaciones/{room}/estado-operativo', [RoomOperationalStatusController::class, 'update'])->name('rooms.operational-status.update');
 

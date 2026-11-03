@@ -61,6 +61,10 @@
             </p>
 
             @if ($isActive)
+                @php($canLeaveWithDebt = $openCheckoutException?->estaVigente() && $checkoutExceptionMatchesDebt)
+                @if ($balance > 0)
+                    @include('stays.partials.checkout-exception')
+                @endif
                 <div class="flex flex-col gap-3 border-t border-gray-100 pt-4">
                     @can('registrarSalida', $stay)
                         <form method="POST" action="{{ route('stays.check-out', $stay) }}" class="flex flex-col gap-3">
@@ -69,7 +73,7 @@
                                 <x-select label="Caja para devolver el efectivo" name="cash_session_id"
                                     :options="['' => 'Sin efectivo que devolver'] + $openCashSessions->mapWithKeys(fn ($cashSession) => [$cashSession->id => $cashSession->cashRegister->name])->all()" />
                             @endif
-                            <x-button :disabled="$balance > 0">Registrar salida</x-button>
+                            <x-button :disabled="$balance > 0 && ! $canLeaveWithDebt">{{ $balance > 0 ? 'Registrar salida con deuda' : 'Registrar salida' }}</x-button>
                         </form>
                     @endcan
                     @can('cambiarHabitacion', $stay)

@@ -124,4 +124,12 @@ class Stay extends Model
     {
         return $this->hasMany(Payment::class);
     }
+
+    /**
+     * @return HasMany<CheckoutException, $this>
+     */
+    public function checkoutExceptions(): HasMany
+    {
+        return $this->hasMany(CheckoutException::class);
+    }
 }

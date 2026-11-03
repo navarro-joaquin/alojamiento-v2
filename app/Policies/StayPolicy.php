@@ -22,6 +22,11 @@ class StayPolicy
         return $user->tienePermisoEnSucursal(BranchPermission::CheckOutStays, $stay->branch_id);
     }
 
+    public function solicitarSalidaConDeuda(User $user, Stay $stay): bool
+    {
+        return $user->tienePermisoEnSucursal(BranchPermission::RequestCheckoutExceptions, $stay->branch_id);
+    }
+
     public function registrarCargo(User $user, Stay $stay): bool
     {
         return $user->tienePermisoEnSucursal(BranchPermission::AddCharges, $stay->branch_id);

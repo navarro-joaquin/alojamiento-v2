@@ -6,6 +6,7 @@ use App\Models\Branch;
 use App\Models\CashMovement;
 use App\Models\CashRegister;
 use App\Models\CashSession;
+use App\Models\CheckoutException;
 use App\Models\Employee;
 use App\Models\Guest;
 use App\Models\Payment;
@@ -80,6 +81,7 @@ class AppServiceProvider extends ServiceProvider
             'cash_movement' => CashMovement::class,
             'cash_register' => CashRegister::class,
             'cash_session' => CashSession::class,
+            'checkout_exception' => CheckoutException::class,
             'employee' => Employee::class,
             'guest' => Guest::class,
             'payment' => Payment::class,

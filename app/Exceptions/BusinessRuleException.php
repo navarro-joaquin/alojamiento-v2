@@ -118,7 +118,47 @@ class BusinessRuleException extends Exception
 
     public static function salidaConDeuda(Number $balance): self
     {
-        return new self("La estadía tiene un saldo pendiente de Bs {$balance}.");
+        return new self("La estadía tiene un saldo pendiente de Bs {$balance} y no hay una salida con deuda autorizada.");
+    }
+
+    public static function autorizacionDeSalidaVencida(): self
+    {
+        return new self('La autorización de salida con deuda venció: solicite una nueva.');
+    }
+
+    public static function deudaDistintaDeLaAutorizada(Number $authorizedAmount, Number $balance): self
+    {
+        return new self("La deuda cambió desde la solicitud (Bs {$authorizedAmount} solicitados, Bs {$balance} actuales): solicite una nueva autorización.");
+    }
+
+    public static function salidaRegistradaPorQuienAutorizo(): self
+    {
+        return new self('Quien autorizó la salida con deuda no puede registrarla: debe hacerlo otro operador.');
+    }
+
+    public static function aprobacionPorElSolicitante(): self
+    {
+        return new self('Quien solicita la salida con deuda no puede autorizarla.');
+    }
+
+    public static function estadiaSinDeuda(): self
+    {
+        return new self('La estadía no tiene saldo pendiente.');
+    }
+
+    public static function salidaConDeudaYaAutorizada(): self
+    {
+        return new self('La estadía ya tiene una salida con deuda autorizada y vigente.');
+    }
+
+    public static function solicitudNoPendiente(): self
+    {
+        return new self('La solicitud de salida con deuda ya no está pendiente.');
+    }
+
+    public static function excepcionNoAbierta(): self
+    {
+        return new self('La salida con deuda ya no está pendiente ni autorizada.');
     }
 
     public static function saldoAFavorNoReembolsable(Number $remainingAmount): self

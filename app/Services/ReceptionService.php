@@ -22,7 +22,7 @@ use Illuminate\Support\Str;
  * Check-in, room change and check-out.
  *
  * Rows are locked in the canonical order: cash_sessions → stays → rooms
- * (several rooms by id) → payments. Authorization is the caller's responsibility.
+ * (several rooms by id) → payments → checkout_exceptions. Authorization is the caller's responsibility.
  */
 class ReceptionService
 {
@@ -32,6 +32,7 @@ class ReceptionService
         private HousekeepingService $housekeepingService,
         private StayBalanceService $stayBalanceService,
         private CashService $cashService,
+        private CheckoutExceptionService $checkoutExceptionService,
         private AuditService $auditService,
     ) {}
 
@@ -176,8 +177,9 @@ class ReceptionService
 
     /**
      * Complete an active stay. Any credit in favour of the guest is refunded in
-     * the same transaction (cash refunds need the open session). Stays with debt
-     * cannot leave until checkout exceptions exist (phase 2).
+     * the same transaction (cash refunds need the open session). A stay with
+     * debt needs a valid checkout exception for exactly that debt, which the
+     * check-out consumes; the debt stays on the completed stay.
      *
      * @throws BusinessRuleException
      * @throws IdempotencyConflictException
@@ -194,9 +196,9 @@ class ReceptionService
 
             $balance = $this->stayBalanceService->calcular($lockedStay);
 
-            if ($balance > 0) {
-                throw BusinessRuleException::salidaConDeuda($balance);
-            }
+            $checkoutException = $balance > 0
+                ? $this->checkoutExceptionService->consumir($lockedStay, $user, $balance)
+                : null;
 
             $refundedAmount = $balance < 0
                 ? $this->devolverSaldoAFavor($lockedStay, $user, $balance * -1, $cashSession)
@@ -214,6 +216,8 @@ class ReceptionService
             $this->auditService->registrar('reception', 'stay.checked_out', $lockedStay, $user, $lockedStay->branch_id, [
                 'room_id' => $lockedRoom->id,
                 'refunded_amount' => (string) $refundedAmount,
+                'outstanding_amount' => $checkoutException?->outstanding_amount,
+                'checkout_exception_id' => $checkoutException?->id,
             ]);
 
             return $lockedStay;

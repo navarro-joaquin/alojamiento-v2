@@ -435,16 +435,20 @@ El movimiento de caja debe generarse desde un único servicio financiero, no des
 - `stay_id` → `stays.id`, `RESTRICT`
 - `requested_by` → `users.id`
 - `approved_by` nullable → `users.id`
-- `outstanding_amount DECIMAL(12,2)`
+- `resolved_by` nullable → `users.id` (quien la rechaza, la revoca o la reemplaza)
+- `outstanding_amount DECIMAL(12,2)` (`CHECK > 0`)
 - `reason`
+- `resolution_notes` nullable
 - `status`: `requested`, `approved`, `rejected`, `used`, `revoked`, `expired`
 - `requested_at`
 - `approved_at` nullable
 - `expires_at` nullable
 - `used_at` nullable
+- `resolved_at` nullable
+- `open_stay_id` generada: `IF(status IN ('requested', 'approved'), stay_id, NULL)`, `UNIQUE`
 - `timestamps`
 
-Índices: `(stay_id, status)` y `(approved_by, approved_at)`. Como máximo una excepción `approved` por estadía (columna generada única o verificación bajo bloqueo).
+Índices: `(stay_id, status)` y `(approved_by, approved_at)`. Como máximo una excepción abierta (`requested` o `approved`) por estadía, garantizado por `open_stay_id`. Una aprobación vencida conserva el estado `approved` hasta que una nueva solicitud la reemplaza y la pasa a `expired`.
 
 La aprobación debe ser realizada por un usuario con permiso de supervisor y distinto del solicitante. En el check-out se recalcula el saldo bajo transacción; si no coincide con `outstanding_amount` o la excepción venció, se solicita una nueva autorización. Al usarse pasa a `used` en la misma transacción del check-out. El backend no debe confiar en un identificador de excepción enviado por el formulario sin verificarlo.
 
@@ -744,7 +748,7 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
 1. ✅ Configurar MySQL para desarrollo y pruebas (sección 13; `phpunit.xml` usa `alojamiento_test`).
 2. ✅ Instalar `spatie/laravel-permission` 8.x (teams con `branch_id`) y `spatie/laravel-activitylog` 5.x.
 3. ✅ Migraciones de la fase 1, con `up()`/`down()`, FK `RESTRICT`, restricciones `CHECK` y columnas generadas únicas: `branches`, `employees`, ALTER `users`, índice por sucursal en `activity_log`, `room_types`, `rooms`, `room_status_logs`, `room_rates`, `guests`, `stays`, `stay_room_assignments`, `stay_guests`, `stay_charges`, `cash_registers`, `cash_sessions`, `payments`, `payment_refunds`, `cash_movements`. Las garantías de base de datos están cubiertas por `tests/Feature/DatabaseConstraintsTest.php`.
-   - Quedan para fases posteriores: `cash_counts`, `expenses`, `checkout_exceptions`, recibos (fase 2) y las columnas `product_id`/`inventory_movement_id` de `stay_charges` (fase 3, mediante ALTER).
+   - Quedan para fases posteriores: `cash_counts`, `expenses`, recibos (fase 2) y las columnas `product_id`/`inventory_movement_id` de `stay_charges` (fase 3, mediante ALTER).
 4. ✅ Enums de estados en `app/Enums/` (string-backed, con `etiqueta()` en español). Algunos incluyen reglas: `PaymentMethod::afectaEfectivo()`, `CashSessionStatus::aceptaMovimientos()` y `HousekeepingStatus::permiteAsignacion()`.
 5. ✅ Modelos Eloquent de la fase 1 con relaciones, casts a enums y decimales, scopes (`activas`, `confirmados`, `confirmadas`, `abiertas`) y factories con estados en español. Notas:
    - Morph map estricto en `AppServiceProvider` (`payment`, `payment_refund`, `user`…): las columnas polimórficas guardan alias, no nombres de clase.
@@ -758,7 +762,7 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
    - Los servicios no comprueban permisos: eso lo harán las Policies (paso 9).
    - Para el check-out, `ReceptionService` debe bloquear la sesión de caja **antes** que la estadía y luego llamar a `devolverPago()`, para respetar el orden de bloqueo canónico.
 8. ✅ `ReceptionService` (`registrarIngreso()`, `cambiarHabitacion()`, `registrarSalida()`), `ChargeService` (`registrarNocheAlojamiento()`, `registrarCargo()`, `registrarDescuento()`, `anularCargo()`), `HousekeepingService` (`cambiarEstadoLimpieza()`, `cambiarEstadoOperativo()`), `NightAuditService` y el comando `lodging:night-audit`. Notas:
-   - Hasta que existan las excepciones de deuda (fase 2), `registrarSalida()` rechaza toda salida con saldo pendiente.
+   - `registrarSalida()` solo deja salir con saldo pendiente si hay una excepción de deuda vigente por exactamente ese importe (fase 2, `CheckoutExceptionService::consumir()`).
    - El saldo a favor se devuelve en la misma transacción, empezando por el pago más reciente y por su mismo método. Si los pagos no alcanzan (por ejemplo, un descuento mayor que los cargos), la salida se rechaza.
    - `stays.rate_amount` siempre es la tarifa vigente: el cambio de habitación la actualiza, y la auditoría nocturna cobra con ella.
    - El check-in y el cambio de habitación marcan la habitación como `dirty`; vuelve a `clean` mediante `HousekeepingService`.
@@ -791,7 +795,11 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
 ### Prioridad sugerida dentro de la fase 2
 
 1. ✅ Devoluciones manuales desde la ficha de estadía (supervisor y administrador): se elige el pago, el importe y el motivo; si el pago fue en efectivo, sale de una caja abierta. Solo se devuelve saldo a favor (sección 4). El formulario lleva `refund_operation_uuid`, así que un doble envío registra una sola devolución. Hay una prueba de concurrencia: dos devoluciones de pagos distintos no superan juntas el saldo a favor.
-2. Excepciones de deuda: solicitud, aprobación por un supervisor distinto y uso en el check-out (`checkout_exceptions`).
+2. ✅ Excepciones de deuda (`CheckoutExceptionService`: `solicitar()`, `aprobar()`, `rechazar()` y `consumir()`):
+   - Se solicita desde la ficha de estadía (permiso `checkout_exceptions.request`, que también tienen los recepcionistas) por la deuda actual y con motivo. Una solicitud nueva reemplaza la pendiente o la autorización vencida o con otra deuda; no reemplaza una autorización vigente.
+   - La autoriza otra persona con `checkout_exceptions.approve` (supervisor y administrador), desde la ficha o desde **Salidas con deuda**, que lista las pendientes y autorizadas de la sucursal con la deuda actual. Dura `lodging.checkout_exception_minutes` (120 por defecto). También se puede rechazar o revocar con motivo.
+   - El check-out la consume en su transacción si sigue vigente, coincide exactamente con la deuda y no lo registra quien la autorizó (el solicitante sí puede). Si la deuda cambió, hay que solicitar otra.
+   - La deuda queda en la estadía completada. **Pendiente:** cobrar deudas de estadías cerradas (hoy `cobrarPago()` exige estadía activa); se resolverá con los reportes de saldos pendientes.
 3. Gastos con categorías, salida de caja y aprobación por umbral (`expense_categories`, `expenses`).
 4. Arqueos parciales y revisión de las sesiones en `pending_review` (`cash_counts`).
 5. Recibos internos con numeración correlativa por sucursal y número de factura externa (`receipt_sequences`, `receipts`).

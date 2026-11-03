@@ -68,9 +68,14 @@ class StayController extends Controller
                 ->orderBy('paid_at'),
         ]);
 
+        $balance = $stayBalanceService->calcular($stay);
+        $openCheckoutException = $stay->checkoutExceptions()->abiertas()->with(['requestedByUser', 'approvedByUser'])->first();
+
         return view('stays.show', [
             'stay' => $stay,
-            'balance' => $stayBalanceService->calcular($stay),
+            'balance' => $balance,
+            'openCheckoutException' => $openCheckoutException,
+            'checkoutExceptionMatchesDebt' => $openCheckoutException !== null && new Number($openCheckoutException->outstanding_amount) == $balance,
             'openCashSessions' => CashSession::query()
                 ->abiertas()
                 ->whereHas('cashRegister', fn ($query) => $query->whereBelongsTo($stay->branch))

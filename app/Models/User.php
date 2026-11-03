@@ -3,6 +3,10 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\BranchPermission;
+use App\Enums\BranchRole;
+use App\Enums\EmployeeStatus;
+use Closure;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -18,6 +22,16 @@ class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasRoles, Notifiable;
+
+    /**
+     * Mirrors the column default, so a user created in memory is not
+     * mistaken for a disabled one.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'is_active' => true,
+    ];
 
     /**
      * Get the attributes that should be cast.
@@ -39,5 +53,50 @@ class User extends Authenticatable
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    /**
+     * An inactive user, or one linked to an inactive employee, cannot operate.
+     */
+    public function estaHabilitado(): bool
+    {
+        return $this->is_active && ($this->employee === null || $this->employee->status === EmployeeStatus::Active);
+    }
+
+    /**
+     * Checks the permission against the roles assigned in the given branch,
+     * regardless of the branch currently active in the session.
+     */
+    public function tienePermisoEnSucursal(BranchPermission $permission, int $branchId): bool
+    {
+        return $this->enSucursal($branchId, fn (): bool => $this->checkPermissionTo($permission));
+    }
+
+    public function asignarRolEnSucursal(BranchRole $role, int $branchId): void
+    {
+        $this->enSucursal($branchId, fn () => $this->assignRole($role));
+    }
+
+    /**
+     * Runs the callback with the branch as the active permissions team and
+     * restores the previous team afterwards.
+     *
+     * @template TResult
+     *
+     * @param  Closure(): TResult  $callback
+     * @return TResult
+     */
+    private function enSucursal(int $branchId, Closure $callback): mixed
+    {
+        $previousTeamId = getPermissionsTeamId();
+        setPermissionsTeamId($branchId);
+        $this->unsetRelation('roles')->unsetRelation('permissions');
+
+        try {
+            return $callback();
+        } finally {
+            setPermissionsTeamId($previousTeamId);
+            $this->unsetRelation('roles')->unsetRelation('permissions');
+        }
     }
 }

@@ -103,7 +103,7 @@ Un usuario puede no ser un empleado operativo (por ejemplo, un administrador); l
 
 Un supervisor o administrador puede operar en varias sucursales, por lo que los roles se asignan **por sucursal**.
 
-**Decisión:** `spatie/laravel-permission` con el modo *teams* activado (`'teams' => true`), usando `branch_id` como clave de equipo. El paquete crea sus propias tablas (`roles`, `permissions`, `model_has_roles`, `model_has_permissions`, `role_has_permissions`). Un middleware fija el equipo activo (`setPermissionsTeamId()`) según la sucursal seleccionada por el usuario y verificada en el servidor. Los roles globales (por ejemplo, administrador general) se modelan como roles con `team_id` nulo.
+**Decisión:** `spatie/laravel-permission` con el modo *teams* activado (`'teams' => true`), usando `branch_id` como clave de equipo. El paquete crea sus propias tablas (`roles`, `permissions`, `model_has_roles`, `model_has_permissions`, `role_has_permissions`). Un middleware fija el equipo activo (`setPermissionsTeamId()`) según la sucursal seleccionada por el usuario y verificada en el servidor. Los roles se definen globalmente (`branch_id` nulo en `roles`) y se asignan por sucursal; un administrador de varias sucursales tiene el rol `admin` asignado en cada una.
 
 Roles iniciales sugeridos: `admin`, `supervisor`, `receptionist`, `housekeeping`, `storekeeper`.
 
@@ -760,7 +760,15 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
    - El saldo a favor se devuelve en la misma transacción, empezando por el pago más reciente y por su mismo método. Si los pagos no alcanzan (por ejemplo, un descuento mayor que los cargos), la salida se rechaza.
    - `stays.rate_amount` siempre es la tarifa vigente: el cambio de habitación la actualiza, y la auditoría nocturna cobra con ella.
    - El check-in y el cambio de habitación marcan la habitación como `dirty`; vuelve a `clean` mediante `HousekeepingService`.
-9. Implementar auditoría y Policies/Gates por sucursal.
+9. ✅ Auditoría y Policies por sucursal. Notas:
+   - El middleware global `AddRequestContext` genera un `request_id` (UUID propio; nunca se acepta el que envía el cliente) y guarda `request_id` e `ip_address` en `Context`. `AuditService` los toma de ahí y la respuesta los devuelve en `X-Request-Id`. Si hay un proxy delante, configurar `TrustProxies` para que `ip_address` sea la del cliente.
+   - Permisos y roles definidos en `App\Enums\BranchPermission` y `App\Enums\BranchRole` (`permisos()`); `RolesAndPermissionsSeeder` los crea como roles globales y resincroniza sus permisos en cada ejecución.
+   - Recepcionista: ingresos, cambios de habitación, salidas, cargos, cobros, apertura y cierre de caja y estado de limpieza. Descuentos, anulaciones, devoluciones y estado operativo quedan para supervisor y administrador. Limpieza solo cambia el estado de limpieza; almacenero no tiene permisos hasta la fase 3.
+   - Las Policies (`RoomPolicy`, `StayPolicy`, `StayChargePolicy`, `PaymentPolicy`, `CashRegisterPolicy`, `CashSessionPolicy`) usan como habilidad el nombre del método del servicio (`registrarIngreso`, `anular`…) y evalúan el permiso **en la sucursal del registro**, con `User::tienePermisoEnSucursal()`, sin depender de la sucursal activa en la sesión.
+   - La salida incluye la devolución del saldo a favor, así que solo exige `stays.check_out`.
+   - Un `Gate::before` deniega todo a usuarios inactivos o vinculados a un empleado inactivo.
+   - No hay administrador global: el rol `admin` se asigna en cada sucursal (`User::asignarRolEnSucursal()`).
+   - El middleware que fija la sucursal activa (`setPermissionsTeamId()`) se construye con las pantallas (paso 11), junto con la selección de sucursal.
 10. Crear pruebas de concurrencia, idempotencia, autorización y consistencia financiera contra MySQL.
 11. Recién entonces construir las pantallas y reportes.
 

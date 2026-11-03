@@ -19,6 +19,7 @@ use App\Models\StayCharge;
 use App\Models\StayRoomAssignment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -39,6 +40,15 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registrarMorphMap();
+        $this->denegarUsuariosDeshabilitados();
+    }
+
+    /**
+     * Inactive users are denied every ability before any policy runs.
+     */
+    private function denegarUsuariosDeshabilitados(): void
+    {
+        Gate::before(fn (User $user): ?bool => $user->estaHabilitado() ? null : false);
     }
 
     /**

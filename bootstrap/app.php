@@ -1,5 +1,7 @@
 <?php
 
+use App\Exceptions\BusinessRuleException;
+use App\Exceptions\IdempotencyConflictException;
 use App\Http\Middleware\AddRequestContext;
 use App\Http\Middleware\EnsureActiveBranch;
 use Illuminate\Foundation\Application;
@@ -22,4 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        // Rejected operations are expected outcomes: show the message on the form instead of reporting an error.
+        $exceptions->dontReport([BusinessRuleException::class, IdempotencyConflictException::class]);
+        $exceptions->render(fn (BusinessRuleException|IdempotencyConflictException $exception, Request $request) => $request->expectsJson()
+            ? response()->json(['message' => $exception->getMessage()], 422)
+            : back()->withInput()->withErrors(['operation' => $exception->getMessage()]));
     })->create();

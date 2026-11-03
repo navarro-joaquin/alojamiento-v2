@@ -28,7 +28,7 @@ class ChargeService
      *
      * @var list<ChargeType>
      */
-    private const array MANUAL_DEBIT_TYPES = [
+    public const array MANUAL_DEBIT_TYPES = [
         ChargeType::LateCheckOut,
         ChargeType::Product,
         ChargeType::Service,

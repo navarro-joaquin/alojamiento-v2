@@ -38,8 +38,13 @@
                     @if ($room->activeStay)
                         <p class="flex flex-col text-sm">
                             <span>{{ $room->activeStay->guests->first()?->first_name }} {{ $room->activeStay->guests->first()?->last_name }}</span>
-                            <span class="text-gray-500">Salida prevista: {{ $room->activeStay->expected_check_out_at?->format('d/m/Y') ?? 'sin fecha' }}</span>
+                            <span class="text-gray-500">Salida prevista: {{ $room->activeStay->expected_check_out_at?->timezone($activeBranch->timezone)->format('d/m/Y') ?? 'sin fecha' }}</span>
                         </p>
+                        <a href="{{ route('stays.show', $room->activeStay) }}" class="text-sm font-medium text-gray-900 underline">Ver estadía</a>
+                    @elseif ($room->estaDisponibleParaAsignar())
+                        @can('registrarIngreso', $room)
+                            <a href="{{ route('stays.create', $room) }}" class="text-sm font-medium text-gray-900 underline">Registrar ingreso</a>
+                        @endcan
                     @endif
 
                     @can('cambiarEstadoLimpieza', $room)

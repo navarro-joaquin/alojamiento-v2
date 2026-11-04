@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 #[Fillable([
     'warehouse_id', 'product_id', 'performed_by', 'movement_type', 'direction', 'quantity', 'unit_cost',
-    'balance_after', 'reference', 'notes', 'operation_uuid', 'request_hash',
+    'balance_after', 'inventory_transfer_id', 'reference', 'notes', 'operation_uuid', 'request_hash',
 ])]
 class InventoryMovement extends Model
 {
@@ -53,6 +53,14 @@ class InventoryMovement extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * @return BelongsTo<InventoryTransfer, $this>
+     */
+    public function inventoryTransfer(): BelongsTo
+    {
+        return $this->belongsTo(InventoryTransfer::class);
     }
 
     /**

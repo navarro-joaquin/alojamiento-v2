@@ -8,6 +8,8 @@ use App\Models\Employee;
 use App\Models\Guest;
 use App\Models\InventoryBalance;
 use App\Models\InventoryMovement;
+use App\Models\InventoryTransfer;
+use App\Models\InventoryTransferItem;
 use App\Models\Payment;
 use App\Models\PaymentRefund;
 use App\Models\Product;
@@ -56,6 +58,8 @@ test('the factory persists a valid record', function (string $modelClass) {
     'warehouse' => Warehouse::class,
     'inventory balance' => InventoryBalance::class,
     'inventory movement' => InventoryMovement::class,
+    'inventory transfer' => InventoryTransfer::class,
+    'inventory transfer item' => InventoryTransferItem::class,
 ]);
 
 test('a stay belongs to the branch of its room', function () {

@@ -13,6 +13,7 @@ use App\Models\CashSession;
 use App\Models\ExpenseCategory;
 use App\Models\Guest;
 use App\Models\InventoryBalance;
+use App\Models\InventoryTransfer;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\ReceiptSequence;
@@ -26,6 +27,7 @@ use App\Services\CashService;
 use App\Services\ChargeService;
 use App\Services\ExpenseService;
 use App\Services\InventoryService;
+use App\Services\InventoryTransferService;
 use App\Services\NightAuditService;
 use App\Services\ReceiptService;
 use App\Services\ReceptionService;
@@ -370,4 +372,24 @@ it('does not let two exits take out more stock than the warehouse holds', functi
     expect($succeeded)->toHaveCount(1)
         ->and(array_values($failed))->toBe(['No hay existencias suficientes: quedan 3.000 (unidad).'])
         ->and($balance->refresh()->quantity)->toBe('3.000');
+});
+
+it('receives a transfer only once when two users receive it at the same time', function () {
+    $balance = InventoryBalance::factory()->create(['quantity' => '10.000', 'average_cost' => '4.0000']);
+    $transfer = InventoryTransfer::factory()->create(['from_warehouse_id' => $balance->warehouse_id]);
+    $transfer->items()->create(['product_id' => $balance->product_id, 'quantity' => '6']);
+    app(InventoryTransferService::class)->enviar($transfer, User::factory()->create());
+    $transferId = $transfer->id;
+    $userId = User::factory()->create()->id;
+
+    $recibir = static fn () => app(InventoryTransferService::class)->recibir(InventoryTransfer::findOrFail($transferId), User::findOrFail($userId))->id;
+
+    ['exitosas' => $succeeded, 'fallidas' => $failed] = separarResultados(ConcurrentRace::ejecutar('inventory_transfers', $transfer->id, [
+        'recepción 1' => $recibir,
+        'recepción 2' => $recibir,
+    ]));
+
+    expect($succeeded)->toHaveCount(1)
+        ->and(array_values($failed))->toBe(['La transferencia no está en tránsito.'])
+        ->and(InventoryBalance::query()->where('warehouse_id', $transfer->to_warehouse_id)->value('quantity'))->toBe('6.000');
 });

@@ -57,6 +57,7 @@ enum BranchRole: string
             self::Storekeeper => [
                 BranchPermission::ViewInventory,
                 BranchPermission::RegisterInventoryMovements,
+                BranchPermission::TransferInventory,
             ],
         };
     }

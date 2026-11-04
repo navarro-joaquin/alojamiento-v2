@@ -291,6 +291,36 @@ class BusinessRuleException extends Exception
         return new self('El almacén no pertenece a la sucursal de la estadía.');
     }
 
+    public static function transferenciaAlMismoAlmacen(): self
+    {
+        return new self('El almacén de destino debe ser distinto del de origen.');
+    }
+
+    public static function transferenciaSinProductos(): self
+    {
+        return new self('La transferencia no tiene productos.');
+    }
+
+    public static function transferenciaNoEnBorrador(): self
+    {
+        return new self('La transferencia ya no está en borrador.');
+    }
+
+    public static function transferenciaNoEnTransito(): self
+    {
+        return new self('La transferencia no está en tránsito.');
+    }
+
+    public static function cantidadRecibidaInvalida(): self
+    {
+        return new self('La cantidad recibida debe estar entre cero y la enviada.');
+    }
+
+    public static function faltanteSinMotivo(): self
+    {
+        return new self('Indique el motivo del faltante en la recepción.');
+    }
+
     public static function ajusteSinDiferencia(): self
     {
         return new self('El conteo coincide con las existencias: no hay nada que ajustar.');

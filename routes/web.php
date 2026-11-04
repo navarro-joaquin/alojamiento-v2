@@ -4,6 +4,7 @@ use App\Http\Controllers\ActiveBranchController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\CancelledInventoryTransferController;
 use App\Http\Controllers\CashCountController;
 use App\Http\Controllers\CashRegisterController;
 use App\Http\Controllers\CashSessionClosingController;
@@ -22,6 +23,9 @@ use App\Http\Controllers\InventoryAdjustmentController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\InventoryEntryController;
 use App\Http\Controllers\InventoryExitController;
+use App\Http\Controllers\InventoryTransferController;
+use App\Http\Controllers\InventoryTransferReceptionController;
+use App\Http\Controllers\InventoryTransferShipmentController;
 use App\Http\Controllers\OccupancyController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentExternalInvoiceController;
@@ -109,6 +113,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/almacenes/{warehouse}/entradas', [InventoryEntryController::class, 'store'])->name('warehouses.entries.store');
         Route::post('/almacenes/{warehouse}/salidas', [InventoryExitController::class, 'store'])->name('warehouses.exits.store');
         Route::post('/almacenes/{warehouse}/ajustes', [InventoryAdjustmentController::class, 'store'])->name('warehouses.adjustments.store');
+        Route::get('/transferencias', [InventoryTransferController::class, 'index'])->name('inventory-transfers.index');
+        Route::post('/transferencias', [InventoryTransferController::class, 'store'])->name('inventory-transfers.store');
+        Route::get('/transferencias/{inventoryTransfer}', [InventoryTransferController::class, 'show'])->name('inventory-transfers.show');
+        Route::post('/transferencias/{inventoryTransfer}/envio', [InventoryTransferShipmentController::class, 'store'])->name('inventory-transfers.send');
+        Route::post('/transferencias/{inventoryTransfer}/recepcion', [InventoryTransferReceptionController::class, 'store'])->name('inventory-transfers.receive');
+        Route::post('/transferencias/{inventoryTransfer}/cancelacion', [CancelledInventoryTransferController::class, 'store'])->name('inventory-transfers.cancel');
 
         Route::put('/habitaciones/{room}/estado-operativo', [RoomOperationalStatusController::class, 'update'])->name('rooms.operational-status.update');
 

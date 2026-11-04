@@ -285,14 +285,15 @@ Cada movimiento y su actualización de saldo deben confirmarse en la misma trans
 
 #### `inventory_transfers`
 - `id`
-- `from_warehouse_id`, `to_warehouse_id` → `warehouses.id`
+- `from_warehouse_id`, `to_warehouse_id` → `warehouses.id` (`CHECK` distintos; pueden ser de sucursales diferentes)
 - `status`: `draft`, `sent`, `received`, `cancelled`
-- `created_by`, `received_by` nullable → `users.id`
-- `sent_at`, `received_at`
+- `notes`, `reception_notes` (motivo del faltante)
+- `created_by`, `sent_by`, `received_by`, `cancelled_by` nullable → `users.id`
+- `sent_at`, `received_at`, `cancelled_at`
 - `timestamps`
 
 #### `inventory_transfer_items`
-- `id`, `inventory_transfer_id`, `product_id`, `quantity DECIMAL(14,3)`, `received_quantity DECIMAL(14,3)` nullable
+- `id`, `inventory_transfer_id`, `product_id` (`UNIQUE` por transferencia), `quantity DECIMAL(14,3)` positiva, `unit_cost DECIMAL(14,4)` nullable (costo promedio del origen al enviar), `received_quantity DECIMAL(14,3)` nullable (`CHECK` entre 0 y lo enviado)
 
 Al enviar se genera `transfer_out` en el origen; al recibir, `transfer_in` en el destino. Las diferencias de recepción se registran como `adjustment` con motivo.
 
@@ -510,8 +511,9 @@ Todos los servicios que bloquean más de una fila lo hacen en este orden, y omit
 5. `payments`
 6. `checkout_exceptions`
 7. `expenses`
-8. `inventory_balances` (ordenados por `id` si son varios)
-9. `receipt_sequences`
+8. `inventory_transfers`
+9. `inventory_balances` (si son varios, ordenados por producto)
+10. `receipt_sequences`
 
 Bloquear siempre en el mismo orden evita interbloqueos (deadlocks) entre cobro, devolución, check-out y cierre.
 
@@ -850,7 +852,11 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
    - En una sola transacción (bloqueo `stays` → `inventory_balances`) se crea el movimiento `sale` al costo promedio y el cargo `product` enlazado (`stay_charges.product_id` e `inventory_movement_id`, único). Sin existencias suficientes no se cobra nada.
    - Los cargos `product` ya no se registran a mano: el tipo salió de `ChargeService::MANUAL_DEBIT_TYPES`, y lo que no tiene inventario se cobra como `service`. Un `CHECK` exige que un cargo enlazado a una venta sea `product` y nombre su producto; los cargos de producto manuales anteriores conservan ambas columnas vacías.
    - Anular el cargo de una venta devuelve las existencias con un movimiento `sale_return` al costo con que salieron, en la misma transacción. Si el huésped sí consumió el producto y se le perdona, corresponde un descuento, no una anulación.
-4. Transferencias entre almacenes.
+4. ✅ Transferencias entre almacenes, también entre sucursales (`InventoryTransferService`: `crear()`, `enviar()`, `recibir()` y `cancelar()`; pantalla **Transferencias**):
+   - Permiso `inventory.transfer` (almacenero, supervisor y administrador). La sucursal de origen crea, envía y cancela; la de destino recibe. Cada una ve las transferencias que salen de sus almacenes o llegan a ellos; las demás responden 404.
+   - El borrador no mueve existencias y es lo único que se cancela. Al enviar se registra un `transfer_out` por producto al costo promedio del origen, que queda guardado en el ítem; si falta stock de un producto, no se envía nada.
+   - Al recibir se registra el `transfer_in` de lo enviado, al mismo costo. Si llegó menos, la diferencia sale del destino como `adjustment` con el motivo obligatorio (`reception_notes`), así el origen conserva lo que envió y el faltante queda en el almacén que lo detectó. Todos los movimientos llevan `inventory_transfer_id`.
+   - Bloqueo `inventory_transfers` → `inventory_balances` en orden de producto; el estado se verifica con la transferencia bloqueada (prueba de concurrencia: dos recepciones simultáneas registran una sola). Creación, envío, recepción y cancelación quedan auditadas.
 5. Activos fijos y sus movimientos.
 
 ## 11. Criterios mínimos para considerar el módulo financiero seguro

@@ -8,6 +8,7 @@ use App\Exceptions\BusinessRuleException;
 use App\Exceptions\IdempotencyConflictException;
 use App\Models\InventoryBalance;
 use App\Models\InventoryMovement;
+use App\Models\InventoryTransfer;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\Warehouse;
@@ -180,6 +181,37 @@ class InventoryService
             InventoryMovementType::SaleReturn, InventoryMovementDirection::In,
             new Number($saleMovement->quantity), new Number($saleMovement->unit_cost),
             ['reference' => $reference],
+        ));
+    }
+
+    /**
+     * Movement of a transfer: transfer_out on sending, transfer_in on
+     * reception and an outgoing adjustment for a shortage found on reception.
+     * Meant for InventoryTransferService, which locks the transfer first and
+     * goes through its products in id order.
+     *
+     * @throws BusinessRuleException
+     */
+    public function registrarMovimientoDeTransferencia(
+        InventoryTransfer $inventoryTransfer,
+        Warehouse $warehouse,
+        Product $product,
+        User $user,
+        InventoryMovementType $movementType,
+        Number $quantity,
+        ?Number $unitCost = null,
+        ?string $notes = null,
+    ): InventoryMovement {
+        $direction = match ($movementType) {
+            InventoryMovementType::TransferOut, InventoryMovementType::Adjustment => InventoryMovementDirection::Out,
+            InventoryMovementType::TransferIn => InventoryMovementDirection::In,
+            default => throw new LogicException("A transfer does not register {$movementType->value} movements."),
+        };
+
+        return DB::transaction(fn (): InventoryMovement => $this->registrarMovimiento(
+            $this->bloquearSaldo($warehouse, $product), $warehouse, $product, $user,
+            $movementType, $direction, $quantity, $unitCost,
+            ['inventory_transfer_id' => $inventoryTransfer->id, 'reference' => "Transferencia #{$inventoryTransfer->id}", 'notes' => $notes],
         ));
     }
 

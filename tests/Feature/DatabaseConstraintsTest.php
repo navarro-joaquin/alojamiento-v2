@@ -7,6 +7,8 @@ use App\Models\Expense;
 use App\Models\Guest;
 use App\Models\InventoryBalance;
 use App\Models\InventoryMovement;
+use App\Models\InventoryTransfer;
+use App\Models\InventoryTransferItem;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Room;
@@ -151,3 +153,13 @@ test('an inventory sale is charged only once', function () {
 
     StayCharge::factory()->create($attributes);
 })->throws(QueryException::class, 'Duplicate entry');
+
+test('a transfer goes to a different warehouse', function () {
+    $transfer = InventoryTransfer::factory()->create();
+
+    DB::table('inventory_transfers')->where('id', $transfer->id)->update(['to_warehouse_id' => $transfer->from_warehouse_id]);
+})->throws(QueryException::class, 'inventory_transfers_distinct_warehouses');
+
+test('a transfer item cannot be received above the quantity sent', function () {
+    InventoryTransferItem::factory()->create(['quantity' => '5.000', 'received_quantity' => '5.001']);
+})->throws(QueryException::class, 'inventory_transfer_items_received_within_sent');

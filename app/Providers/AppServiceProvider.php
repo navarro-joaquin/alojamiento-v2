@@ -14,6 +14,7 @@ use App\Models\ExpenseCategory;
 use App\Models\Guest;
 use App\Models\InventoryBalance;
 use App\Models\InventoryMovement;
+use App\Models\InventoryTransfer;
 use App\Models\Payment;
 use App\Models\PaymentRefund;
 use App\Models\Product;
@@ -99,6 +100,7 @@ class AppServiceProvider extends ServiceProvider
             'guest' => Guest::class,
             'inventory_balance' => InventoryBalance::class,
             'inventory_movement' => InventoryMovement::class,
+            'inventory_transfer' => InventoryTransfer::class,
             'payment' => Payment::class,
             'payment_refund' => PaymentRefund::class,
             'permission' => Permission::class,

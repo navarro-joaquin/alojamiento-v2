@@ -466,19 +466,20 @@ La aprobación debe ser realizada por un usuario con permiso de supervisor y dis
 - `id`, `branch_id`, `prefix`, `next_number`
 - `UNIQUE(branch_id)`
 
-La numeración correlativa se obtiene bloqueando la fila de la secuencia dentro de la transacción de emisión, para que no haya saltos ni duplicados.
+La numeración correlativa se obtiene bloqueando la fila de la secuencia dentro de la transacción de emisión, para que no haya saltos ni duplicados. La fila se crea en la primera emisión de la sucursal, con su código como prefijo.
 
 #### `receipts`
 - `id`
 - `branch_id` → `branches.id`
 - `stay_id` → `stays.id`
-- `payment_id` nullable → `payments.id` (o `payment_refund_id` nullable para recibos de devolución)
-- `number` (`UNIQUE(branch_id, number)`)
-- `holder_name`, `holder_document` nullable
+- `payment_id` → `payments.id` (los recibos de devolución quedan pendientes)
+- `prefix` (copiado de la secuencia) y `number` (`UNIQUE(branch_id, number)`); se imprime como `CEN-000042`
+- `holder_name`, `holder_document` nullable (cifrado)
 - `amount DECIMAL(12,2)`
 - `status`: `issued`, `voided`
 - `issued_by` → `users.id`, `issued_at`
 - `voided_by` nullable, `voided_at` nullable, `void_reason` nullable
+- `issued_payment_id` generada: `IF(status = 'issued', payment_id, NULL)`, `UNIQUE` (un solo recibo vigente por pago)
 
 Un recibo emitido no se edita; se anula con motivo. Para conciliar con la contabilidad, se ofrece un reporte de pagos sin `external_invoice_number`.
 
@@ -817,7 +818,11 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
    - En la sesión abierta, quien puede cerrar la caja registra arqueos parciales (por ejemplo, en el cambio de turno): guardan el efectivo esperado, el contado y la diferencia, sin cerrar la caja ni mover dinero. El cierre también deja su arqueo (`count_type = closing`).
    - El efectivo contado se puede detallar por billetes y monedas bolivianos; en ese caso el importe es su suma, y el servicio rechaza un detalle que no coincida con el importe.
    - Las sesiones en `pending_review` aparecen en **Cajas → Cierres por revisar** para quien tiene `cash_sessions.review` (supervisor y administrador). La revisión exige observaciones, la hace alguien distinto de quien cerró y deja la sesión `closed`. Arqueos y revisiones quedan auditados.
-5. Recibos internos con numeración correlativa por sucursal y número de factura externa (`receipt_sequences`, `receipts`).
+5. ✅ Recibos internos (`ReceiptService`: `emitir()`, `anular()` y `registrarFacturaExterna()`):
+   - Desde la tabla de pagos de la ficha de estadía, quien cobra emite el recibo de un pago confirmado por su importe total. El titular se propone a partir del huésped principal y se puede cambiar (por ejemplo, a una empresa con su NIT). La página del recibo se imprime sin el menú.
+   - Numeración correlativa por sucursal con el código como prefijo, sin saltos ni duplicados (prueba de concurrencia: dos emisiones simultáneas reciben números consecutivos). Un pago tiene como máximo un recibo vigente; para corregirlo, un supervisor o administrador (`receipts.void`) lo anula con motivo y se emite otro con número nuevo.
+   - En la misma tabla se guarda el número de la factura emitida en el sistema externo (`payments.external_invoice_number`). Emisiones, anulaciones y cambios del número de factura quedan auditados.
+   - **Pendiente:** recibos de devoluciones.
 6. Reportes financieros por fecha de negocio y consulta de auditoría.
 
 ## 11. Criterios mínimos para considerar el módulo financiero seguro

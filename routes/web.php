@@ -10,6 +10,10 @@ use App\Http\Controllers\CheckOutController;
 use App\Http\Controllers\CheckoutExceptionApprovalController;
 use App\Http\Controllers\CheckoutExceptionController;
 use App\Http\Controllers\CheckoutExceptionRejectionController;
+use App\Http\Controllers\ExpenseApprovalController;
+use App\Http\Controllers\ExpenseCategoryController;
+use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\ExpenseRejectionController;
 use App\Http\Controllers\OccupancyController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentRefundController;
@@ -24,6 +28,7 @@ use App\Http\Controllers\StayChargeController;
 use App\Http\Controllers\StayController;
 use App\Http\Controllers\StayDiscountController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VoidedExpenseController;
 use App\Http\Controllers\VoidedStayChargeController;
 use Illuminate\Support\Facades\Route;
 
@@ -41,6 +46,7 @@ Route::middleware('auth')->group(function () {
     // Global catalogs (super admin): outside the active branch, so the first branch can be created.
     Route::resource('sucursales', BranchController::class)->except(['show', 'destroy'])->parameters(['sucursales' => 'branch'])->names('branches');
     Route::resource('tipos-de-habitacion', RoomTypeController::class)->except(['show', 'destroy'])->parameters(['tipos-de-habitacion' => 'roomType'])->names('room-types');
+    Route::resource('categorias-de-gasto', ExpenseCategoryController::class)->except(['show', 'destroy'])->parameters(['categorias-de-gasto' => 'expenseCategory'])->names('expense-categories');
     Route::resource('usuarios', UserController::class)->except(['show', 'destroy'])->parameters(['usuarios' => 'user'])->names('users');
 
     Route::middleware('active.branch')->group(function () {
@@ -63,6 +69,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/salidas-con-deuda', [CheckoutExceptionController::class, 'index'])->name('checkout-exceptions.index');
         Route::post('/salidas-con-deuda/{checkoutException}/aprobacion', [CheckoutExceptionApprovalController::class, 'store'])->name('checkout-exceptions.approve');
         Route::post('/salidas-con-deuda/{checkoutException}/rechazo', [CheckoutExceptionRejectionController::class, 'store'])->name('checkout-exceptions.reject');
+
+        Route::get('/gastos', [ExpenseController::class, 'index'])->name('expenses.index');
+        Route::post('/gastos', [ExpenseController::class, 'store'])->name('expenses.store');
+        Route::post('/gastos/{expense}/aprobacion', [ExpenseApprovalController::class, 'store'])->name('expenses.approve');
+        Route::post('/gastos/{expense}/rechazo', [ExpenseRejectionController::class, 'store'])->name('expenses.reject');
+        Route::post('/gastos/{expense}/anulacion', [VoidedExpenseController::class, 'store'])->name('expenses.void');
 
         Route::put('/habitaciones/{room}/estado-operativo', [RoomOperationalStatusController::class, 'update'])->name('rooms.operational-status.update');
 

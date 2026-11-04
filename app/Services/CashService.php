@@ -401,9 +401,11 @@ class CashService
     }
 
     /**
+     * Lock a session that still accepts movements, with its register loaded.
+     *
      * @throws BusinessRuleException
      */
-    private function bloquearSesionAbierta(CashSession $cashSession): CashSession
+    public function bloquearSesionAbierta(CashSession $cashSession): CashSession
     {
         $lockedSession = CashSession::query()->with('cashRegister')->lockForUpdate()->findOrFail($cashSession->id);
 

@@ -21,6 +21,9 @@
                     @can('verPendientes', [\App\Models\CheckoutException::class, $activeBranch])
                         <a href="{{ route('checkout-exceptions.index') }}" @class(['hover:text-gray-900', 'text-gray-900' => request()->routeIs('checkout-exceptions.*'), 'text-gray-500' => ! request()->routeIs('checkout-exceptions.*')])>Salidas con deuda</a>
                     @endcan
+                    @can('verGastos', [\App\Models\Expense::class, $activeBranch])
+                        <a href="{{ route('expenses.index') }}" @class(['hover:text-gray-900', 'text-gray-900' => request()->routeIs('expenses.*'), 'text-gray-500' => ! request()->routeIs('expenses.*')])>Gastos</a>
+                    @endcan
                     @can('gestionar', [\App\Models\Room::class, $activeBranch])
                         <details class="relative">
                             <summary class="cursor-pointer list-none text-gray-500 hover:text-gray-900">Configuración</summary>
@@ -45,6 +48,7 @@
                         <div class="absolute left-0 z-10 mt-2 flex w-56 flex-col rounded-md border border-gray-200 bg-white py-1 shadow-lg">
                             <a href="{{ route('branches.index') }}" class="px-3 py-2 hover:bg-gray-50">Sucursales</a>
                             <a href="{{ route('room-types.index') }}" class="px-3 py-2 hover:bg-gray-50">Tipos de habitación</a>
+                            <a href="{{ route('expense-categories.index') }}" class="px-3 py-2 hover:bg-gray-50">Categorías de gasto</a>
                             <a href="{{ route('users.index') }}" class="px-3 py-2 hover:bg-gray-50">Usuarios</a>
                         </div>
                     </details>

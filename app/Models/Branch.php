@@ -82,4 +82,12 @@ class Branch extends Model
     {
         return $this->hasMany(CashRegister::class);
     }
+
+    /**
+     * @return HasMany<Expense, $this>
+     */
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class);
+    }
 }

@@ -390,24 +390,28 @@ Un pago confirmado representa un cobro positivo; no usar importes negativos para
 Índices: `(payment_id, status)` y `(cash_session_id, refunded_at)`. En transacción con bloqueo del pago, verificar que las devoluciones confirmadas acumuladas no excedan el pago original. Para devolución en efectivo, exigir sesión abierta; las devoluciones por tarjeta o transferencia no reducen el efectivo físico si no se entrega efectivo.
 
 #### `expense_categories`
-- `id`, `name` único, `timestamps`
+- `id`, `name` único, `is_active`, `timestamps`
+
+Catálogo global, compartido por todas las sucursales y a cargo del superadministrador. Las categorías se desactivan en lugar de borrarse.
 
 #### `expenses`
 - `id`
 - `branch_id` → `branches.id`
-- `cash_session_id` nullable → `cash_sessions.id`
-- `created_by` → `users.id`
-- `approved_by` nullable → `users.id`
+- `cash_session_id` nullable → `cash_sessions.id` (la caja de la que salió el efectivo; vacía para otros métodos y para gastos pendientes)
 - `expense_category_id` → `expense_categories.id`
+- `created_by` → `users.id`
+- `approved_by` nullable → `users.id`, `approved_at` nullable
+- `resolved_by` nullable → `users.id` (quien lo rechaza o lo anula), `resolved_at` nullable, `resolution_notes` nullable
 - `description`
-- `amount DECIMAL(12,2)` positivo
+- `amount DECIMAL(12,2)` (`CHECK > 0`)
 - `payment_method`
-- `expense_date`
+- `reference` nullable (comprobante del proveedor)
+- `expense_date` (fecha de negocio de la sucursal al registrarlo)
 - `status`: `pending_approval`, `confirmed`, `rejected`, `voided`
 - `operation_uuid` UUID único, `request_hash`
 - `timestamps`
 
-Un gasto pagado en efectivo exige sesión abierta y crea su `cash_movement` en el mismo servicio y transacción. Los gastos que superen el umbral de la sucursal quedan en `pending_approval` y no afectan la caja hasta aprobarse.
+Índices: `(branch_id, status)`, `(branch_id, expense_date)` y `(cash_session_id, status)`. Un gasto pagado en efectivo exige sesión abierta y crea su `cash_movement` en el mismo servicio y transacción. Los gastos que superen el umbral de la sucursal quedan en `pending_approval` y no afectan la caja hasta aprobarse.
 
 #### `cash_movements`
 - `id`
@@ -498,8 +502,9 @@ Todos los servicios que bloquean más de una fila lo hacen en este orden, y omit
 4. `rooms`
 5. `payments`
 6. `checkout_exceptions`
-7. `inventory_balances` (ordenados por `id` si son varios)
-8. `receipt_sequences`
+7. `expenses`
+8. `inventory_balances` (ordenados por `id` si son varios)
+9. `receipt_sequences`
 
 Bloquear siempre en el mismo orden evita interbloqueos (deadlocks) entre cobro, devolución, check-out y cierre.
 
@@ -616,7 +621,7 @@ Responsabilidad prevista:
 Los cobros crean `Payment` y `CashMovement` en la misma transacción. El cierre calcula el efectivo desde los movimientos que afectan la caja física.
 
 ### `ExpenseService`
-Responsabilidad: registrar, aprobar y anular gastos, creando el movimiento de caja cuando se pagan en efectivo.
+Responsabilidad: registrar, aprobar, rechazar y anular gastos (`registrar()`, `aprobar()`, `rechazar()`, `anular()`), creando el movimiento de caja cuando se pagan en efectivo.
 
 ### `ReceptionService`
 Responsabilidad prevista:
@@ -748,7 +753,7 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
 1. ✅ Configurar MySQL para desarrollo y pruebas (sección 13; `phpunit.xml` usa `alojamiento_test`).
 2. ✅ Instalar `spatie/laravel-permission` 8.x (teams con `branch_id`) y `spatie/laravel-activitylog` 5.x.
 3. ✅ Migraciones de la fase 1, con `up()`/`down()`, FK `RESTRICT`, restricciones `CHECK` y columnas generadas únicas: `branches`, `employees`, ALTER `users`, índice por sucursal en `activity_log`, `room_types`, `rooms`, `room_status_logs`, `room_rates`, `guests`, `stays`, `stay_room_assignments`, `stay_guests`, `stay_charges`, `cash_registers`, `cash_sessions`, `payments`, `payment_refunds`, `cash_movements`. Las garantías de base de datos están cubiertas por `tests/Feature/DatabaseConstraintsTest.php`.
-   - Quedan para fases posteriores: `cash_counts`, `expenses`, recibos (fase 2) y las columnas `product_id`/`inventory_movement_id` de `stay_charges` (fase 3, mediante ALTER).
+   - Quedan para fases posteriores: `cash_counts`, recibos (fase 2) y las columnas `product_id`/`inventory_movement_id` de `stay_charges` (fase 3, mediante ALTER).
 4. ✅ Enums de estados en `app/Enums/` (string-backed, con `etiqueta()` en español). Algunos incluyen reglas: `PaymentMethod::afectaEfectivo()`, `CashSessionStatus::aceptaMovimientos()` y `HousekeepingStatus::permiteAsignacion()`.
 5. ✅ Modelos Eloquent de la fase 1 con relaciones, casts a enums y decimales, scopes (`activas`, `confirmados`, `confirmadas`, `abiertas`) y factories con estados en español. Notas:
    - Morph map estricto en `AppServiceProvider` (`payment`, `payment_refund`, `user`…): las columnas polimórficas guardan alias, no nombres de clase.
@@ -800,7 +805,12 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
    - La autoriza otra persona con `checkout_exceptions.approve` (supervisor y administrador), desde la ficha o desde **Salidas con deuda**, que lista las pendientes y autorizadas de la sucursal con la deuda actual. Dura `lodging.checkout_exception_minutes` (120 por defecto). También se puede rechazar o revocar con motivo.
    - El check-out la consume en su transacción si sigue vigente, coincide exactamente con la deuda y no lo registra quien la autorizó (el solicitante sí puede). Si la deuda cambió, hay que solicitar otra.
    - La deuda queda en la estadía completada. **Pendiente:** cobrar deudas de estadías cerradas (hoy `cobrarPago()` exige estadía activa); se resolverá con los reportes de saldos pendientes.
-3. Gastos con categorías, salida de caja y aprobación por umbral (`expense_categories`, `expenses`).
+3. ✅ Gastos con categorías, salida de caja y aprobación por umbral (`ExpenseService`; pantalla **Gastos**):
+   - Permisos: `expenses.register` (recepcionista, supervisor y administrador), `expenses.approve` y `expenses.void` (supervisor y administrador). Las categorías son globales y las gestiona el superadministrador (menú "Administración"); `ExpenseCategorySeeder` carga las iniciales.
+   - Hasta el umbral de la sucursal (`expense_approval_threshold`, o `lodging.expense_approval_threshold`, Bs 500.00 por defecto), el gasto se confirma al registrarlo; igualar el umbral no exige aprobación. Por encima queda `pending_approval` y lo aprueba o rechaza (con motivo) otra persona: quien lo registró nunca puede aprobarlo.
+   - Un gasto en efectivo sale de una caja abierta de la sucursal cuando se confirma: al registrarlo o, si estaba pendiente, al aprobarlo, desde la caja que elige quien aprueba. Una caja no entrega más efectivo del esperado (prueba de concurrencia: dos gastos que juntos lo superan no pasan los dos). Tarjeta, transferencia y QR no usan caja.
+   - Anular un gasto confirmado exige motivo; si fue en efectivo, el dinero vuelve con un movimiento de entrada a la caja abierta que se elija (puede no ser la original si ya cerró).
+   - El formulario lleva `operation_uuid`: un doble envío registra un solo gasto. Registro, aprobación, rechazo y anulación quedan auditados.
 4. Arqueos parciales y revisión de las sesiones en `pending_review` (`cash_counts`).
 5. Recibos internos con numeración correlativa por sucursal y número de factura externa (`receipt_sequences`, `receipts`).
 6. Reportes financieros por fecha de negocio y consulta de auditoría.

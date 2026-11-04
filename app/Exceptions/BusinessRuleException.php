@@ -161,6 +161,36 @@ class BusinessRuleException extends Exception
         return new self('La salida con deuda ya no está pendiente ni autorizada.');
     }
 
+    public static function gastoEnEfectivoSinSesion(): self
+    {
+        return new self('Un gasto en efectivo requiere una sesión de caja abierta.');
+    }
+
+    public static function efectivoInsuficiente(Number $expectedCash): self
+    {
+        return new self("El gasto supera el efectivo de la caja (Bs {$expectedCash}).");
+    }
+
+    public static function categoriaDeGastoInactiva(): self
+    {
+        return new self('La categoría de gasto está inactiva.');
+    }
+
+    public static function gastoNoPendiente(): self
+    {
+        return new self('El gasto ya no está pendiente de aprobación.');
+    }
+
+    public static function aprobacionDeGastoPorQuienLoRegistro(): self
+    {
+        return new self('Quien registra un gasto no puede aprobarlo.');
+    }
+
+    public static function gastoNoConfirmado(): self
+    {
+        return new self('Solo se pueden anular gastos confirmados.');
+    }
+
     public static function saldoAFavorNoReembolsable(Number $remainingAmount): self
     {
         return new self("No hay pagos suficientes para devolver el saldo a favor (faltan Bs {$remainingAmount}).");

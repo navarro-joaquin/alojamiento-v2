@@ -8,6 +8,8 @@ use App\Models\CashRegister;
 use App\Models\CashSession;
 use App\Models\CheckoutException;
 use App\Models\Employee;
+use App\Models\Expense;
+use App\Models\ExpenseCategory;
 use App\Models\Guest;
 use App\Models\Payment;
 use App\Models\PaymentRefund;
@@ -83,6 +85,8 @@ class AppServiceProvider extends ServiceProvider
             'cash_session' => CashSession::class,
             'checkout_exception' => CheckoutException::class,
             'employee' => Employee::class,
+            'expense' => Expense::class,
+            'expense_category' => ExpenseCategory::class,
             'guest' => Guest::class,
             'payment' => Payment::class,
             'payment_refund' => PaymentRefund::class,

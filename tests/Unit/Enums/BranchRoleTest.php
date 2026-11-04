@@ -11,6 +11,8 @@ it('keeps sensitive permissions away from the receptionist', function (BranchPer
     'voids' => BranchPermission::VoidCharges,
     'refunds' => BranchPermission::RefundPayments,
     'checkout exception approvals' => BranchPermission::ApproveCheckoutExceptions,
+    'expense approvals' => BranchPermission::ApproveExpenses,
+    'expense voids' => BranchPermission::VoidExpenses,
     'operational status' => BranchPermission::UpdateOperationalStatus,
 ]);
 

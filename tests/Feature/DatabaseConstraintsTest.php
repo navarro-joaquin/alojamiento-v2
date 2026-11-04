@@ -3,6 +3,7 @@
 use App\Models\CashMovement;
 use App\Models\CashRegister;
 use App\Models\CashSession;
+use App\Models\Expense;
 use App\Models\Guest;
 use App\Models\Payment;
 use App\Models\Room;
@@ -72,6 +73,16 @@ test('a stay cannot have two primary guests', function () {
 test('payments reject non-positive amounts', function () {
     Payment::factory()->create(['amount' => '0.00']);
 })->throws(QueryException::class, 'payments_amount_positive');
+
+test('expenses reject non-positive amounts', function () {
+    Expense::factory()->create(['amount' => '0.00']);
+})->throws(QueryException::class, 'expenses_amount_positive');
+
+test('an expense cannot be registered twice with the same operation uuid', function () {
+    $expense = Expense::factory()->create();
+
+    Expense::factory()->create(['operation_uuid' => $expense->operation_uuid]);
+})->throws(QueryException::class, 'Duplicate entry');
 
 test('cash movements reject an invalid direction', function () {
     $cashMovement = CashMovement::factory()->create();

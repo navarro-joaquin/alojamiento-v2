@@ -17,6 +17,9 @@ enum BranchPermission: string
     case RefundPayments = 'payments.refund';
     case RequestCheckoutExceptions = 'checkout_exceptions.request';
     case ApproveCheckoutExceptions = 'checkout_exceptions.approve';
+    case RegisterExpenses = 'expenses.register';
+    case ApproveExpenses = 'expenses.approve';
+    case VoidExpenses = 'expenses.void';
     case OpenCashSessions = 'cash_sessions.open';
     case CloseCashSessions = 'cash_sessions.close';
     case UpdateHousekeepingStatus = 'rooms.update_housekeeping';
@@ -47,6 +50,9 @@ enum BranchPermission: string
             self::RefundPayments => 'Devolver pagos',
             self::RequestCheckoutExceptions => 'Solicitar salidas con deuda',
             self::ApproveCheckoutExceptions => 'Autorizar salidas con deuda',
+            self::RegisterExpenses => 'Registrar gastos',
+            self::ApproveExpenses => 'Aprobar gastos',
+            self::VoidExpenses => 'Anular gastos',
             self::OpenCashSessions => 'Abrir caja',
             self::CloseCashSessions => 'Cerrar caja',
             self::UpdateHousekeepingStatus => 'Cambiar estado de limpieza',

@@ -45,6 +45,7 @@ enum BranchRole: string
                 BranchPermission::RequestCheckoutExceptions,
                 BranchPermission::AddCharges,
                 BranchPermission::CollectPayments,
+                BranchPermission::RegisterExpenses,
                 BranchPermission::OpenCashSessions,
                 BranchPermission::CloseCashSessions,
                 BranchPermission::UpdateHousekeepingStatus,

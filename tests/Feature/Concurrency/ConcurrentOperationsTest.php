@@ -9,6 +9,7 @@ use App\Models\Branch;
 use App\Models\CashMovement;
 use App\Models\CashRegister;
 use App\Models\CashSession;
+use App\Models\ExpenseCategory;
 use App\Models\Guest;
 use App\Models\Payment;
 use App\Models\Room;
@@ -18,6 +19,7 @@ use App\Models\StayCharge;
 use App\Models\User;
 use App\Services\CashService;
 use App\Services\ChargeService;
+use App\Services\ExpenseService;
 use App\Services\NightAuditService;
 use App\Services\ReceptionService;
 use App\Services\StayBalanceService;
@@ -255,6 +257,27 @@ it('keeps the expected cash of a closing session consistent with a payment colle
     if (array_key_exists('cobro', $failed)) {
         expect($failed['cobro'])->toContain('no está abierta');
     }
+});
+
+it('does not let two cash expenses take out more than the register holds', function () {
+    $cashSession = abrirSesionEnSucursal(Branch::factory()->create()->id);
+    $cashSessionId = $cashSession->id;
+    $expenseCategoryId = ExpenseCategory::factory()->create()->id;
+    $userId = User::factory()->create()->id;
+
+    $gastar = static fn () => app(ExpenseService::class)->registrar(
+        CashSession::findOrFail($cashSessionId)->cashRegister->branch, User::findOrFail($userId), ExpenseCategory::findOrFail($expenseCategoryId),
+        'Garrafa de gas', '150.00', PaymentMethod::Cash, (string) Str::uuid(), CashSession::findOrFail($cashSessionId),
+    )->id;
+
+    ['exitosas' => $succeeded, 'fallidas' => $failed] = separarResultados(ConcurrentRace::ejecutar('cash_sessions', $cashSession->id, [
+        'gasto 1' => $gastar,
+        'gasto 2' => $gastar,
+    ]));
+
+    expect($succeeded)->toHaveCount(1)
+        ->and(array_values($failed))->toBe(['El gasto supera el efectivo de la caja (Bs 50.00).'])
+        ->and((string) app(CashService::class)->calcularEfectivoEsperado($cashSession))->toBe('50.00');
 });
 
 it('charges each night once when the night audit runs twice at the same time', function () {

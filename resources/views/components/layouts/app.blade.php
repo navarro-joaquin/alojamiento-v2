@@ -46,6 +46,9 @@
                     @can('verTransferencias', [\App\Models\InventoryTransfer::class, $activeBranch])
                         <x-nav-link :href="route('inventory-transfers.index')" :active="request()->routeIs('inventory-transfers.*')">Transferencias</x-nav-link>
                     @endcan
+                    @can('verActivos', [\App\Models\FixedAsset::class, $activeBranch])
+                        <x-nav-link :href="route('fixed-assets.index')" :active="request()->routeIs('fixed-assets.*')">Activos fijos</x-nav-link>
+                    @endcan
                     @can('verReportes', $activeBranch)
                         <x-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">Reportes</x-nav-link>
                     @endcan

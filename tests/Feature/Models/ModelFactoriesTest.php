@@ -1,10 +1,12 @@
 <?php
 
+use App\Models\AssetMovement;
 use App\Models\Branch;
 use App\Models\CashMovement;
 use App\Models\CashRegister;
 use App\Models\CashSession;
 use App\Models\Employee;
+use App\Models\FixedAsset;
 use App\Models\Guest;
 use App\Models\InventoryBalance;
 use App\Models\InventoryMovement;
@@ -60,6 +62,8 @@ test('the factory persists a valid record', function (string $modelClass) {
     'inventory movement' => InventoryMovement::class,
     'inventory transfer' => InventoryTransfer::class,
     'inventory transfer item' => InventoryTransferItem::class,
+    'fixed asset' => FixedAsset::class,
+    'asset movement' => AssetMovement::class,
 ]);
 
 test('a stay belongs to the branch of its room', function () {

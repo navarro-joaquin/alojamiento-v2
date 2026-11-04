@@ -321,6 +321,31 @@ class BusinessRuleException extends Exception
         return new self('Indique el motivo del faltante en la recepción.');
     }
 
+    public static function sucursalInactiva(): self
+    {
+        return new self('La sucursal está inactiva.');
+    }
+
+    public static function activoDadoDeBaja(): self
+    {
+        return new self('El activo ya está dado de baja.');
+    }
+
+    public static function bajaSoloConSuOperacion(): self
+    {
+        return new self('Para dar de baja un activo use la opción de baja, con su motivo.');
+    }
+
+    public static function habitacionSoloParaActivoEnUso(): self
+    {
+        return new self('Solo un activo en uso se ubica en una habitación.');
+    }
+
+    public static function movimientoDeActivoSinCambios(): self
+    {
+        return new self('El activo ya está en esa ubicación y estado.');
+    }
+
     public static function ajusteSinDiferencia(): self
     {
         return new self('El conteo coincide con las existencias: no hay nada que ajustar.');

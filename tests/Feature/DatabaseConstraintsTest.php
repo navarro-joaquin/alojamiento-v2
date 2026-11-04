@@ -4,6 +4,7 @@ use App\Models\CashMovement;
 use App\Models\CashRegister;
 use App\Models\CashSession;
 use App\Models\Expense;
+use App\Models\FixedAsset;
 use App\Models\Guest;
 use App\Models\InventoryBalance;
 use App\Models\InventoryMovement;
@@ -163,3 +164,15 @@ test('a transfer goes to a different warehouse', function () {
 test('a transfer item cannot be received above the quantity sent', function () {
     InventoryTransferItem::factory()->create(['quantity' => '5.000', 'received_quantity' => '5.001']);
 })->throws(QueryException::class, 'inventory_transfer_items_received_within_sent');
+
+test('only an asset in use sits in a room', function () {
+    $room = Room::factory()->create();
+
+    FixedAsset::factory()->create(['branch_id' => $room->branch_id, 'room_id' => $room->id, 'status' => 'in_repair']);
+})->throws(QueryException::class, 'fixed_assets_room_only_in_use');
+
+test('an asset code is unique', function () {
+    FixedAsset::factory()->create(['asset_code' => 'AF-1']);
+
+    FixedAsset::factory()->create(['asset_code' => 'AF-1']);
+})->throws(QueryException::class, 'Duplicate entry');

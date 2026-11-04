@@ -98,4 +98,12 @@ class Branch extends Model
     {
         return $this->hasMany(Warehouse::class);
     }
+
+    /**
+     * @return HasMany<FixedAsset, $this>
+     */
+    public function fixedAssets(): HasMany
+    {
+        return $this->hasMany(FixedAsset::class);
+    }
 }

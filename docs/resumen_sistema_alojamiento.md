@@ -301,19 +301,23 @@ Al enviar se genera `transfer_out` en el origen; al recibir, `transfer_in` en el
 - `id`
 - `branch_id` → `branches.id`
 - `room_id` nullable → `rooms.id`
-- `asset_code` único
-- `name`, `serial_number`
-- `purchase_date`
-- `purchase_cost DECIMAL(12,2)`
+- `asset_code` único (en mayúsculas)
+- `name`, `serial_number` nullable
+- `purchase_date` nullable
+- `purchase_cost DECIMAL(12,2)` nullable, no negativo
 - `status`: `in_use`, `in_storage`, `in_repair`, `retired`
+- `CHECK`: solo un activo `in_use` tiene `room_id`.
 
 #### `asset_movements`
 - `id`
 - `fixed_asset_id` → `fixed_assets.id`
 - `from_branch_id` nullable, `to_branch_id` nullable → `branches.id`
 - `from_room_id` nullable, `to_room_id` nullable → `rooms.id`
+- `from_status` nullable, `to_status`
 - `performed_by` → `users.id`
 - `moved_at`, `notes`
+
+El primer movimiento de cada activo es su alta (sin origen).
 
 ### 3.5 Caja, pagos, devoluciones y gastos
 
@@ -857,7 +861,13 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
    - El borrador no mueve existencias y es lo único que se cancela. Al enviar se registra un `transfer_out` por producto al costo promedio del origen, que queda guardado en el ítem; si falta stock de un producto, no se envía nada.
    - Al recibir se registra el `transfer_in` de lo enviado, al mismo costo. Si llegó menos, la diferencia sale del destino como `adjustment` con el motivo obligatorio (`reception_notes`), así el origen conserva lo que envió y el faltante queda en el almacén que lo detectó. Todos los movimientos llevan `inventory_transfer_id`.
    - Bloqueo `inventory_transfers` → `inventory_balances` en orden de producto; el estado se verifica con la transferencia bloqueada (prueba de concurrencia: dos recepciones simultáneas registran una sola). Creación, envío, recepción y cancelación quedan auditadas.
-5. Activos fijos y sus movimientos.
+5. ✅ Activos fijos (`FixedAssetService`: `registrar()`, `mover()` y `darDeBaja()`; pantalla **Activos fijos**):
+   - Permisos: `fixed_assets.manage` (almacenero, supervisor y administrador) para registrar, editar datos y mover; `fixed_assets.retire` (supervisor y administrador) para dar de baja.
+   - Cada cambio de sucursal, habitación o estado queda en `asset_movements` con origen y destino, empezando por el alta. Solo un activo en uso se ubica en una habitación, y siempre de su sucursal (validado y garantizado por `CHECK`); al pasar a depósito o reparación deja la habitación.
+   - Enviar un activo a otra sucursal se lo entrega: desde entonces lo gestiona esa sucursal y deja de verse en la de origen; su historial completo se ve desde la nueva.
+   - La baja exige motivo y es definitiva: un activo dado de baja no se mueve más. La edición solo cambia datos descriptivos (código, nombre, serie, compra); ubicación y estado cambian únicamente con movimientos. Alta, movimientos y bajas quedan auditados en el registro `assets`, en la sucursal donde se hicieron.
+
+**Fase 3 completa.**
 
 ## 11. Criterios mínimos para considerar el módulo financiero seguro
 

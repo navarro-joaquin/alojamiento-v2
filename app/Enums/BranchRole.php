@@ -26,8 +26,8 @@ enum BranchRole: string
 
     /**
      * Permissions the role grants in the branch where it is assigned.
-     * Inventory adjustments are left to supervisors and admins, so whoever
-     * keeps the stock does not also correct its differences.
+     * Inventory adjustments and retiring fixed assets are left to supervisors
+     * and admins, so whoever keeps the goods does not also write them off.
      *
      * @return list<BranchPermission>
      */
@@ -58,6 +58,7 @@ enum BranchRole: string
                 BranchPermission::ViewInventory,
                 BranchPermission::RegisterInventoryMovements,
                 BranchPermission::TransferInventory,
+                BranchPermission::ManageFixedAssets,
             ],
         };
     }

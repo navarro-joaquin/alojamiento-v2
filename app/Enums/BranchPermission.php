@@ -30,6 +30,8 @@ enum BranchPermission: string
     case RegisterInventoryMovements = 'inventory.register';
     case AdjustInventory = 'inventory.adjust';
     case TransferInventory = 'inventory.transfer';
+    case ManageFixedAssets = 'fixed_assets.manage';
+    case RetireFixedAssets = 'fixed_assets.retire';
     case ViewReports = 'reports.view';
     case ViewAuditLog = 'audit.view';
     case ManageRooms = 'rooms.manage';
@@ -73,6 +75,8 @@ enum BranchPermission: string
             self::RegisterInventoryMovements => 'Registrar entradas y salidas de inventario',
             self::AdjustInventory => 'Ajustar el inventario',
             self::TransferInventory => 'Enviar y recibir transferencias de inventario',
+            self::ManageFixedAssets => 'Registrar y mover activos fijos',
+            self::RetireFixedAssets => 'Dar de baja activos fijos',
             self::ViewReports => 'Ver reportes financieros',
             self::ViewAuditLog => 'Consultar la auditoría',
             self::ManageRooms => 'Gestionar habitaciones',

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\AssetMovement;
 use App\Models\Branch;
 use App\Models\CashCount;
 use App\Models\CashMovement;
@@ -11,6 +12,7 @@ use App\Models\CheckoutException;
 use App\Models\Employee;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
+use App\Models\FixedAsset;
 use App\Models\Guest;
 use App\Models\InventoryBalance;
 use App\Models\InventoryMovement;
@@ -88,6 +90,7 @@ class AppServiceProvider extends ServiceProvider
     private function registrarMorphMap(): void
     {
         Relation::enforceMorphMap([
+            'asset_movement' => AssetMovement::class,
             'branch' => Branch::class,
             'cash_count' => CashCount::class,
             'cash_movement' => CashMovement::class,
@@ -97,6 +100,7 @@ class AppServiceProvider extends ServiceProvider
             'employee' => Employee::class,
             'expense' => Expense::class,
             'expense_category' => ExpenseCategory::class,
+            'fixed_asset' => FixedAsset::class,
             'guest' => Guest::class,
             'inventory_balance' => InventoryBalance::class,
             'inventory_movement' => InventoryMovement::class,

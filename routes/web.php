@@ -51,10 +51,13 @@ Route::middleware('auth')->group(function () {
     Route::put('/sucursal', [ActiveBranchController::class, 'update'])->name('active-branch.update');
 
     // Global catalogs (super admin): outside the active branch, so the first branch can be created.
-    Route::resource('sucursales', BranchController::class)->except(['show', 'destroy'])->parameters(['sucursales' => 'branch'])->names('branches');
-    Route::resource('tipos-de-habitacion', RoomTypeController::class)->except(['show', 'destroy'])->parameters(['tipos-de-habitacion' => 'roomType'])->names('room-types');
-    Route::resource('categorias-de-gasto', ExpenseCategoryController::class)->except(['show', 'destroy'])->parameters(['categorias-de-gasto' => 'expenseCategory'])->names('expense-categories');
-    Route::resource('usuarios', UserController::class)->except(['show', 'destroy'])->parameters(['usuarios' => 'user'])->names('users');
+    // The branch already chosen, if any, is still shared so the menu keeps its branch links.
+    Route::middleware('share.active.branch')->group(function () {
+        Route::resource('sucursales', BranchController::class)->except(['show', 'destroy'])->parameters(['sucursales' => 'branch'])->names('branches');
+        Route::resource('tipos-de-habitacion', RoomTypeController::class)->except(['show', 'destroy'])->parameters(['tipos-de-habitacion' => 'roomType'])->names('room-types');
+        Route::resource('categorias-de-gasto', ExpenseCategoryController::class)->except(['show', 'destroy'])->parameters(['categorias-de-gasto' => 'expenseCategory'])->names('expense-categories');
+        Route::resource('usuarios', UserController::class)->except(['show', 'destroy'])->parameters(['usuarios' => 'user'])->names('users');
+    });
 
     Route::middleware('active.branch')->group(function () {
         Route::get('/', [OccupancyController::class, 'index'])->name('occupancy.index');

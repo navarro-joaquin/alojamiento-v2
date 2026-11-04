@@ -4,6 +4,7 @@ use App\Exceptions\BusinessRuleException;
 use App\Exceptions\IdempotencyConflictException;
 use App\Http\Middleware\AddRequestContext;
 use App\Http\Middleware\EnsureActiveBranch;
+use App\Http\Middleware\ShareActiveBranch;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,7 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(AddRequestContext::class);
-        $middleware->alias(['active.branch' => EnsureActiveBranch::class]);
+        $middleware->alias([
+            'active.branch' => EnsureActiveBranch::class,
+            'share.active.branch' => ShareActiveBranch::class,
+        ]);
         $middleware->redirectUsersTo(fn () => route('occupancy.index'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {

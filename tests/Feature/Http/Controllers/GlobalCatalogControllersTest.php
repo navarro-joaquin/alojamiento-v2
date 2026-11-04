@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\BranchRole;
+use App\Http\Middleware\EnsureActiveBranch;
 use App\Models\Branch;
 use App\Models\Room;
 use App\Models\RoomType;
@@ -128,4 +129,31 @@ it('denies everything to a disabled super admin', function () {
     $disabledSuperAdmin = User::factory()->superAdministrador()->inactivo()->create();
 
     expect($disabledSuperAdmin->can('gestionar', Branch::class))->toBeFalse();
+});
+
+it('keeps the branch links of the menu on the global catalogs once a branch is chosen', function () {
+    $branch = Branch::factory()->create(['name' => 'Sucursal Centro']);
+
+    $this->actingAs($this->superAdmin)
+        ->get(route('room-types.index'))
+        ->assertOk()
+        ->assertDontSee(route('cash-registers.index'));
+
+    $this->actingAs($this->superAdmin)
+        ->withSession([EnsureActiveBranch::SESSION_KEY => $branch->id])
+        ->get(route('room-types.index'))
+        ->assertOk()
+        ->assertSee('Sucursal Centro')
+        ->assertSee(route('cash-registers.index'))
+        ->assertSee(route('rooms.index'));
+});
+
+it('does not share a branch the user can no longer work in', function () {
+    $inactiveBranch = Branch::factory()->inactiva()->create(['name' => 'Sucursal Cerrada']);
+
+    $this->actingAs($this->superAdmin)
+        ->withSession([EnsureActiveBranch::SESSION_KEY => $inactiveBranch->id])
+        ->get(route('room-types.index'))
+        ->assertOk()
+        ->assertDontSee(route('cash-registers.index'));
 });

@@ -4,6 +4,8 @@ use App\Enums\BranchRole;
 use App\Enums\CheckoutExceptionStatus;
 use App\Enums\StayStatus;
 use App\Models\Branch;
+use App\Models\CashRegister;
+use App\Models\CashSession;
 use App\Models\CheckoutException;
 use App\Models\Room;
 use App\Models\Stay;
@@ -11,6 +13,7 @@ use App\Models\StayCharge;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 
@@ -69,6 +72,26 @@ it('runs the whole checkout with debt: request, approval and check-out', functio
 
     expect($this->stay->refresh()->status)->toBe(StayStatus::Completed)
         ->and($checkoutException->refresh()->status)->toBe(CheckoutExceptionStatus::Used);
+
+    $cashSession = CashSession::factory()->for(CashRegister::factory()->for($this->branch))->create();
+
+    $this->actingAs($this->receptionist)
+        ->get(route('stays.show', $this->stay))
+        ->assertSee('Cobrar deuda pendiente');
+
+    $this->actingAs($this->receptionist)
+        ->post(route('stays.payments.store', $this->stay), [
+            'cash_session_id' => $cashSession->id,
+            'payment_type' => 'settlement',
+            'payment_method' => 'cash',
+            'amount' => '250.00',
+            'operation_uuid' => (string) Str::uuid(),
+        ])
+        ->assertRedirect(route('stays.show', $this->stay));
+
+    $this->actingAs($this->receptionist)
+        ->get(route('stays.show', $this->stay))
+        ->assertDontSee('Cobrar deuda pendiente');
 });
 
 it('keeps approval and the pending list away from the receptionist', function () {

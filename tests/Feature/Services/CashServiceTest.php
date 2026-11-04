@@ -5,6 +5,7 @@ use App\Enums\CashMovementType;
 use App\Enums\CashSessionStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentType;
+use App\Enums\StayStatus;
 use App\Exceptions\BusinessRuleException;
 use App\Exceptions\IdempotencyConflictException;
 use App\Models\Branch;
@@ -175,11 +176,26 @@ describe('cobrarPago', function () {
         cobrarEfectivo($stay, crearSesionAbiertaEn(Branch::factory()->create()), '100.00');
     })->throws(BusinessRuleException::class, 'pertenece a otra sucursal');
 
-    it('rejects a stay that is no longer active', function () {
-        $stay = Stay::factory()->finalizada()->create();
+    it('rejects a cancelled stay', function () {
+        $stay = Stay::factory()->create(['status' => StayStatus::Cancelled]);
 
         cobrarEfectivo($stay, crearSesionAbiertaEn($stay->branch), '100.00');
     })->throws(BusinessRuleException::class, 'no está activa');
+
+    it('collects the debt left by a completed stay', function () {
+        $stay = crearEstadiaConDeuda();
+        $stay->update(['status' => StayStatus::Completed, 'check_out_at' => now()]);
+        $cashSession = crearSesionAbiertaEn($stay->branch);
+
+        expect(fn () => cobrarEfectivo($stay, $cashSession, '50.00', paymentType: PaymentType::Deposit))
+            ->toThrow(BusinessRuleException::class, 'Una estadía finalizada solo admite el cobro de su saldo pendiente, no anticipos.');
+        expect(fn () => cobrarEfectivo($stay, $cashSession, '250.01'))
+            ->toThrow(BusinessRuleException::class, 'El pago supera el saldo pendiente (Bs 250.00).');
+
+        cobrarEfectivo($stay, $cashSession, '250.00');
+
+        expect((string) app(StayBalanceService::class)->calcular($stay))->toBe('0.00');
+    });
 
     it('rejects an amount that is not positive', function () {
         $stay = crearEstadiaConDeuda();

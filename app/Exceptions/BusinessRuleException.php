@@ -51,6 +51,11 @@ class BusinessRuleException extends Exception
         return new self('La estadía no está activa.');
     }
 
+    public static function estadiaFinalizadaSoloAdmiteSaldo(): self
+    {
+        return new self('Una estadía finalizada solo admite el cobro de su saldo pendiente, no anticipos.');
+    }
+
     public static function importeNoPositivo(): self
     {
         return new self('El importe debe ser mayor que cero.');

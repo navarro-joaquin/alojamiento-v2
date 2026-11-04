@@ -87,7 +87,7 @@ class CashService
     }
 
     /**
-     * Collect a payment for an active stay.
+     * Collect a payment for an active stay, or the debt left by a completed one.
      *
      * A settlement may not exceed the outstanding balance. A deposit may leave the
      * guest in credit by at most the branch deposit limit (nights × agreed rate).
@@ -368,7 +368,11 @@ class CashService
             throw BusinessRuleException::sesionDeOtraSucursal();
         }
 
-        if ($lockedStay->status !== StayStatus::Active) {
+        if ($lockedStay->status === StayStatus::Completed && $paymentType !== PaymentType::Settlement) {
+            throw BusinessRuleException::estadiaFinalizadaSoloAdmiteSaldo();
+        }
+
+        if (! in_array($lockedStay->status, [StayStatus::Active, StayStatus::Completed], true)) {
             throw BusinessRuleException::estadiaNoActiva();
         }
 

@@ -7,9 +7,11 @@ use App\Enums\ChargeStatus;
 use App\Enums\ChargeType;
 use App\Enums\StayStatus;
 use App\Exceptions\BusinessRuleException;
+use App\Models\Product;
 use App\Models\Stay;
 use App\Models\StayCharge;
 use App\Models\User;
+use App\Models\Warehouse;
 use BcMath\Number;
 use Carbon\CarbonInterface;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -17,25 +19,28 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Charges, discounts and voids on a stay. Amounts are always positive; the
- * direction gives the sign. Authorization for discounts and voids is the
- * caller's responsibility.
+ * direction gives the sign. Product sales take the stock out in the same
+ * transaction, and voiding them puts it back. Authorization for discounts
+ * and voids is the caller's responsibility.
  */
 class ChargeService
 {
     /**
      * Manually chargeable types. Lodging nights come from check-in and the
-     * night audit; discounts have their own operation.
+     * night audit; products from a sale; discounts have their own operation.
      *
      * @var list<ChargeType>
      */
     public const array MANUAL_DEBIT_TYPES = [
         ChargeType::LateCheckOut,
-        ChargeType::Product,
         ChargeType::Service,
         ChargeType::Adjustment,
     ];
 
-    public function __construct(private AuditService $auditService) {}
+    public function __construct(
+        private InventoryService $inventoryService,
+        private AuditService $auditService,
+    ) {}
 
     /**
      * Charge the night of a business date at the stay's agreed rate. Idempotent:
@@ -98,6 +103,59 @@ class ChargeService
     }
 
     /**
+     * Sell a product to the guest at its current sale price, taking it out of
+     * a warehouse of the stay's branch. Locks stays → inventory_balances.
+     *
+     * @throws BusinessRuleException
+     */
+    public function venderProducto(Stay $stay, User $user, Warehouse $warehouse, Product $product, string $quantity): StayCharge
+    {
+        if (! $product->is_sellable || $product->sale_price === null) {
+            throw BusinessRuleException::productoNoVendible();
+        }
+
+        if ($warehouse->branch_id !== $stay->branch_id) {
+            throw BusinessRuleException::almacenDeOtraSucursal();
+        }
+
+        $quantity = (new Number($quantity))->round(2);
+        $unitPrice = new Number($product->sale_price);
+
+        if ($quantity <= 0) {
+            throw BusinessRuleException::cantidadNoPositiva();
+        }
+
+        return DB::transaction(function () use ($stay, $user, $warehouse, $product, $quantity, $unitPrice): StayCharge {
+            $lockedStay = $this->bloquearEstadiaActiva($stay);
+            $saleMovement = $this->inventoryService->registrarVenta($warehouse, $product, $user, $quantity, "Estadía #{$lockedStay->id}");
+
+            $stayCharge = $lockedStay->charges()->create([
+                'charge_type' => ChargeType::Product,
+                'direction' => ChargeDirection::Debit,
+                'description' => $product->name,
+                'service_date' => $lockedStay->branch->current_business_date,
+                'quantity' => (string) $quantity,
+                'unit_price' => (string) $unitPrice,
+                'total_amount' => (string) ($quantity * $unitPrice)->round(2),
+                'product_id' => $product->id,
+                'inventory_movement_id' => $saleMovement->id,
+                'status' => ChargeStatus::Confirmed,
+                'created_by' => $user->id,
+            ]);
+
+            $this->auditService->registrar('reception', 'stay_charge.product_sold', $stayCharge, $user, $lockedStay->branch_id, [
+                'stay_id' => $lockedStay->id,
+                'product_id' => $product->id,
+                'warehouse_id' => $warehouse->id,
+                'quantity' => $stayCharge->quantity,
+                'total_amount' => $stayCharge->total_amount,
+            ]);
+
+            return $stayCharge;
+        });
+    }
+
+    /**
      * @throws BusinessRuleException
      */
     public function registrarDescuento(Stay $stay, User $user, string $description, string $amount): StayCharge
@@ -119,7 +177,9 @@ class ChargeService
     }
 
     /**
-     * Void a charge without deleting it. A voided lodging night may be charged again.
+     * Void a charge without deleting it. A voided lodging night may be charged
+     * again; a voided product sale returns its stock to the warehouse. A
+     * product the guest did consume is waived with a discount instead.
      *
      * @throws BusinessRuleException
      */
@@ -139,6 +199,10 @@ class ChargeService
                 'voided_at' => now(),
                 'void_reason' => $reason,
             ]);
+
+            if ($lockedCharge->inventory_movement_id !== null) {
+                $this->inventoryService->registrarDevolucionDeVenta($lockedCharge->inventoryMovement, $user, "Anulación del cargo #{$lockedCharge->id}");
+            }
 
             $this->auditService->registrar('reception', 'stay_charge.voided', $lockedCharge, $user, $lockedStay->branch_id, [
                 'stay_id' => $lockedStay->id,

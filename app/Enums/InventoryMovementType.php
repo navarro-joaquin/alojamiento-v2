@@ -11,6 +11,7 @@ enum InventoryMovementType: string
     case Adjustment = 'adjustment';
     case TransferIn = 'transfer_in';
     case TransferOut = 'transfer_out';
+    case SaleReturn = 'sale_return';
 
     public function etiqueta(): string
     {
@@ -18,6 +19,7 @@ enum InventoryMovementType: string
             self::Entry => 'Entrada',
             self::Exit => 'Salida',
             self::Sale => 'Venta',
+            self::SaleReturn => 'Devolución de venta',
             self::Consumption => 'Consumo interno',
             self::Adjustment => 'Ajuste',
             self::TransferIn => 'Transferencia recibida',
@@ -32,7 +34,7 @@ enum InventoryMovementType: string
     public function direccion(): ?InventoryMovementDirection
     {
         return match ($this) {
-            self::Entry, self::TransferIn => InventoryMovementDirection::In,
+            self::Entry, self::TransferIn, self::SaleReturn => InventoryMovementDirection::In,
             self::Exit, self::Sale, self::Consumption, self::TransferOut => InventoryMovementDirection::Out,
             self::Adjustment => null,
         };

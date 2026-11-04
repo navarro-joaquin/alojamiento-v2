@@ -281,6 +281,16 @@ class BusinessRuleException extends Exception
         return new self('Ese tipo de salida no se puede registrar manualmente.');
     }
 
+    public static function productoNoVendible(): self
+    {
+        return new self('El producto no se vende a huéspedes.');
+    }
+
+    public static function almacenDeOtraSucursal(): self
+    {
+        return new self('El almacén no pertenece a la sucursal de la estadía.');
+    }
+
     public static function ajusteSinDiferencia(): self
     {
         return new self('El conteo coincide con las existencias: no hay nada que ajustar.');

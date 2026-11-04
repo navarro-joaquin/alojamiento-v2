@@ -39,6 +39,7 @@ use App\Http\Controllers\StaffMemberController;
 use App\Http\Controllers\StayChargeController;
 use App\Http\Controllers\StayController;
 use App\Http\Controllers\StayDiscountController;
+use App\Http\Controllers\StayProductSaleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VoidedExpenseController;
 use App\Http\Controllers\VoidedReceiptController;
@@ -77,6 +78,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/estadias/{stay}', [StayController::class, 'show'])->name('stays.show');
 
         Route::post('/estadias/{stay}/cargos', [StayChargeController::class, 'store'])->name('stays.charges.store');
+        Route::post('/estadias/{stay}/ventas', [StayProductSaleController::class, 'store'])->name('stays.product-sales.store');
         Route::post('/estadias/{stay}/descuentos', [StayDiscountController::class, 'store'])->name('stays.discounts.store');
         Route::post('/cargos/{stayCharge}/anulacion', [VoidedStayChargeController::class, 'store'])->name('stay-charges.void');
         Route::post('/estadias/{stay}/pagos', [PaymentController::class, 'store'])->name('stays.payments.store');

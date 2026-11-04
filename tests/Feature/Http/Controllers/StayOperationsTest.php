@@ -6,12 +6,15 @@ use App\Enums\StayStatus;
 use App\Models\Branch;
 use App\Models\CashRegister;
 use App\Models\CashSession;
+use App\Models\InventoryBalance;
 use App\Models\Payment;
+use App\Models\Product;
 use App\Models\Room;
 use App\Models\RoomRate;
 use App\Models\Stay;
 use App\Models\StayCharge;
 use App\Models\User;
+use App\Models\Warehouse;
 use App\Services\StayBalanceService;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -43,7 +46,7 @@ function saldoDe(Stay $stay): string
 
 it('adds a charge to the stay', function () {
     $this->actingAs(operadorConRol($this->branch, BranchRole::Receptionist))
-        ->post(route('stays.charges.store', $this->stay), ['charge_type' => 'product', 'description' => 'Agua', 'quantity' => '2', 'unit_price' => '7.50'])
+        ->post(route('stays.charges.store', $this->stay), ['charge_type' => 'service', 'description' => 'Lavandería', 'quantity' => '2', 'unit_price' => '7.50'])
         ->assertRedirect(route('stays.show', $this->stay))
         ->assertSessionHas('status', 'Cargo registrado.');
 
@@ -156,7 +159,7 @@ it('forbids operations on stays of another branch', function () {
     $otherStay = Stay::factory()->create();
 
     $this->actingAs(operadorConRol($this->branch, BranchRole::Admin))
-        ->post(route('stays.charges.store', $otherStay), ['charge_type' => 'product', 'description' => 'Agua', 'quantity' => '1', 'unit_price' => '5'])
+        ->post(route('stays.charges.store', $otherStay), ['charge_type' => 'service', 'description' => 'Lavandería', 'quantity' => '1', 'unit_price' => '5'])
         ->assertForbidden();
 });
 
@@ -224,4 +227,42 @@ it('refunds only with the refund permission and only payments of the stay', func
         ->assertSessionHasErrors('refund_payment_id');
 
     expect($payment->refunds()->exists())->toBeFalse();
+});
+
+it('sells a product to the guest from the stay page', function () {
+    $minibar = Warehouse::factory()->for($this->branch)->create(['name' => 'Minibar']);
+    $product = Product::factory()->vendible('8.00')->create(['name' => 'Agua sin gas']);
+    InventoryBalance::factory()->for($minibar)->for($product)->create(['quantity' => '5.000']);
+    $receptionist = operadorConRol($this->branch, BranchRole::Receptionist);
+
+    $this->actingAs($receptionist)
+        ->get(route('stays.show', $this->stay))
+        ->assertSee('Vender producto')
+        ->assertSee('Agua sin gas · Bs 8.00');
+
+    $this->actingAs($receptionist)
+        ->post(route('stays.product-sales.store', $this->stay), ['sale_warehouse_id' => $minibar->id, 'sale_product_id' => $product->id, 'sale_quantity' => '2'])
+        ->assertRedirect(route('stays.show', $this->stay))
+        ->assertSessionHas('status', 'Venta registrada: Agua sin gas por Bs 16.00.');
+
+    expect(saldoDe($this->stay))->toBe('266.00');
+});
+
+it('rejects a product sale on a stay of another branch', function () {
+    $otherStay = Stay::factory()->create();
+    $minibar = Warehouse::factory()->for($this->branch)->create();
+    $product = Product::factory()->vendible()->create();
+
+    $this->actingAs(operadorConRol($this->branch, BranchRole::Receptionist))
+        ->post(route('stays.product-sales.store', $otherStay), ['sale_warehouse_id' => $minibar->id, 'sale_product_id' => $product->id, 'sale_quantity' => '1'])
+        ->assertForbidden();
+});
+
+it('keeps product sales away from the storekeeper', function () {
+    $minibar = Warehouse::factory()->for($this->branch)->create();
+    $product = Product::factory()->vendible()->create();
+
+    $this->actingAs(operadorConRol($this->branch, BranchRole::Storekeeper))
+        ->post(route('stays.product-sales.store', $this->stay), ['sale_warehouse_id' => $minibar->id, 'sale_product_id' => $product->id, 'sale_quantity' => '1'])
+        ->assertForbidden();
 });

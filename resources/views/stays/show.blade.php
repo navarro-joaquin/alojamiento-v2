@@ -208,6 +208,22 @@
                         <x-button>Agregar cargo</x-button>
                     </form>
                 </x-card>
+
+                @if ($saleWarehouses->isNotEmpty() && $sellableProducts->isNotEmpty())
+                    <x-card title="Vender producto">
+                        <form method="POST" action="{{ route('stays.product-sales.store', $stay) }}" class="flex flex-col gap-3">
+                            @csrf
+                            <x-select label="Producto" name="sale_product_id"
+                                :options="['' => 'Elija un producto'] + $sellableProducts->mapWithKeys(fn ($product) => [$product->id => $product->name.' · Bs '.$product->sale_price])->all()" required />
+                            <div class="grid grid-cols-2 gap-3">
+                                <x-select label="Sale de" name="sale_warehouse_id"
+                                    :options="$saleWarehouses->pluck('name', 'id')->all()" />
+                                <x-field label="Cantidad" name="sale_quantity" value="1" inputmode="decimal" required />
+                            </div>
+                            <x-button>Vender</x-button>
+                        </form>
+                    </x-card>
+                @endif
             @endcan
 
             @if ($balance < 0 && $refundablePayments->isNotEmpty())

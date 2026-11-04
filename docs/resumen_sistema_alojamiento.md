@@ -270,7 +270,7 @@ Reglas:
 - `warehouse_id` → `warehouses.id`
 - `product_id` → `products.id`
 - `performed_by` → `users.id`
-- `movement_type`: `entry`, `exit`, `sale`, `consumption`, `adjustment`, `transfer_in`, `transfer_out`
+- `movement_type`: `entry`, `exit`, `sale`, `sale_return`, `consumption`, `adjustment`, `transfer_in`, `transfer_out`
 - `direction`: `in`, `out`
 - `quantity DECIMAL(14,3)` positiva
 - `unit_cost DECIMAL(14,4)`
@@ -279,7 +279,7 @@ Reglas:
 - `reference`, `notes`
 - `operation_uuid` nullable único y `request_hash` (idempotencia de los movimientos manuales)
 - `timestamps`
-- `CHECK`: cantidad positiva, costo y saldo no negativos, y `direction` coherente con el tipo (`entry`/`transfer_in` entran, `exit`/`sale`/`consumption`/`transfer_out` salen, `adjustment` en ambos sentidos). `inventory_balances` tiene `CHECK (quantity >= 0)`.
+- `CHECK`: cantidad positiva, costo y saldo no negativos, y `direction` coherente con el tipo (`entry`/`transfer_in`/`sale_return` entran, `exit`/`sale`/`consumption`/`transfer_out` salen, `adjustment` en ambos sentidos). `inventory_balances` tiene `CHECK (quantity >= 0)`.
 
 Cada movimiento y su actualización de saldo deben confirmarse en la misma transacción, bloqueando la fila de `inventory_balances`. Si la política lo exige, rechazar salidas que dejen saldo negativo. Una venta a un huésped crea, en la misma transacción, el `stay_charge` (`product`) y el `inventory_movement` (`sale`).
 
@@ -845,7 +845,11 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
    - Salidas manuales: `exit` (merma, rotura, devolución al proveedor) y `consumption` (consumo interno, como amenidades), siempre con motivo. Ventas y transferencias no se registran a mano.
    - El ajuste se hace por conteo físico: se indica la cantidad contada y el sistema registra la diferencia, calculada con el saldo bloqueado; un conteo igual al saldo se rechaza.
    - Los formularios llevan `operation_uuid`: un doble envío registra un solo movimiento. Todos los movimientos quedan auditados en el registro `inventory`. Producto o almacén inactivos no admiten movimientos.
-3. Venta de productos a huéspedes desde la ficha de estadía (`stay_charge` + movimiento `sale` en la misma transacción).
+3. ✅ Venta de productos a huéspedes (`ChargeService::venderProducto()`; tarjeta "Vender producto" de la ficha de estadía):
+   - Quien puede registrar cargos (`charges.add`) elige un producto vendible y activo, el almacén de la sucursal del que sale y la cantidad. El precio es el de venta vigente del producto.
+   - En una sola transacción (bloqueo `stays` → `inventory_balances`) se crea el movimiento `sale` al costo promedio y el cargo `product` enlazado (`stay_charges.product_id` e `inventory_movement_id`, único). Sin existencias suficientes no se cobra nada.
+   - Los cargos `product` ya no se registran a mano: el tipo salió de `ChargeService::MANUAL_DEBIT_TYPES`, y lo que no tiene inventario se cobra como `service`. Un `CHECK` exige que un cargo enlazado a una venta sea `product` y nombre su producto; los cargos de producto manuales anteriores conservan ambas columnas vacías.
+   - Anular el cargo de una venta devuelve las existencias con un movimiento `sale_return` al costo con que salieron, en la misma transacción. Si el huésped sí consumió el producto y se le perdona, corresponde un descuento, no una anulación.
 4. Transferencias entre almacenes.
 5. Activos fijos y sus movimientos.
 

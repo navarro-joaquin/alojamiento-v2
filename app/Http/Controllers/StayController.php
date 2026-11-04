@@ -10,6 +10,7 @@ use App\Enums\ReceiptStatus;
 use App\Http\Requests\StoreStayRequest;
 use App\Models\CashSession;
 use App\Models\Payment;
+use App\Models\Product;
 use App\Models\Room;
 use App\Models\Stay;
 use App\Services\ChargeService;
@@ -87,6 +88,8 @@ class StayController extends Controller
                 ->each(fn (Payment $payment) => $payment->refundable_amount = (string) (new Number($payment->amount) - new Number((string) ($payment->refunded_amount ?? '0'))))
                 ->filter(fn (Payment $payment): bool => new Number($payment->refundable_amount) > 0),
             'manualChargeTypes' => ChargeService::MANUAL_DEBIT_TYPES,
+            'saleWarehouses' => $stay->branch->warehouses()->activos()->orderBy('name')->get(),
+            'sellableProducts' => Product::query()->vendibles()->orderBy('name')->get(),
             'paymentMethods' => PaymentMethod::cases(),
             'paymentTypes' => PaymentType::cases(),
         ]);

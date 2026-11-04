@@ -131,3 +131,23 @@ test('an inventory movement direction must match its type', function () {
 test('an inventory movement quantity must be positive', function () {
     InventoryMovement::factory()->create(['quantity' => '0.000']);
 })->throws(QueryException::class, 'inventory_movements_quantity_positive');
+
+test('a charge linked to a sale must be a product charge naming its product', function () {
+    $movement = InventoryMovement::factory()->create(['movement_type' => 'sale', 'direction' => 'out']);
+
+    StayCharge::factory()->create(['charge_type' => 'service', 'product_id' => $movement->product_id, 'inventory_movement_id' => $movement->id]);
+})->throws(QueryException::class, 'stay_charges_product_sale_complete');
+
+test('a product charge linked to a sale must name its product', function () {
+    $movement = InventoryMovement::factory()->create(['movement_type' => 'sale', 'direction' => 'out']);
+
+    StayCharge::factory()->create(['charge_type' => 'product', 'inventory_movement_id' => $movement->id]);
+})->throws(QueryException::class, 'stay_charges_product_sale_complete');
+
+test('an inventory sale is charged only once', function () {
+    $movement = InventoryMovement::factory()->create(['movement_type' => 'sale', 'direction' => 'out']);
+    $attributes = ['charge_type' => 'product', 'product_id' => $movement->product_id, 'inventory_movement_id' => $movement->id];
+    StayCharge::factory()->create($attributes);
+
+    StayCharge::factory()->create($attributes);
+})->throws(QueryException::class, 'Duplicate entry');

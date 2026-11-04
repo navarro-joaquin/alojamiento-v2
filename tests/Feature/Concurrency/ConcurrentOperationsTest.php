@@ -220,7 +220,7 @@ it('never completes a stay with a charge added during its check-out', function (
     ['exitosas' => $succeeded, 'fallidas' => $failed] = separarResultados(ConcurrentRace::ejecutar('stays', $stay->id, [
         'salida' => static fn () => app(ReceptionService::class)->registrarSalida(Stay::findOrFail($stayId), User::findOrFail($userId))->id,
         'cargo' => static fn () => app(ChargeService::class)->registrarCargo(
-            Stay::findOrFail($stayId), User::findOrFail($userId), ChargeType::Product, 'Agua', '1', '15.00',
+            Stay::findOrFail($stayId), User::findOrFail($userId), ChargeType::Service, 'Lavandería', '1', '15.00',
         )->id,
     ]));
 

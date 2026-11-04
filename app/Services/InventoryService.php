@@ -151,6 +151,39 @@ class InventoryService
     }
 
     /**
+     * Take a product sold to a guest out of stock, at the average cost. Meant
+     * to run inside the transaction of the charge, after the stay was locked.
+     *
+     * @throws BusinessRuleException
+     */
+    public function registrarVenta(Warehouse $warehouse, Product $product, User $user, Number $quantity, string $reference): InventoryMovement
+    {
+        $this->verificarActivos($warehouse, $product);
+
+        return DB::transaction(fn (): InventoryMovement => $this->registrarMovimiento(
+            $this->bloquearSaldo($warehouse, $product), $warehouse, $product, $user,
+            InventoryMovementType::Sale, InventoryMovementDirection::Out, $quantity, null,
+            ['reference' => $reference],
+        ));
+    }
+
+    /**
+     * Put the stock of a voided sale back, at the cost it left with. It is
+     * accepted even if the product or the warehouse was deactivated since.
+     */
+    public function registrarDevolucionDeVenta(InventoryMovement $saleMovement, User $user, string $reference): InventoryMovement
+    {
+        $saleMovement->loadMissing(['warehouse', 'product']);
+
+        return DB::transaction(fn (): InventoryMovement => $this->registrarMovimiento(
+            $this->bloquearSaldo($saleMovement->warehouse, $saleMovement->product), $saleMovement->warehouse, $saleMovement->product, $user,
+            InventoryMovementType::SaleReturn, InventoryMovementDirection::In,
+            new Number($saleMovement->quantity), new Number($saleMovement->unit_cost),
+            ['reference' => $reference],
+        ));
+    }
+
+    /**
      * Lock the balance of the product in the warehouse, creating it empty the
      * first time. The lock is taken before inserting so concurrent movements
      * of an existing balance always wait on it.
@@ -204,7 +237,8 @@ class InventoryService
 
         if ($direction === InventoryMovementDirection::In) {
             $balanceAfter = $currentQuantity + $quantity;
-            $averageCost = ($currentQuantity * $averageCost + $quantity * $unitCost)->div($balanceAfter, 4);
+            // div() truncates at the given scale: divide with spare digits and round when storing.
+            $averageCost = ($currentQuantity * $averageCost + $quantity * $unitCost)->div($balanceAfter, 10);
         } else {
             if ($quantity > $currentQuantity) {
                 throw BusinessRuleException::existenciasInsuficientes($currentQuantity, $product->unit);

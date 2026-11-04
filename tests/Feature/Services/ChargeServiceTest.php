@@ -77,17 +77,17 @@ describe('registrarCargo', function () {
     ])->throws(BusinessRuleException::class, 'no se puede registrar manualmente');
 
     it('rejects a quantity that is not positive', function () {
-        app(ChargeService::class)->registrarCargo(crearEstadiaParaCargos(), User::factory()->create(), ChargeType::Product, 'Agua', '0', '10.00');
+        app(ChargeService::class)->registrarCargo(crearEstadiaParaCargos(), User::factory()->create(), ChargeType::Service, 'Lavandería', '0', '10.00');
     })->throws(BusinessRuleException::class, 'mayor que cero');
 
     it('rejects a negative unit price', function () {
-        app(ChargeService::class)->registrarCargo(crearEstadiaParaCargos(), User::factory()->create(), ChargeType::Product, 'Agua', '1', '-10.00');
+        app(ChargeService::class)->registrarCargo(crearEstadiaParaCargos(), User::factory()->create(), ChargeType::Service, 'Lavandería', '1', '-10.00');
     })->throws(BusinessRuleException::class, 'no puede ser negativo');
 
     it('rejects a stay that is no longer active', function () {
         $stay = Stay::factory()->finalizada()->create();
 
-        app(ChargeService::class)->registrarCargo($stay, User::factory()->create(), ChargeType::Product, 'Agua', '1', '10.00');
+        app(ChargeService::class)->registrarCargo($stay, User::factory()->create(), ChargeType::Service, 'Lavandería', '1', '10.00');
     })->throws(BusinessRuleException::class, 'no está activa');
 });
 

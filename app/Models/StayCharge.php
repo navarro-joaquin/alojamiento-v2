@@ -22,6 +22,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'quantity',
     'unit_price',
     'total_amount',
+    'product_id',
+    'inventory_movement_id',
     'status',
     'created_by',
     'voided_by',
@@ -83,5 +85,23 @@ class StayCharge extends Model
     public function voidedByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'voided_by');
+    }
+
+    /**
+     * @return BelongsTo<Product, $this>
+     */
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * The sale that took the product out of stock.
+     *
+     * @return BelongsTo<InventoryMovement, $this>
+     */
+    public function inventoryMovement(): BelongsTo
+    {
+        return $this->belongsTo(InventoryMovement::class);
     }
 }

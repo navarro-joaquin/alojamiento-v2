@@ -22,6 +22,7 @@ enum BranchPermission: string
     case VoidExpenses = 'expenses.void';
     case OpenCashSessions = 'cash_sessions.open';
     case CloseCashSessions = 'cash_sessions.close';
+    case ReviewCashSessions = 'cash_sessions.review';
     case UpdateHousekeepingStatus = 'rooms.update_housekeeping';
     case UpdateOperationalStatus = 'rooms.update_operational';
     case ManageRooms = 'rooms.manage';
@@ -55,6 +56,7 @@ enum BranchPermission: string
             self::VoidExpenses => 'Anular gastos',
             self::OpenCashSessions => 'Abrir caja',
             self::CloseCashSessions => 'Cerrar caja',
+            self::ReviewCashSessions => 'Revisar cierres de caja',
             self::UpdateHousekeepingStatus => 'Cambiar estado de limpieza',
             self::UpdateOperationalStatus => 'Cambiar estado operativo',
             self::ManageRooms => 'Gestionar habitaciones',

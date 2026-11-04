@@ -31,6 +31,21 @@ class BusinessRuleException extends Exception
         return new self('La sesión de caja pertenece a otra sucursal.');
     }
 
+    public static function denominacionesNoCoinciden(Number $countedAmount, Number $declaredAmount): self
+    {
+        return new self("El detalle de billetes y monedas suma Bs {$countedAmount}, no Bs {$declaredAmount}.");
+    }
+
+    public static function sesionNoPendienteDeRevision(): self
+    {
+        return new self('La sesión de caja no está pendiente de revisión.');
+    }
+
+    public static function revisionPorQuienCerro(): self
+    {
+        return new self('Quien cerró la caja no puede revisar su propio cierre.');
+    }
+
     public static function estadiaNoActiva(): self
     {
         return new self('La estadía no está activa.');

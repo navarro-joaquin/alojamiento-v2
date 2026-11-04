@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CashSessionStatus;
 use App\Http\Requests\CashRegisterRequest;
 use App\Models\CashRegister;
 use App\Models\CashSession;
@@ -27,6 +28,12 @@ class CashRegisterController extends Controller
         return view('cash-registers.index', [
             'cashRegisters' => $cashRegisters->where('is_active', true),
             'inactiveCashRegisters' => $cashRegisters->where('is_active', false),
+            'sessionsPendingReview' => CashSession::query()
+                ->where('status', CashSessionStatus::PendingReview)
+                ->whereHas('cashRegister', fn ($query) => $query->whereBelongsTo($branch))
+                ->with(['cashRegister', 'closedByUser'])
+                ->orderBy('closed_at')
+                ->get(),
             'recentSessions' => CashSession::query()
                 ->whereHas('cashRegister', fn ($query) => $query->whereBelongsTo($branch))
                 ->whereNotNull('closed_at')

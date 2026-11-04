@@ -50,6 +50,24 @@
         </x-card>
     @endif
 
+    @can('verPendientesDeRevision', [\App\Models\CashSession::class, $activeBranch])
+        <x-card title="Cierres por revisar">
+            @if ($sessionsPendingReview->isEmpty())
+                <p class="text-sm text-gray-600">No hay cierres pendientes de revisión.</p>
+            @else
+                <ul class="flex flex-col gap-2 text-sm">
+                    @foreach ($sessionsPendingReview as $pendingSession)
+                        <li>
+                            <a href="{{ route('cash-sessions.show', $pendingSession) }}" class="underline">{{ $pendingSession->cashRegister->name }}</a>
+                            · cerrada por {{ $pendingSession->closedByUser->name }} el {{ $pendingSession->closed_at->timezone($activeBranch->timezone)->format('d/m/Y H:i') }}
+                            · <span class="font-semibold text-red-700">diferencia Bs {{ $pendingSession->difference_amount }}</span>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+        </x-card>
+    @endcan
+
     <x-card title="Últimos cierres">
         @if ($recentSessions->isEmpty())
             <p class="text-sm text-gray-600">Todavía no hay cierres.</p>

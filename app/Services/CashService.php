@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\CashCountType;
+use App\Enums\CashDenomination;
 use App\Enums\CashMovementDirection;
 use App\Enums\CashMovementType;
 use App\Enums\CashSessionStatus;
@@ -12,6 +14,7 @@ use App\Enums\RefundStatus;
 use App\Enums\StayStatus;
 use App\Exceptions\BusinessRuleException;
 use App\Exceptions\IdempotencyConflictException;
+use App\Models\CashCount;
 use App\Models\CashRegister;
 use App\Models\CashSession;
 use App\Models\Payment;
@@ -190,21 +193,57 @@ class CashService
     }
 
     /**
+     * Count the cash of an open session without closing it, for example at a
+     * shift change. The count only records the difference; it moves no money.
+     *
+     * @param  array<int, int>  $denominations  quantity by value in centavos
+     *
+     * @throws BusinessRuleException
+     */
+    public function registrarArqueo(CashSession $cashSession, User $user, string $declaredAmount, array $denominations = [], ?string $notes = null): CashCount
+    {
+        $declaredAmount = $this->verificarEfectivoContado($declaredAmount, $denominations);
+
+        return DB::transaction(function () use ($cashSession, $user, $declaredAmount, $denominations, $notes): CashCount {
+            $lockedSession = $this->bloquearSesionAbierta($cashSession);
+            $expectedAmount = $this->calcularEfectivoEsperado($lockedSession);
+
+            $cashCount = $lockedSession->cashCounts()->create([
+                'counted_by' => $user->id,
+                'count_type' => CashCountType::Partial,
+                'expected_amount' => (string) $expectedAmount,
+                'declared_amount' => (string) $declaredAmount,
+                'difference_amount' => (string) ($declaredAmount - $expectedAmount),
+                'denominations' => $denominations ?: null,
+                'notes' => $notes,
+                'counted_at' => now(),
+            ]);
+
+            $this->auditService->registrar('cash', 'cash_count.recorded', $cashCount, $user, $lockedSession->cashRegister->branch_id, [
+                'cash_session_id' => $lockedSession->id,
+                'expected_amount' => $cashCount->expected_amount,
+                'declared_amount' => $cashCount->declared_amount,
+                'difference_amount' => $cashCount->difference_amount,
+            ]);
+
+            return $cashCount;
+        });
+    }
+
+    /**
      * Close a session against the cash physically counted. The difference is
      * attributed to the shared session, not to a person; above the branch
      * threshold the session waits for a supervisor review.
      *
+     * @param  array<int, int>  $denominations  quantity by value in centavos
+     *
      * @throws BusinessRuleException
      */
-    public function cerrarSesion(CashSession $cashSession, User $user, string $declaredAmount, ?string $closingNotes = null): CashSession
+    public function cerrarSesion(CashSession $cashSession, User $user, string $declaredAmount, ?string $closingNotes = null, array $denominations = []): CashSession
     {
-        $declaredAmount = (new Number($declaredAmount))->round(2);
+        $declaredAmount = $this->verificarEfectivoContado($declaredAmount, $denominations);
 
-        if ($declaredAmount < 0) {
-            throw BusinessRuleException::importeNegativo();
-        }
-
-        return DB::transaction(function () use ($cashSession, $user, $declaredAmount, $closingNotes): CashSession {
+        return DB::transaction(function () use ($cashSession, $user, $declaredAmount, $closingNotes, $denominations): CashSession {
             $lockedRegister = CashRegister::query()->with('branch')->lockForUpdate()->findOrFail($cashSession->cash_register_id);
             $lockedSession = CashSession::query()->lockForUpdate()->findOrFail($cashSession->id);
 
@@ -229,11 +268,58 @@ class CashService
                 'status' => $absoluteDifference > $threshold ? CashSessionStatus::PendingReview : CashSessionStatus::Closed,
             ]);
 
+            $lockedSession->cashCounts()->create([
+                'counted_by' => $user->id,
+                'count_type' => CashCountType::Closing,
+                'expected_amount' => $lockedSession->expected_amount,
+                'declared_amount' => $lockedSession->declared_amount,
+                'difference_amount' => $lockedSession->difference_amount,
+                'denominations' => $denominations ?: null,
+                'notes' => $closingNotes,
+                'counted_at' => $lockedSession->closed_at,
+            ]);
+
             $this->auditService->registrar('cash', 'cash_session.closed', $lockedSession, $user, $lockedRegister->branch_id, [
                 'expected_amount' => $lockedSession->expected_amount,
                 'declared_amount' => $lockedSession->declared_amount,
                 'difference_amount' => $lockedSession->difference_amount,
                 'status' => $lockedSession->status->value,
+            ]);
+
+            return $lockedSession;
+        });
+    }
+
+    /**
+     * A supervisor other than whoever closed the session accepts its
+     * difference, with notes, and the session is finally closed.
+     *
+     * @throws BusinessRuleException
+     */
+    public function revisarSesion(CashSession $cashSession, User $user, string $reviewNotes): CashSession
+    {
+        return DB::transaction(function () use ($cashSession, $user, $reviewNotes): CashSession {
+            $lockedRegister = CashRegister::query()->lockForUpdate()->findOrFail($cashSession->cash_register_id);
+            $lockedSession = CashSession::query()->lockForUpdate()->findOrFail($cashSession->id);
+
+            if ($lockedSession->status !== CashSessionStatus::PendingReview) {
+                throw BusinessRuleException::sesionNoPendienteDeRevision();
+            }
+
+            if ($lockedSession->closed_by === $user->id) {
+                throw BusinessRuleException::revisionPorQuienCerro();
+            }
+
+            $lockedSession->update([
+                'reviewed_by' => $user->id,
+                'reviewed_at' => now(),
+                'review_notes' => $reviewNotes,
+                'status' => CashSessionStatus::Closed,
+            ]);
+
+            $this->auditService->registrar('cash', 'cash_session.reviewed', $lockedSession, $user, $lockedRegister->branch_id, [
+                'difference_amount' => $lockedSession->difference_amount,
+                'notes' => $reviewNotes,
             ]);
 
             return $lockedSession;
@@ -437,6 +523,32 @@ class CashService
         if ($amount > $maximumDeposit) {
             throw BusinessRuleException::anticipoSuperaTope($maximumDeposit > 0 ? $maximumDeposit : new Number('0.00'));
         }
+    }
+
+    /**
+     * When the bills and coins are detailed, they must add up to the amount.
+     *
+     * @param  array<int, int>  $denominations  quantity by value in centavos
+     *
+     * @throws BusinessRuleException
+     */
+    private function verificarEfectivoContado(string $declaredAmount, array $denominations): Number
+    {
+        $declaredAmount = (new Number($declaredAmount))->round(2);
+
+        if ($declaredAmount < 0) {
+            throw BusinessRuleException::importeNegativo();
+        }
+
+        if ($denominations !== []) {
+            $countedAmount = CashDenomination::sumar($denominations);
+
+            if ($countedAmount != $declaredAmount) {
+                throw BusinessRuleException::denominacionesNoCoinciden($countedAmount, $declaredAmount);
+            }
+        }
+
+        return $declaredAmount;
     }
 
     /**

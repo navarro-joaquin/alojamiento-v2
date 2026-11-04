@@ -336,13 +336,14 @@ Representa la caja física compartida.
 - `declared_amount DECIMAL(12,2)` nullable
 - `difference_amount DECIMAL(12,2)` nullable
 - `closing_notes` nullable
+- `review_notes` nullable
 - `status`: `open`, `closing`, `pending_review`, `closed`
 - `open_register_id` columna generada: `IF(status IN ('open','closing'), cash_register_id, NULL)` con `UNIQUE`
 - `timestamps`
 
 Índices sugeridos: `(cash_register_id, status)` y `(opened_by, opened_at)`. Para evitar dos sesiones abiertas en una caja, bloquear la fila de `cash_registers` dentro de una transacción y verificar si ya existe una sesión abierta; `open_register_id` es la garantía final a nivel de base.
 
-Una sesión pasa a `pending_review` si `|difference_amount|` supera el umbral configurado por sucursal; un usuario con permiso de supervisor la revisa y la marca `closed`.
+Una sesión pasa a `pending_review` si `|difference_amount|` supera el umbral configurado por sucursal; un usuario con permiso `cash_sessions.review`, distinto de quien la cerró, la revisa con observaciones y la marca `closed`.
 
 #### `cash_counts` (arqueos)
 - `id`
@@ -350,8 +351,9 @@ Una sesión pasa a `pending_review` si `|difference_amount|` supera el umbral co
 - `counted_by` → `users.id`
 - `count_type`: `partial` (cambio de turno o control) o `closing`
 - `expected_amount`, `declared_amount`, `difference_amount` `DECIMAL(12,2)`
-- `denominations` JSON nullable (detalle de billetes y monedas)
+- `denominations` JSON nullable (cantidad de billetes y monedas, con el valor en centavos como clave; ver `App\Enums\CashDenomination`)
 - `notes`, `counted_at`
+- `CHECK (declared_amount >= 0)`; índice `(cash_session_id, counted_at)`
 
 Permite registrar arqueos durante la sesión compartida (por ejemplo, en cada cambio de turno) sin cerrarla.
 
@@ -753,7 +755,7 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
 1. ✅ Configurar MySQL para desarrollo y pruebas (sección 13; `phpunit.xml` usa `alojamiento_test`).
 2. ✅ Instalar `spatie/laravel-permission` 8.x (teams con `branch_id`) y `spatie/laravel-activitylog` 5.x.
 3. ✅ Migraciones de la fase 1, con `up()`/`down()`, FK `RESTRICT`, restricciones `CHECK` y columnas generadas únicas: `branches`, `employees`, ALTER `users`, índice por sucursal en `activity_log`, `room_types`, `rooms`, `room_status_logs`, `room_rates`, `guests`, `stays`, `stay_room_assignments`, `stay_guests`, `stay_charges`, `cash_registers`, `cash_sessions`, `payments`, `payment_refunds`, `cash_movements`. Las garantías de base de datos están cubiertas por `tests/Feature/DatabaseConstraintsTest.php`.
-   - Quedan para fases posteriores: `cash_counts`, recibos (fase 2) y las columnas `product_id`/`inventory_movement_id` de `stay_charges` (fase 3, mediante ALTER).
+   - Quedan para fases posteriores: recibos (fase 2) y las columnas `product_id`/`inventory_movement_id` de `stay_charges` (fase 3, mediante ALTER).
 4. ✅ Enums de estados en `app/Enums/` (string-backed, con `etiqueta()` en español). Algunos incluyen reglas: `PaymentMethod::afectaEfectivo()`, `CashSessionStatus::aceptaMovimientos()` y `HousekeepingStatus::permiteAsignacion()`.
 5. ✅ Modelos Eloquent de la fase 1 con relaciones, casts a enums y decimales, scopes (`activas`, `confirmados`, `confirmadas`, `abiertas`) y factories con estados en español. Notas:
    - Morph map estricto en `AppServiceProvider` (`payment`, `payment_refund`, `user`…): las columnas polimórficas guardan alias, no nombres de clase.
@@ -811,7 +813,10 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
    - Un gasto en efectivo sale de una caja abierta de la sucursal cuando se confirma: al registrarlo o, si estaba pendiente, al aprobarlo, desde la caja que elige quien aprueba. Una caja no entrega más efectivo del esperado (prueba de concurrencia: dos gastos que juntos lo superan no pasan los dos). Tarjeta, transferencia y QR no usan caja.
    - Anular un gasto confirmado exige motivo; si fue en efectivo, el dinero vuelve con un movimiento de entrada a la caja abierta que se elija (puede no ser la original si ya cerró).
    - El formulario lleva `operation_uuid`: un doble envío registra un solo gasto. Registro, aprobación, rechazo y anulación quedan auditados.
-4. Arqueos parciales y revisión de las sesiones en `pending_review` (`cash_counts`).
+4. ✅ Arqueos parciales y revisión de cierres (`CashService::registrarArqueo()` y `revisarSesion()`):
+   - En la sesión abierta, quien puede cerrar la caja registra arqueos parciales (por ejemplo, en el cambio de turno): guardan el efectivo esperado, el contado y la diferencia, sin cerrar la caja ni mover dinero. El cierre también deja su arqueo (`count_type = closing`).
+   - El efectivo contado se puede detallar por billetes y monedas bolivianos; en ese caso el importe es su suma, y el servicio rechaza un detalle que no coincida con el importe.
+   - Las sesiones en `pending_review` aparecen en **Cajas → Cierres por revisar** para quien tiene `cash_sessions.review` (supervisor y administrador). La revisión exige observaciones, la hace alguien distinto de quien cerró y deja la sesión `closed`. Arqueos y revisiones quedan auditados.
 5. Recibos internos con numeración correlativa por sucursal y número de factura externa (`receipt_sequences`, `receipts`).
 6. Reportes financieros por fecha de negocio y consulta de auditoría.
 

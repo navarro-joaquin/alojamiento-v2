@@ -3,9 +3,11 @@
 use App\Http\Controllers\ActiveBranchController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\CashCountController;
 use App\Http\Controllers\CashRegisterController;
 use App\Http\Controllers\CashSessionClosingController;
 use App\Http\Controllers\CashSessionController;
+use App\Http\Controllers\CashSessionReviewController;
 use App\Http\Controllers\CheckOutController;
 use App\Http\Controllers\CheckoutExceptionApprovalController;
 use App\Http\Controllers\CheckoutExceptionController;
@@ -88,5 +90,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/cajas/{cashRegister}/sesiones', [CashSessionController::class, 'store'])->name('cash-sessions.store');
         Route::get('/sesiones-de-caja/{cashSession}', [CashSessionController::class, 'show'])->name('cash-sessions.show');
         Route::post('/sesiones-de-caja/{cashSession}/cierre', [CashSessionClosingController::class, 'store'])->name('cash-sessions.close');
+        Route::post('/sesiones-de-caja/{cashSession}/arqueos', [CashCountController::class, 'store'])->name('cash-sessions.counts.store');
+        Route::post('/sesiones-de-caja/{cashSession}/revision', [CashSessionReviewController::class, 'store'])->name('cash-sessions.review');
     });
 });

@@ -37,6 +37,8 @@ class CashSessionController extends Controller
             'cashRegister',
             'openedByUser',
             'closedByUser',
+            'reviewedByUser',
+            'cashCounts' => fn ($query) => $query->with('countedByUser')->orderBy('counted_at')->orderBy('id'),
             'movements' => fn ($query) => $query->with('performedByUser')->orderBy('occurred_at')->orderBy('id'),
         ]);
 

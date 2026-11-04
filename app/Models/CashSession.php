@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'declared_amount',
     'difference_amount',
     'closing_notes',
+    'review_notes',
     'status',
 ])]
 class CashSession extends Model
@@ -108,5 +109,13 @@ class CashSession extends Model
     public function movements(): HasMany
     {
         return $this->hasMany(CashMovement::class);
+    }
+
+    /**
+     * @return HasMany<CashCount, $this>
+     */
+    public function cashCounts(): HasMany
+    {
+        return $this->hasMany(CashCount::class);
     }
 }

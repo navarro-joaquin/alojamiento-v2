@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Branch;
+use App\Models\CashCount;
 use App\Models\CashMovement;
 use App\Models\CashRegister;
 use App\Models\CashSession;
@@ -80,6 +81,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Relation::enforceMorphMap([
             'branch' => Branch::class,
+            'cash_count' => CashCount::class,
             'cash_movement' => CashMovement::class,
             'cash_register' => CashRegister::class,
             'cash_session' => CashSession::class,

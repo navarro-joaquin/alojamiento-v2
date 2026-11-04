@@ -51,7 +51,8 @@
                 @can('cerrar', $cashSession)
                     <form method="POST" action="{{ route('cash-sessions.close', $cashSession) }}" class="flex flex-col gap-3 border-t border-gray-100 pt-4">
                         @csrf
-                        <x-field label="Efectivo contado (Bs)" name="declared_amount" inputmode="decimal" required />
+                        <x-field label="Efectivo contado (Bs)" name="declared_amount" inputmode="decimal" />
+                        @include('cash-sessions.partials.denominations', ['fieldName' => 'denominations'])
                         <label class="flex flex-col gap-1 text-sm font-medium">
                             Observaciones
                             <textarea name="closing_notes" rows="2" class="rounded-md border border-gray-300 px-3 py-2 font-normal">{{ old('closing_notes') }}</textarea>
@@ -61,9 +62,84 @@
                 @endcan
             @else
                 <p class="text-sm text-gray-600">{{ $cashSession->closing_notes ?: 'Sin observaciones.' }}</p>
+
+                @if ($cashSession->reviewedByUser)
+                    <div class="flex flex-col gap-1 border-t border-gray-100 pt-4 text-sm">
+                        <p class="font-medium">Revisada por {{ $cashSession->reviewedByUser->name }} el {{ $cashSession->reviewed_at->timezone($activeBranch->timezone)->format('d/m/Y H:i') }}</p>
+                        <p class="text-gray-600">{{ $cashSession->review_notes }}</p>
+                    </div>
+                @endif
+
+                @if ($cashSession->status === \App\Enums\CashSessionStatus::PendingReview)
+                    @can('revisar', $cashSession)
+                        <form method="POST" action="{{ route('cash-sessions.review', $cashSession) }}" class="flex flex-col gap-3 border-t border-gray-100 pt-4">
+                            @csrf
+                            <p class="text-sm text-gray-600">La diferencia supera el umbral de la sucursal. Revísela y deje constancia de lo que se hizo.</p>
+                            <label class="flex flex-col gap-1 text-sm font-medium">
+                                Observaciones de la revisión
+                                <textarea name="review_notes" rows="2" required class="rounded-md border border-gray-300 px-3 py-2 font-normal">{{ old('review_notes') }}</textarea>
+                            </label>
+                            <x-button>Dar por revisada</x-button>
+                        </form>
+                    @else
+                        <p class="border-t border-gray-100 pt-4 text-sm text-gray-600">Pendiente de que la revise un supervisor distinto de quien la cerró.</p>
+                    @endcan
+                @endif
             @endif
         </x-card>
     </div>
+
+    <x-card title="Arqueos">
+        @if ($cashSession->cashCounts->isEmpty())
+            <p class="text-sm text-gray-600">Todavía no hay arqueos.</p>
+        @else
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="text-gray-500">
+                        <tr>
+                            <th class="py-2 pr-4 font-medium">Hora</th>
+                            <th class="py-2 pr-4 font-medium">Tipo</th>
+                            <th class="py-2 pr-4 font-medium">Usuario</th>
+                            <th class="py-2 pr-4 text-right font-medium">Esperado</th>
+                            <th class="py-2 pr-4 text-right font-medium">Contado</th>
+                            <th class="py-2 pr-4 text-right font-medium">Diferencia</th>
+                            <th class="py-2 font-medium">Observaciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @foreach ($cashSession->cashCounts as $cashCount)
+                            <tr>
+                                <td class="py-2 pr-4">{{ $cashCount->counted_at->timezone($activeBranch->timezone)->format('d/m H:i') }}</td>
+                                <td class="py-2 pr-4">{{ $cashCount->count_type->etiqueta() }}</td>
+                                <td class="py-2 pr-4">{{ $cashCount->countedByUser->name }}</td>
+                                <td class="py-2 pr-4 text-right">Bs {{ $cashCount->expected_amount }}</td>
+                                <td class="py-2 pr-4 text-right">Bs {{ $cashCount->declared_amount }}</td>
+                                <td @class(['py-2 pr-4 text-right', 'font-semibold text-red-700' => $cashCount->difference_amount !== '0.00'])>Bs {{ $cashCount->difference_amount }}</td>
+                                <td class="py-2 text-gray-600">{{ $cashCount->notes }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+
+        @if ($isOpen)
+            @can('registrarArqueo', $cashSession)
+                <form method="POST" action="{{ route('cash-sessions.counts.store', $cashSession) }}" class="flex flex-col gap-3 border-t border-gray-100 pt-4">
+                    @csrf
+                    <p class="text-sm text-gray-600">Un arqueo parcial (por ejemplo, en el cambio de turno) registra la diferencia del momento sin cerrar la caja ni mover dinero.</p>
+                    <div class="grid gap-4 sm:grid-cols-3">
+                        <x-field label="Efectivo contado (Bs)" name="count_declared_amount" inputmode="decimal" />
+                        <x-field label="Observaciones" name="count_notes" />
+                    </div>
+                    @include('cash-sessions.partials.denominations', ['fieldName' => 'count_denominations'])
+                    <div>
+                        <x-button variant="secondary">Registrar arqueo</x-button>
+                    </div>
+                </form>
+            @endcan
+        @endif
+    </x-card>
 
     <x-card title="Movimientos">
         <div class="overflow-x-auto">

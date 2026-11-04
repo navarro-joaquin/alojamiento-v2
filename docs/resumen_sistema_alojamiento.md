@@ -823,7 +823,10 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
    - Numeración correlativa por sucursal con el código como prefijo, sin saltos ni duplicados (prueba de concurrencia: dos emisiones simultáneas reciben números consecutivos). Un pago tiene como máximo un recibo vigente; para corregirlo, un supervisor o administrador (`receipts.void`) lo anula con motivo y se emite otro con número nuevo.
    - En la misma tabla se guarda el número de la factura emitida en el sistema externo (`payments.external_invoice_number`). Emisiones, anulaciones y cambios del número de factura quedan auditados.
    - **Pendiente:** recibos de devoluciones.
-6. Reportes financieros por fecha de negocio y consulta de auditoría.
+6. ✅ Reportes financieros y consulta de auditoría:
+   - **Reportes** (`reports.view`, supervisor y administrador; `FinancialReportService`), para un rango de fechas de negocio (por defecto la actual, hasta 93 días): ocupación (noches vendidas sobre habitaciones × días), cargos y descuentos por tipo, cobros, devoluciones y gastos por método con su neto, gastos por categoría, sesiones de caja con sus diferencias y cobros sin número de factura externa. También lista los saldos pendientes: estadías activas con deuda y estadías finalizadas que salieron con deuda autorizada.
+   - Cargos y gastos se asignan por su fecha de negocio. Cobros y devoluciones, que solo tienen hora, se asignan a la fecha de negocio que va desde la hora de la auditoría nocturna (`lodging.night_audit_hour`) de ese día hasta la misma hora del siguiente; así un cobro a la 01:00 cuenta en la noche que paga.
+   - **Auditoría** (`audit.view`, solo el administrador de la sucursal): consulta de solo lectura del registro de actividad de la sucursal, con filtros por registro, evento y fechas, y el detalle de cada operación. Las operaciones globales (sucursales y cuentas) no tienen sucursal y no aparecen.
 
 ## 11. Criterios mínimos para considerar el módulo financiero seguro
 

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActiveBranchController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\CashCountController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\ExpenseApprovalController;
 use App\Http\Controllers\ExpenseCategoryController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\ExpenseRejectionController;
+use App\Http\Controllers\FinancialReportController;
 use App\Http\Controllers\OccupancyController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentExternalInvoiceController;
@@ -79,6 +81,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/salidas-con-deuda', [CheckoutExceptionController::class, 'index'])->name('checkout-exceptions.index');
         Route::post('/salidas-con-deuda/{checkoutException}/aprobacion', [CheckoutExceptionApprovalController::class, 'store'])->name('checkout-exceptions.approve');
         Route::post('/salidas-con-deuda/{checkoutException}/rechazo', [CheckoutExceptionRejectionController::class, 'store'])->name('checkout-exceptions.reject');
+
+        Route::get('/reportes', [FinancialReportController::class, 'index'])->name('reports.index');
+        Route::get('/auditoria', [AuditLogController::class, 'index'])->name('audit-log.index');
 
         Route::get('/gastos', [ExpenseController::class, 'index'])->name('expenses.index');
         Route::post('/gastos', [ExpenseController::class, 'store'])->name('expenses.store');

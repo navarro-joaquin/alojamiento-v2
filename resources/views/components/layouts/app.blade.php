@@ -24,6 +24,12 @@
                     @can('verGastos', [\App\Models\Expense::class, $activeBranch])
                         <a href="{{ route('expenses.index') }}" @class(['hover:text-gray-900', 'text-gray-900' => request()->routeIs('expenses.*'), 'text-gray-500' => ! request()->routeIs('expenses.*')])>Gastos</a>
                     @endcan
+                    @can('verReportes', $activeBranch)
+                        <a href="{{ route('reports.index') }}" @class(['hover:text-gray-900', 'text-gray-900' => request()->routeIs('reports.*'), 'text-gray-500' => ! request()->routeIs('reports.*')])>Reportes</a>
+                    @endcan
+                    @can('verAuditoria', $activeBranch)
+                        <a href="{{ route('audit-log.index') }}" @class(['hover:text-gray-900', 'text-gray-900' => request()->routeIs('audit-log.*'), 'text-gray-500' => ! request()->routeIs('audit-log.*')])>Auditoría</a>
+                    @endcan
                     @can('gestionar', [\App\Models\Room::class, $activeBranch])
                         <details class="relative">
                             <summary class="cursor-pointer list-none text-gray-500 hover:text-gray-900">Configuración</summary>

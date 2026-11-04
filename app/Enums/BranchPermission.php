@@ -26,17 +26,20 @@ enum BranchPermission: string
     case ReviewCashSessions = 'cash_sessions.review';
     case UpdateHousekeepingStatus = 'rooms.update_housekeeping';
     case UpdateOperationalStatus = 'rooms.update_operational';
+    case ViewReports = 'reports.view';
+    case ViewAuditLog = 'audit.view';
     case ManageRooms = 'rooms.manage';
     case ManageRoomRates = 'room_rates.manage';
     case ManageCashRegisters = 'cash_registers.manage';
     case ManageStaff = 'staff.manage';
 
     /**
-     * Whether the permission configures the branch rather than operating it.
+     * Whether the permission is reserved to the branch admin: it configures or
+     * oversees the branch rather than operating it.
      */
     public function esDeAdministracion(): bool
     {
-        return in_array($this, [self::ManageRooms, self::ManageRoomRates, self::ManageCashRegisters, self::ManageStaff], true);
+        return in_array($this, [self::ViewAuditLog, self::ManageRooms, self::ManageRoomRates, self::ManageCashRegisters, self::ManageStaff], true);
     }
 
     public function etiqueta(): string
@@ -61,6 +64,8 @@ enum BranchPermission: string
             self::ReviewCashSessions => 'Revisar cierres de caja',
             self::UpdateHousekeepingStatus => 'Cambiar estado de limpieza',
             self::UpdateOperationalStatus => 'Cambiar estado operativo',
+            self::ViewReports => 'Ver reportes financieros',
+            self::ViewAuditLog => 'Consultar la auditoría',
             self::ManageRooms => 'Gestionar habitaciones',
             self::ManageRoomRates => 'Gestionar tarifas',
             self::ManageCashRegisters => 'Gestionar cajas',

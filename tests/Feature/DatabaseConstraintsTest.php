@@ -6,6 +6,7 @@ use App\Models\CashSession;
 use App\Models\Expense;
 use App\Models\Guest;
 use App\Models\Payment;
+use App\Models\Product;
 use App\Models\Room;
 use App\Models\Stay;
 use App\Models\StayCharge;
@@ -100,3 +101,11 @@ test('the activity log exposes the branch id from its properties', function () {
 
     expect(DB::table('activity_log')->value('branch_id'))->toBe($stay->branch_id);
 });
+
+test('a product sold to guests needs a sale price', function () {
+    Product::factory()->create(['is_sellable' => true, 'sale_price' => null]);
+})->throws(QueryException::class, 'products_sellable_has_price');
+
+test('a product sale price must be positive', function () {
+    Product::factory()->create(['sale_price' => '0.00']);
+})->throws(QueryException::class, 'products_sale_price_positive');

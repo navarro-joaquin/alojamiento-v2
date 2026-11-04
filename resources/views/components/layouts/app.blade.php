@@ -60,6 +60,9 @@
                         @can('gestionar', [\App\Models\CashRegister::class, $activeBranch])
                             <x-nav-link :href="route('cash-registers.create')" :active="request()->routeIs('cash-registers.create', 'cash-registers.edit')">Nueva caja</x-nav-link>
                         @endcan
+                        @can('gestionar', [\App\Models\Warehouse::class, $activeBranch])
+                            <x-nav-link :href="route('warehouses.index')" :active="request()->routeIs('warehouses.*')">Almacenes</x-nav-link>
+                        @endcan
                         @can('gestionarPersonal', [\App\Models\User::class, $activeBranch])
                             <x-nav-link :href="route('staff-members.index')" :active="request()->routeIs('staff-members.*')">Personal</x-nav-link>
                         @endcan
@@ -73,6 +76,8 @@
                     <x-nav-link :href="route('branches.index')" :active="request()->routeIs('branches.*')">Sucursales</x-nav-link>
                     <x-nav-link :href="route('room-types.index')" :active="request()->routeIs('room-types.*')">Tipos de habitación</x-nav-link>
                     <x-nav-link :href="route('expense-categories.index')" :active="request()->routeIs('expense-categories.*')">Categorías de gasto</x-nav-link>
+                    <x-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')">Productos</x-nav-link>
+                    <x-nav-link :href="route('product-categories.index')" :active="request()->routeIs('product-categories.*')">Categorías de producto</x-nav-link>
                     <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">Usuarios</x-nav-link>
                 </div>
             @endcan

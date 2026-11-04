@@ -90,4 +90,12 @@ class Branch extends Model
     {
         return $this->hasMany(Expense::class);
     }
+
+    /**
+     * @return HasMany<Warehouse, $this>
+     */
+    public function warehouses(): HasMany
+    {
+        return $this->hasMany(Warehouse::class);
+    }
 }

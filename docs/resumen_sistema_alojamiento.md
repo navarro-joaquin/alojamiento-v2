@@ -244,11 +244,12 @@ Reglas:
 
 #### `products`
 - `id`
-- `category_id` nullable → `product_categories.id`
-- `sku` único
+- `product_category_id` nullable → `product_categories.id`
+- `sku` único (en mayúsculas)
 - `name`, `unit`
 - `sale_price DECIMAL(12,2)` nullable (si se vende a huéspedes)
 - `is_sellable`, `is_active`
+- `CHECK`: el precio, si existe, es positivo, y un producto vendible tiene precio.
 
 #### `warehouses`
 - `id`
@@ -827,6 +828,17 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
    - **Reportes** (`reports.view`, supervisor y administrador; `FinancialReportService`), para un rango de fechas de negocio (por defecto la actual, hasta 93 días): ocupación (noches vendidas sobre habitaciones × días), cargos y descuentos por tipo, cobros, devoluciones y gastos por método con su neto, gastos por categoría, sesiones de caja con sus diferencias y cobros sin número de factura externa. También lista los saldos pendientes: estadías activas con deuda y estadías finalizadas que salieron con deuda autorizada.
    - Cargos y gastos se asignan por su fecha de negocio. Cobros y devoluciones, que solo tienen hora, se asignan a la fecha de negocio que va desde la hora de la auditoría nocturna (`lodging.night_audit_hour`) de ese día hasta la misma hora del siguiente; así un cobro a la 01:00 cuenta en la noche que paga.
    - **Auditoría** (`audit.view`, solo el administrador de la sucursal): consulta de solo lectura del registro de actividad de la sucursal, con filtros por registro, evento y fechas, y el detalle de cada operación. Las operaciones globales (sucursales y cuentas) no tienen sucursal y no aparecen.
+
+### Prioridad sugerida dentro de la fase 3
+
+1. ✅ Catálogo de productos y almacenes:
+   - **Productos** y **Categorías de producto** son catálogos globales que gestiona el superadministrador (menú "Administración"), para que existencias y precios sean comparables entre sucursales. El código (SKU) se guarda en mayúsculas y es único. Un producto que se vende a huéspedes necesita precio de venta (validado en el formulario y por `CHECK`).
+   - **Almacenes**: cada sucursal tiene los suyos (por ejemplo, depósito central, minibar, tienda de recepción), con nombre único por sucursal. Los gestiona el admin de la sucursal (`warehouses.manage`, menú "Configuración"); los de otra sucursal responden 404.
+   - Productos y almacenes no se borran: se desactivan y conservan su historial.
+2. Movimientos de inventario (`InventoryService`): entradas con costo, salidas, consumos y ajustes, con costo promedio ponderado y sin saldo negativo. Permisos del almacenero.
+3. Venta de productos a huéspedes desde la ficha de estadía (`stay_charge` + movimiento `sale` en la misma transacción).
+4. Transferencias entre almacenes.
+5. Activos fijos y sus movimientos.
 
 ## 11. Criterios mínimos para considerar el módulo financiero seguro
 

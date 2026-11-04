@@ -22,6 +22,8 @@ use App\Http\Controllers\OccupancyController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentExternalInvoiceController;
 use App\Http\Controllers\PaymentRefundController;
+use App\Http\Controllers\ProductCategoryController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\RoomChangeController;
 use App\Http\Controllers\RoomController;
@@ -37,6 +39,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VoidedExpenseController;
 use App\Http\Controllers\VoidedReceiptController;
 use App\Http\Controllers\VoidedStayChargeController;
+use App\Http\Controllers\WarehouseController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -56,6 +59,8 @@ Route::middleware('auth')->group(function () {
         Route::resource('sucursales', BranchController::class)->except(['show', 'destroy'])->parameters(['sucursales' => 'branch'])->names('branches');
         Route::resource('tipos-de-habitacion', RoomTypeController::class)->except(['show', 'destroy'])->parameters(['tipos-de-habitacion' => 'roomType'])->names('room-types');
         Route::resource('categorias-de-gasto', ExpenseCategoryController::class)->except(['show', 'destroy'])->parameters(['categorias-de-gasto' => 'expenseCategory'])->names('expense-categories');
+        Route::resource('categorias-de-producto', ProductCategoryController::class)->except(['show', 'destroy'])->parameters(['categorias-de-producto' => 'productCategory'])->names('product-categories');
+        Route::resource('productos', ProductController::class)->except(['show', 'destroy'])->parameters(['productos' => 'product'])->names('products');
         Route::resource('usuarios', UserController::class)->except(['show', 'destroy'])->parameters(['usuarios' => 'user'])->names('users');
     });
 
@@ -100,6 +105,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('habitaciones', RoomController::class)->except(['show', 'destroy'])->parameters(['habitaciones' => 'room'])->names('rooms');
         Route::resource('tarifas', RoomRateController::class)->except(['show', 'destroy'])->parameters(['tarifas' => 'roomRate'])->names('room-rates');
         Route::resource('cajas', CashRegisterController::class)->except(['show', 'destroy'])->parameters(['cajas' => 'cashRegister'])->names('cash-registers');
+        Route::resource('almacenes', WarehouseController::class)->except(['show', 'destroy'])->parameters(['almacenes' => 'warehouse'])->names('warehouses');
         Route::get('/personal', [StaffMemberController::class, 'index'])->name('staff-members.index');
         Route::post('/personal', [StaffMemberController::class, 'store'])->name('staff-members.store');
         Route::delete('/personal/{user}', [StaffMemberController::class, 'destroy'])->name('staff-members.destroy');

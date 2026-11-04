@@ -32,6 +32,7 @@ enum BranchPermission: string
     case ManageRoomRates = 'room_rates.manage';
     case ManageCashRegisters = 'cash_registers.manage';
     case ManageStaff = 'staff.manage';
+    case ManageWarehouses = 'warehouses.manage';
 
     /**
      * Whether the permission is reserved to the branch admin: it configures or
@@ -39,7 +40,7 @@ enum BranchPermission: string
      */
     public function esDeAdministracion(): bool
     {
-        return in_array($this, [self::ViewAuditLog, self::ManageRooms, self::ManageRoomRates, self::ManageCashRegisters, self::ManageStaff], true);
+        return in_array($this, [self::ViewAuditLog, self::ManageRooms, self::ManageRoomRates, self::ManageCashRegisters, self::ManageStaff, self::ManageWarehouses], true);
     }
 
     public function etiqueta(): string
@@ -70,6 +71,7 @@ enum BranchPermission: string
             self::ManageRoomRates => 'Gestionar tarifas',
             self::ManageCashRegisters => 'Gestionar cajas',
             self::ManageStaff => 'Gestionar personal',
+            self::ManageWarehouses => 'Gestionar almacenes',
         };
     }
 }

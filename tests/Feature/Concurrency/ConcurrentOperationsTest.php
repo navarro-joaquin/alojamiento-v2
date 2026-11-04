@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\ChargeType;
+use App\Enums\InventoryMovementType;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentType;
 use App\Enums\StayStatus;
@@ -11,16 +12,20 @@ use App\Models\CashRegister;
 use App\Models\CashSession;
 use App\Models\ExpenseCategory;
 use App\Models\Guest;
+use App\Models\InventoryBalance;
 use App\Models\Payment;
+use App\Models\Product;
 use App\Models\ReceiptSequence;
 use App\Models\Room;
 use App\Models\RoomRate;
 use App\Models\Stay;
 use App\Models\StayCharge;
 use App\Models\User;
+use App\Models\Warehouse;
 use App\Services\CashService;
 use App\Services\ChargeService;
 use App\Services\ExpenseService;
+use App\Services\InventoryService;
 use App\Services\NightAuditService;
 use App\Services\ReceiptService;
 use App\Services\ReceptionService;
@@ -345,3 +350,24 @@ function conHoraDeCierreALaMedianoche(Closure $callback): mixed
         unset($_ENV['LODGING_NIGHT_AUDIT_HOUR'], $_SERVER['LODGING_NIGHT_AUDIT_HOUR']);
     }
 }
+
+it('does not let two exits take out more stock than the warehouse holds', function () {
+    $balance = InventoryBalance::factory()->create(['quantity' => '8.000', 'average_cost' => '4.0000']);
+    $warehouseId = $balance->warehouse_id;
+    $productId = $balance->product_id;
+    $userId = User::factory()->create()->id;
+
+    $consumir = static fn () => app(InventoryService::class)->registrarSalida(
+        Warehouse::findOrFail($warehouseId), Product::findOrFail($productId), User::findOrFail($userId),
+        InventoryMovementType::Consumption, '5', (string) Str::uuid(),
+    )->id;
+
+    ['exitosas' => $succeeded, 'fallidas' => $failed] = separarResultados(ConcurrentRace::ejecutar('inventory_balances', $balance->id, [
+        'consumo 1' => $consumir,
+        'consumo 2' => $consumir,
+    ]));
+
+    expect($succeeded)->toHaveCount(1)
+        ->and(array_values($failed))->toBe(['No hay existencias suficientes: quedan 3.000 (unidad).'])
+        ->and($balance->refresh()->quantity)->toBe('3.000');
+});

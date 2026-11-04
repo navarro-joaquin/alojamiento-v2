@@ -5,6 +5,8 @@ use App\Models\CashRegister;
 use App\Models\CashSession;
 use App\Models\Expense;
 use App\Models\Guest;
+use App\Models\InventoryBalance;
+use App\Models\InventoryMovement;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Room;
@@ -109,3 +111,23 @@ test('a product sold to guests needs a sale price', function () {
 test('a product sale price must be positive', function () {
     Product::factory()->create(['sale_price' => '0.00']);
 })->throws(QueryException::class, 'products_sale_price_positive');
+
+test('a product has a single balance per warehouse', function () {
+    $balance = InventoryBalance::factory()->create();
+
+    InventoryBalance::factory()->create(['warehouse_id' => $balance->warehouse_id, 'product_id' => $balance->product_id]);
+})->throws(QueryException::class, 'Duplicate entry');
+
+test('an inventory balance cannot go negative', function () {
+    InventoryBalance::factory()->create(['quantity' => '-0.001']);
+})->throws(QueryException::class, 'inventory_balances_quantity_not_negative');
+
+test('an inventory movement direction must match its type', function () {
+    $movement = InventoryMovement::factory()->create();
+
+    DB::table('inventory_movements')->where('id', $movement->id)->update(['direction' => 'out']);
+})->throws(QueryException::class, 'inventory_movements_direction_matches_type');
+
+test('an inventory movement quantity must be positive', function () {
+    InventoryMovement::factory()->create(['quantity' => '0.000']);
+})->throws(QueryException::class, 'inventory_movements_quantity_positive');

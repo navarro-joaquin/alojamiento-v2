@@ -26,6 +26,9 @@ enum BranchPermission: string
     case ReviewCashSessions = 'cash_sessions.review';
     case UpdateHousekeepingStatus = 'rooms.update_housekeeping';
     case UpdateOperationalStatus = 'rooms.update_operational';
+    case ViewInventory = 'inventory.view';
+    case RegisterInventoryMovements = 'inventory.register';
+    case AdjustInventory = 'inventory.adjust';
     case ViewReports = 'reports.view';
     case ViewAuditLog = 'audit.view';
     case ManageRooms = 'rooms.manage';
@@ -65,6 +68,9 @@ enum BranchPermission: string
             self::ReviewCashSessions => 'Revisar cierres de caja',
             self::UpdateHousekeepingStatus => 'Cambiar estado de limpieza',
             self::UpdateOperationalStatus => 'Cambiar estado operativo',
+            self::ViewInventory => 'Consultar el inventario',
+            self::RegisterInventoryMovements => 'Registrar entradas y salidas de inventario',
+            self::AdjustInventory => 'Ajustar el inventario',
             self::ViewReports => 'Ver reportes financieros',
             self::ViewAuditLog => 'Consultar la auditoría',
             self::ManageRooms => 'Gestionar habitaciones',

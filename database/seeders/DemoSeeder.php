@@ -5,10 +5,13 @@ namespace Database\Seeders;
 use App\Enums\BranchRole;
 use App\Models\Branch;
 use App\Models\CashRegister;
+use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\Room;
 use App\Models\RoomRate;
 use App\Models\RoomType;
 use App\Models\User;
+use App\Models\Warehouse;
 use Illuminate\Database\Seeder;
 
 /**
@@ -31,6 +34,41 @@ class DemoSeeder extends Seeder
 
         $this->crearHabitaciones($branch);
         $this->crearUsuarios($branch);
+        $this->crearInventario($branch);
+    }
+
+    /**
+     * Warehouses and products without stock: entries go through the inventory screen.
+     */
+    private function crearInventario(Branch $branch): void
+    {
+        foreach (['Depósito', 'Minibar'] as $warehouseName) {
+            Warehouse::query()->firstOrCreate(['branch_id' => $branch->id, 'name' => $warehouseName]);
+        }
+
+        $products = [
+            'Bebidas' => [
+                ['sku' => 'AGUA-500', 'name' => 'Agua sin gas 500 ml', 'unit' => 'botella', 'sale_price' => '8.00'],
+                ['sku' => 'GASEOSA-500', 'name' => 'Gaseosa 500 ml', 'unit' => 'botella', 'sale_price' => '10.00'],
+                ['sku' => 'CERVEZA-620', 'name' => 'Cerveza 620 ml', 'unit' => 'botella', 'sale_price' => '25.00'],
+            ],
+            'Amenidades' => [
+                ['sku' => 'JABON-30', 'name' => 'Jabón de tocador 30 g', 'unit' => 'pieza', 'sale_price' => null],
+                ['sku' => 'PAPEL-HIG', 'name' => 'Papel higiénico', 'unit' => 'rollo', 'sale_price' => null],
+            ],
+        ];
+
+        foreach ($products as $categoryName => $definitions) {
+            $productCategory = ProductCategory::query()->firstOrCreate(['name' => $categoryName]);
+
+            foreach ($definitions as $definition) {
+                Product::query()->firstOrCreate(['sku' => $definition['sku']], [
+                    ...$definition,
+                    'product_category_id' => $productCategory->id,
+                    'is_sellable' => $definition['sale_price'] !== null,
+                ]);
+            }
+        }
     }
 
     private function crearHabitaciones(Branch $branch): void
@@ -68,6 +106,7 @@ class DemoSeeder extends Seeder
             'supervisor@alojamiento.test' => ['Supervisión', BranchRole::Supervisor],
             'recepcion@alojamiento.test' => ['Recepción', BranchRole::Receptionist],
             'limpieza@alojamiento.test' => ['Limpieza', BranchRole::Housekeeping],
+            'almacen@alojamiento.test' => ['Almacén', BranchRole::Storekeeper],
         ];
 
         foreach ($users as $email => [$name, $role]) {

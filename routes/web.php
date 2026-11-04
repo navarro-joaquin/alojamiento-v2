@@ -18,6 +18,10 @@ use App\Http\Controllers\ExpenseCategoryController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\ExpenseRejectionController;
 use App\Http\Controllers\FinancialReportController;
+use App\Http\Controllers\InventoryAdjustmentController;
+use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\InventoryEntryController;
+use App\Http\Controllers\InventoryExitController;
 use App\Http\Controllers\OccupancyController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentExternalInvoiceController;
@@ -98,6 +102,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/gastos/{expense}/aprobacion', [ExpenseApprovalController::class, 'store'])->name('expenses.approve');
         Route::post('/gastos/{expense}/rechazo', [ExpenseRejectionController::class, 'store'])->name('expenses.reject');
         Route::post('/gastos/{expense}/anulacion', [VoidedExpenseController::class, 'store'])->name('expenses.void');
+
+        Route::get('/inventario', [InventoryController::class, 'index'])->name('inventory.index');
+        Route::post('/almacenes/{warehouse}/entradas', [InventoryEntryController::class, 'store'])->name('warehouses.entries.store');
+        Route::post('/almacenes/{warehouse}/salidas', [InventoryExitController::class, 'store'])->name('warehouses.exits.store');
+        Route::post('/almacenes/{warehouse}/ajustes', [InventoryAdjustmentController::class, 'store'])->name('warehouses.adjustments.store');
 
         Route::put('/habitaciones/{room}/estado-operativo', [RoomOperationalStatusController::class, 'update'])->name('rooms.operational-status.update');
 

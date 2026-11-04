@@ -12,8 +12,12 @@ use App\Models\Employee;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use App\Models\Guest;
+use App\Models\InventoryBalance;
+use App\Models\InventoryMovement;
 use App\Models\Payment;
 use App\Models\PaymentRefund;
+use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\Receipt;
 use App\Models\ReceiptSequence;
 use App\Models\Room;
@@ -24,6 +28,7 @@ use App\Models\Stay;
 use App\Models\StayCharge;
 use App\Models\StayRoomAssignment;
 use App\Models\User;
+use App\Models\Warehouse;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
@@ -92,9 +97,13 @@ class AppServiceProvider extends ServiceProvider
             'expense' => Expense::class,
             'expense_category' => ExpenseCategory::class,
             'guest' => Guest::class,
+            'inventory_balance' => InventoryBalance::class,
+            'inventory_movement' => InventoryMovement::class,
             'payment' => Payment::class,
             'payment_refund' => PaymentRefund::class,
             'permission' => Permission::class,
+            'product' => Product::class,
+            'product_category' => ProductCategory::class,
             'receipt' => Receipt::class,
             'receipt_sequence' => ReceiptSequence::class,
             'role' => Role::class,
@@ -106,6 +115,7 @@ class AppServiceProvider extends ServiceProvider
             'stay_charge' => StayCharge::class,
             'stay_room_assignment' => StayRoomAssignment::class,
             'user' => User::class,
+            'warehouse' => Warehouse::class,
         ]);
     }
 }

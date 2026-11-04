@@ -40,6 +40,9 @@
                     @can('verGastos', [\App\Models\Expense::class, $activeBranch])
                         <x-nav-link :href="route('expenses.index')" :active="request()->routeIs('expenses.*')">Gastos</x-nav-link>
                     @endcan
+                    @can('verInventario', [\App\Models\InventoryMovement::class, $activeBranch])
+                        <x-nav-link :href="route('inventory.index')" :active="request()->routeIs('inventory.*')">Inventario</x-nav-link>
+                    @endcan
                     @can('verReportes', $activeBranch)
                         <x-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">Reportes</x-nav-link>
                     @endcan

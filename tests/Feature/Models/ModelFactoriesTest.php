@@ -6,6 +6,8 @@ use App\Models\CashRegister;
 use App\Models\CashSession;
 use App\Models\Employee;
 use App\Models\Guest;
+use App\Models\InventoryBalance;
+use App\Models\InventoryMovement;
 use App\Models\Payment;
 use App\Models\PaymentRefund;
 use App\Models\Product;
@@ -52,6 +54,8 @@ test('the factory persists a valid record', function (string $modelClass) {
     'product category' => ProductCategory::class,
     'product' => Product::class,
     'warehouse' => Warehouse::class,
+    'inventory balance' => InventoryBalance::class,
+    'inventory movement' => InventoryMovement::class,
 ]);
 
 test('a stay belongs to the branch of its room', function () {

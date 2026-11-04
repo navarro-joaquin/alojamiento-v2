@@ -26,7 +26,8 @@ enum BranchRole: string
 
     /**
      * Permissions the role grants in the branch where it is assigned.
-     * The storekeeper gets its permissions with inventory (phase 3).
+     * Inventory adjustments are left to supervisors and admins, so whoever
+     * keeps the stock does not also correct its differences.
      *
      * @return list<BranchPermission>
      */
@@ -53,7 +54,10 @@ enum BranchRole: string
             self::Housekeeping => [
                 BranchPermission::UpdateHousekeepingStatus,
             ],
-            self::Storekeeper => [],
+            self::Storekeeper => [
+                BranchPermission::ViewInventory,
+                BranchPermission::RegisterInventoryMovements,
+            ],
         };
     }
 }

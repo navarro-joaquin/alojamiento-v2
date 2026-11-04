@@ -245,4 +245,44 @@ class BusinessRuleException extends Exception
     {
         return new self('La fecha de negocio ya está al día; no corresponde cerrarla todavía.');
     }
+
+    public static function almacenInactivo(): self
+    {
+        return new self('El almacén está inactivo.');
+    }
+
+    public static function productoInactivo(): self
+    {
+        return new self('El producto está inactivo.');
+    }
+
+    public static function cantidadNoPositiva(): self
+    {
+        return new self('La cantidad debe ser mayor que cero.');
+    }
+
+    public static function conteoNegativo(): self
+    {
+        return new self('La cantidad contada no puede ser negativa.');
+    }
+
+    public static function costoNegativo(): self
+    {
+        return new self('El costo unitario no puede ser negativo.');
+    }
+
+    public static function existenciasInsuficientes(Number $availableQuantity, string $unit): self
+    {
+        return new self("No hay existencias suficientes: quedan {$availableQuantity} ({$unit}).");
+    }
+
+    public static function tipoDeSalidaNoPermitido(): self
+    {
+        return new self('Ese tipo de salida no se puede registrar manualmente.');
+    }
+
+    public static function ajusteSinDiferencia(): self
+    {
+        return new self('El conteo coincide con las existencias: no hay nada que ajustar.');
+    }
 }

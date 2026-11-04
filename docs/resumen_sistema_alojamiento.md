@@ -276,7 +276,10 @@ Reglas:
 - `unit_cost DECIMAL(14,4)`
 - `balance_after DECIMAL(14,3)`
 - `inventory_transfer_id` nullable → `inventory_transfers.id`
-- `reference`, `notes`, `timestamps`
+- `reference`, `notes`
+- `operation_uuid` nullable único y `request_hash` (idempotencia de los movimientos manuales)
+- `timestamps`
+- `CHECK`: cantidad positiva, costo y saldo no negativos, y `direction` coherente con el tipo (`entry`/`transfer_in` entran, `exit`/`sale`/`consumption`/`transfer_out` salen, `adjustment` en ambos sentidos). `inventory_balances` tiene `CHECK (quantity >= 0)`.
 
 Cada movimiento y su actualización de saldo deben confirmarse en la misma transacción, bloqueando la fila de `inventory_balances`. Si la política lo exige, rechazar salidas que dejen saldo negativo. Una venta a un huésped crea, en la misma transacción, el `stay_charge` (`product`) y el `inventory_movement` (`sale`).
 
@@ -835,7 +838,13 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
    - **Productos** y **Categorías de producto** son catálogos globales que gestiona el superadministrador (menú "Administración"), para que existencias y precios sean comparables entre sucursales. El código (SKU) se guarda en mayúsculas y es único. Un producto que se vende a huéspedes necesita precio de venta (validado en el formulario y por `CHECK`).
    - **Almacenes**: cada sucursal tiene los suyos (por ejemplo, depósito central, minibar, tienda de recepción), con nombre único por sucursal. Los gestiona el admin de la sucursal (`warehouses.manage`, menú "Configuración"); los de otra sucursal responden 404.
    - Productos y almacenes no se borran: se desactivan y conservan su historial.
-2. Movimientos de inventario (`InventoryService`): entradas con costo, salidas, consumos y ajustes, con costo promedio ponderado y sin saldo negativo. Permisos del almacenero.
+2. ✅ Movimientos de inventario (`InventoryService`: `registrarEntrada()`, `registrarSalida()` y `registrarAjuste()`; pantalla **Inventario**):
+   - Permisos: `inventory.view` e `inventory.register` (almacenero, supervisor y administrador) e `inventory.adjust` (supervisor y administrador): quien custodia las existencias no corrige sus diferencias.
+   - Cada movimiento bloquea la fila de `inventory_balances` (la crea vacía la primera vez, después de intentar bloquearla) y actualiza saldo y costo en la misma transacción. Las existencias nunca quedan negativas: una salida mayor se rechaza en el formulario, y la base lo garantiza con `CHECK` (prueba de concurrencia: dos consumos que juntos superan el saldo no pasan los dos).
+   - Valoración por costo promedio ponderado: cada entrada lo recalcula con su costo unitario; salidas, consumos y ajustes salen al costo promedio vigente y no lo cambian. Con saldo cero se conserva el último costo.
+   - Salidas manuales: `exit` (merma, rotura, devolución al proveedor) y `consumption` (consumo interno, como amenidades), siempre con motivo. Ventas y transferencias no se registran a mano.
+   - El ajuste se hace por conteo físico: se indica la cantidad contada y el sistema registra la diferencia, calculada con el saldo bloqueado; un conteo igual al saldo se rechaza.
+   - Los formularios llevan `operation_uuid`: un doble envío registra un solo movimiento. Todos los movimientos quedan auditados en el registro `inventory`. Producto o almacén inactivos no admiten movimientos.
 3. Venta de productos a huéspedes desde la ficha de estadía (`stay_charge` + movimiento `sale` en la misma transacción).
 4. Transferencias entre almacenes.
 5. Activos fijos y sus movimientos.

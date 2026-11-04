@@ -51,6 +51,36 @@ class BusinessRuleException extends Exception
         return new self('La estadía no está activa.');
     }
 
+    public static function cuentaAnulada(): self
+    {
+        return new self('La cuenta está anulada.');
+    }
+
+    public static function anticipoSoloEnEstadias(): self
+    {
+        return new self('Solo se reciben anticipos de estadías; esta cuenta solo admite el pago de su saldo.');
+    }
+
+    public static function ventaSinProductos(): self
+    {
+        return new self('Indique al menos un producto.');
+    }
+
+    public static function cargoDeVentaDeMostrador(): self
+    {
+        return new self('Los cargos de una venta de mostrador se anulan junto con la venta completa.');
+    }
+
+    public static function ventaDeMostradorYaAnulada(): self
+    {
+        return new self('La venta de mostrador ya está anulada.');
+    }
+
+    public static function noEsVentaDeMostrador(): self
+    {
+        return new self('La cuenta no es una venta de mostrador.');
+    }
+
     public static function estadiaFinalizadaSoloAdmiteSaldo(): self
     {
         return new self('Una estadía finalizada solo admite el cobro de su saldo pendiente, no anticipos.');
@@ -283,7 +313,7 @@ class BusinessRuleException extends Exception
 
     public static function productoNoVendible(): self
     {
-        return new self('El producto no se vende a huéspedes.');
+        return new self('El producto no está a la venta.');
     }
 
     public static function almacenDeOtraSucursal(): self

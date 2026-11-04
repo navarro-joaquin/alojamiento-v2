@@ -3,7 +3,7 @@
         @csrf
         <x-card>
             <p class="text-sm text-gray-600">
-                {{ $payment->payment_type->etiqueta() }} de la habitación {{ $payment->folio->stay->room->room_number }} ·
+                {{ $payment->payment_type->etiqueta() }} · {{ $payment->folio->descripcion() }} ·
                 {{ $payment->payment_method->etiqueta() }} · Bs {{ $payment->amount }}
             </p>
             <div class="grid gap-4 sm:grid-cols-3">
@@ -14,7 +14,7 @@
         </x-card>
         <div class="flex gap-3">
             <x-button>Emitir recibo</x-button>
-            <a href="{{ route('stays.show', $payment->folio->stay) }}" class="inline-flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900">Cancelar</a>
+            <a href="{{ $payment->folio->urlDeDetalle() }}" class="inline-flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900">Cancelar</a>
         </div>
     </form>
 </x-layouts.app>

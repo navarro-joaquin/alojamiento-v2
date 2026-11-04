@@ -34,6 +34,9 @@
                     @can('verCajas', [\App\Models\CashRegister::class, $activeBranch])
                         <x-nav-link :href="route('cash-registers.index')" :active="request()->routeIs('cash-registers.index', 'cash-sessions.*')">Cajas</x-nav-link>
                     @endcan
+                    @can('verVentasDeMostrador', [\App\Models\Folio::class, $activeBranch])
+                        <x-nav-link :href="route('counter-sales.index')" :active="request()->routeIs('counter-sales.*')">Ventas de mostrador</x-nav-link>
+                    @endcan
                     @can('verPendientes', [\App\Models\CheckoutException::class, $activeBranch])
                         <x-nav-link :href="route('checkout-exceptions.index')" :active="request()->routeIs('checkout-exceptions.*')">Salidas con deuda</x-nav-link>
                     @endcan

@@ -98,7 +98,7 @@ it('only sells active products marked for sale', function () {
     $supply = Product::factory()->create();
     InventoryBalance::factory()->for($this->minibar)->for($supply)->create();
 
-    expect(fn () => venderAlHuesped('1', product: $supply))->toThrow(BusinessRuleException::class, 'El producto no se vende a huéspedes.');
+    expect(fn () => venderAlHuesped('1', product: $supply))->toThrow(BusinessRuleException::class, 'El producto no está a la venta.');
 
     $this->product->update(['is_active' => false]);
     expect(fn () => venderAlHuesped('1'))->toThrow(BusinessRuleException::class, 'El producto está inactivo.');

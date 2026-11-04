@@ -158,7 +158,7 @@
             <ul class="flex flex-col gap-1 text-sm">
                 @foreach ($report['paymentsWithoutInvoice'] as $payment)
                     <li>
-                        <a href="{{ route('stays.show', $payment->folio->stay) }}" class="underline">Hab. {{ $payment->folio->stay->room->room_number }}</a>
+                        <a href="{{ $payment->folio->urlDeDetalle() }}" class="underline">{{ $payment->folio->descripcion() }}</a>
                         · {{ $payment->paid_at->timezone($activeBranch->timezone)->format('d/m H:i') }}
                         · {{ $payment->payment_method->etiqueta() }} · Bs {{ $payment->amount }}
                     </li>

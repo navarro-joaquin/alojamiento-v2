@@ -179,41 +179,58 @@ class ChargeService
     }
 
     /**
-     * Void a charge without deleting it. A voided lodging night may be charged
-     * again; a voided product sale returns its stock to the warehouse. A
-     * product the guest did consume is waived with a discount instead.
+     * Void a charge of an active stay without deleting it. A voided lodging
+     * night may be charged again; a voided product sale returns its stock to
+     * the warehouse. A product the guest did consume is waived with a
+     * discount instead. Counter sales are voided as a whole, never per charge.
      *
      * @throws BusinessRuleException
      */
     public function anularCargo(StayCharge $stayCharge, User $user, string $reason): StayCharge
     {
+        if ($stayCharge->stay_id === null) {
+            throw BusinessRuleException::cargoDeVentaDeMostrador();
+        }
+
         return DB::transaction(function () use ($stayCharge, $user, $reason): StayCharge {
             $lockedStay = $this->bloquearEstadiaActiva($stayCharge->stay);
-            $lockedCharge = StayCharge::query()->lockForUpdate()->findOrFail($stayCharge->id);
 
-            if ($lockedCharge->status !== ChargeStatus::Confirmed) {
-                throw BusinessRuleException::cargoNoConfirmado();
-            }
-
-            $lockedCharge->update([
-                'status' => ChargeStatus::Voided,
-                'voided_by' => $user->id,
-                'voided_at' => now(),
-                'void_reason' => $reason,
-            ]);
-
-            if ($lockedCharge->inventory_movement_id !== null) {
-                $this->inventoryService->registrarDevolucionDeVenta($lockedCharge->inventoryMovement, $user, "Anulación del cargo #{$lockedCharge->id}");
-            }
-
-            $this->auditService->registrar('reception', 'stay_charge.voided', $lockedCharge, $user, $lockedStay->branch_id, [
-                'stay_id' => $lockedStay->id,
-                'total_amount' => $lockedCharge->total_amount,
-                'reason' => $reason,
-            ]);
-
-            return $lockedCharge;
+            return $this->anularCargoBloqueado($stayCharge, $user, $reason, $lockedStay->branch_id);
         });
+    }
+
+    /**
+     * Void a charge whose stay or folio the caller already holds locked.
+     *
+     * @throws BusinessRuleException
+     */
+    public function anularCargoBloqueado(StayCharge $stayCharge, User $user, string $reason, int $branchId): StayCharge
+    {
+        $lockedCharge = StayCharge::query()->lockForUpdate()->findOrFail($stayCharge->id);
+
+        if ($lockedCharge->status !== ChargeStatus::Confirmed) {
+            throw BusinessRuleException::cargoNoConfirmado();
+        }
+
+        $lockedCharge->update([
+            'status' => ChargeStatus::Voided,
+            'voided_by' => $user->id,
+            'voided_at' => now(),
+            'void_reason' => $reason,
+        ]);
+
+        if ($lockedCharge->inventory_movement_id !== null) {
+            $this->inventoryService->registrarDevolucionDeVenta($lockedCharge->inventoryMovement, $user, "Anulación del cargo #{$lockedCharge->id}");
+        }
+
+        $this->auditService->registrar('reception', 'stay_charge.voided', $lockedCharge, $user, $branchId, [
+            'folio_id' => $lockedCharge->folio_id,
+            'stay_id' => $lockedCharge->stay_id,
+            'total_amount' => $lockedCharge->total_amount,
+            'reason' => $reason,
+        ]);
+
+        return $lockedCharge;
     }
 
     /**

@@ -371,13 +371,7 @@ class CashService
             throw BusinessRuleException::sesionDeOtraSucursal();
         }
 
-        if ($lockedStay->status === StayStatus::Completed && $paymentType !== PaymentType::Settlement) {
-            throw BusinessRuleException::estadiaFinalizadaSoloAdmiteSaldo();
-        }
-
-        if (! in_array($lockedStay->status, [StayStatus::Active, StayStatus::Completed], true)) {
-            throw BusinessRuleException::estadiaNoActiva();
-        }
+        $this->verificarCuentaCobrable($lockedFolio, $paymentType);
 
         $this->verificarLimiteDePago($lockedFolio, $paymentType, $amount);
 
@@ -403,13 +397,13 @@ class CashService
             'amount' => (string) $amount,
             'affects_cash' => $paymentMethod->afectaEfectivo(),
             'operation_uuid' => $operationUuid,
-            'description' => "Cobro de la estadía #{$lockedStay->id}",
+            'description' => $lockedStay !== null ? "Cobro de la estadía #{$lockedStay->id}" : "Cobro de la {$lockedFolio->descripcion()}",
             'occurred_at' => $payment->paid_at,
         ]);
 
         $this->auditService->registrar('cash', 'payment.collected', $payment, $user, $lockedFolio->branch_id, [
             'folio_id' => $lockedFolio->id,
-            'stay_id' => $lockedStay->id,
+            'stay_id' => $lockedStay?->id,
             'amount' => $payment->amount,
             'payment_method' => $paymentMethod->value,
             'payment_type' => $paymentType->value,
@@ -511,9 +505,39 @@ class CashService
     }
 
     /**
+     * A stay folio takes payments while its stay is active, and only the
+     * settlement of its debt once completed. Deposits are advances on a
+     * stay; other folios only take settlements, and a voided one nothing.
+     *
+     * @throws BusinessRuleException
+     */
+    private function verificarCuentaCobrable(Folio $folio, PaymentType $paymentType): void
+    {
+        if ($folio->estaAnulada()) {
+            throw BusinessRuleException::cuentaAnulada();
+        }
+
+        if ($folio->stay === null) {
+            if ($paymentType !== PaymentType::Settlement) {
+                throw BusinessRuleException::anticipoSoloEnEstadias();
+            }
+
+            return;
+        }
+
+        if ($folio->stay->status === StayStatus::Completed && $paymentType !== PaymentType::Settlement) {
+            throw BusinessRuleException::estadiaFinalizadaSoloAdmiteSaldo();
+        }
+
+        if (! in_array($folio->stay->status, [StayStatus::Active, StayStatus::Completed], true)) {
+            throw BusinessRuleException::estadiaNoActiva();
+        }
+    }
+
+    /**
      * Lock a folio after the stay that owns it, with both loaded.
      */
-    private function bloquearFolio(Folio $folio): Folio
+    public function bloquearFolio(Folio $folio): Folio
     {
         $lockedStay = $folio->stay_id !== null
             ? Stay::query()->with('branch')->lockForUpdate()->findOrFail($folio->stay_id)

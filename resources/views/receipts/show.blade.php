@@ -24,7 +24,13 @@
             </div>
             <div class="flex flex-col gap-1">
                 <dt class="text-gray-500">Concepto</dt>
-                <dd>{{ $receipt->payment->payment_type->etiqueta() }} por alojamiento, habitación {{ $receipt->folio->stay->room->room_number }}</dd>
+                <dd>
+                    @if ($receipt->folio->folio_type === \App\Enums\FolioType::Stay)
+                        {{ $receipt->payment->payment_type->etiqueta() }} por alojamiento, habitación {{ $receipt->folio->stay->room->room_number }}
+                    @else
+                        {{ $receipt->folio->descripcion() }}
+                    @endif
+                </dd>
             </div>
             <div class="flex flex-col gap-1">
                 <dt class="text-gray-500">Forma de pago</dt>
@@ -54,7 +60,7 @@
         @unless ($isVoided)
             <button type="button" onclick="window.print()" class="inline-flex items-center rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-gray-700">Imprimir</button>
         @endunless
-        <a href="{{ route('stays.show', $receipt->folio->stay) }}" class="inline-flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900">Volver a la estadía</a>
+        <a href="{{ $receipt->folio->urlDeDetalle() }}" class="inline-flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900">Volver</a>
 
         @unless ($isVoided)
             @can('anular', $receipt)

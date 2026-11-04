@@ -22,11 +22,11 @@ class ReceiptController extends Controller
         $this->asegurarDeLaSucursalActiva($request, $payment->folio->branch_id);
         Gate::authorize('emitir', [Receipt::class, $payment]);
 
-        $primaryGuest = $payment->folio->stay->guests()->wherePivot('is_primary', true)->first();
+        $primaryGuest = $payment->folio->stay?->guests()->wherePivot('is_primary', true)->first();
 
         return view('receipts.create', [
             'payment' => $payment->load('folio.stay.room'),
-            'holderName' => $primaryGuest ? "{$primaryGuest->first_name} {$primaryGuest->last_name}" : '',
+            'holderName' => $primaryGuest ? "{$primaryGuest->first_name} {$primaryGuest->last_name}" : ($payment->folio->holder_name ?? ''),
             'holderDocument' => $primaryGuest ? $this->formatearDocumento($primaryGuest) : '',
         ]);
     }

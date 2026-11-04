@@ -24,6 +24,6 @@ class PaymentExternalInvoiceController extends Controller
 
         $receiptService->registrarFacturaExterna($payment, $request->user(), $validated['external_invoice_number'] ?? null);
 
-        return redirect()->route('stays.show', $payment->folio->stay)->with('status', 'Número de factura guardado.');
+        return redirect()->to($payment->folio->urlDeDetalle())->with('status', 'Número de factura guardado.');
     }
 }

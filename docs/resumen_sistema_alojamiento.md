@@ -331,6 +331,10 @@ El primer movimiento de cada activo es su alta (sin origen).
 - `stay_id` → `stays.id` nullable, `UNIQUE`: solo y siempre en las cuentas `stay` (`CHECK folios_stay_only_for_stay_type`)
 - `holder_name` nullable (titular de las cuentas sin estadía)
 - `created_by` → `users.id`
+- `operation_uuid` nullable `UNIQUE` y `request_hash`: idempotencia de la venta de mostrador
+- `voided_by` → `users.id`, `voided_at`, `void_reason`: anulación de una venta de mostrador completa
+
+Los cargos de una venta de mostrador no tienen estadía (`stay_charges.stay_id` nullable).
 
 #### `cash_registers`
 - `id`
@@ -887,7 +891,11 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
    - Cada estadía abre su cuenta en el check-in. Cargos, pagos y recibos llevan `folio_id`; los cargos conservan `stay_id` como la estadía de la que provienen, y pagos y recibos dejan de tener `stay_id`.
    - `FolioBalanceService` reemplaza a `StayBalanceService`; cobro, devolución, check-out, excepciones de deuda, recibos y reportes usan el saldo de la cuenta. `CashService::cobrarPago()` recibe la cuenta y bloquea estadía → cuenta.
    - La migración abre una cuenta por cada estadía existente y le pasa sus cargos, pagos y recibos; también se puede revertir.
-2. Ventas de mostrador a personas que no se hospedan.
+2. ✅ Ventas de mostrador a personas que no se hospedan (`CounterSaleService`: `vender()` y `anular()`; pantalla **Ventas de mostrador**):
+   - Quien registra cargos y cobra (`charges.add` y `payments.collect`) elige el almacén de la sucursal, hasta cinco productos vendibles con su cantidad, la caja abierta y el método; el cliente es opcional. En una transacción (bloqueo `cash_sessions` → `folios` → `inventory_balances` por producto) se abre una cuenta `counter`, salen los productos (movimientos `sale`), se crean sus cargos y se cobra el total como `settlement`. Sin existencias suficientes no se vende ni se cobra nada.
+   - El formulario lleva `operation_uuid` (guardado en la cuenta y en el pago): un doble envío devuelve la misma venta, y el mismo UUID con otros datos se rechaza.
+   - Una cuenta sin estadía solo admite pagos de saldo: los anticipos son de estadías. El recibo se emite como cualquier otro, con el cliente como titular.
+   - La venta se anula completa, nunca por cargo (`charges.void` y `payments.refund`, supervisor y administrador): vuelven las existencias (`sale_return`) y se devuelve lo cobrado por el mismo método; el efectivo sale de una caja abierta. Venta y anulación quedan auditadas.
 3. Catálogo de empresas (razón social, NIT, contacto), cada una al contado o a crédito.
 4. Grupos: una cuenta del grupo o empresa recibe las noches de sus habitaciones; los consumos los paga cada huésped en su cuenta.
 5. Cuentas por cobrar de las empresas a crédito.

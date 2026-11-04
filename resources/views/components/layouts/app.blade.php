@@ -6,24 +6,25 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title }} · {{ config('app.name') }}</title>
+    @fonts
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-gray-50 text-gray-900 antialiased lg:flex">
     {{-- On small screens the checkbox shows and hides the sidebar without JavaScript. --}}
     <input type="checkbox" id="sidebar-toggle" class="peer sr-only">
 
-    <div class="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 lg:hidden print:hidden">
-        <a href="{{ route('occupancy.index') }}" class="text-base font-semibold">{{ config('app.name') }}</a>
-        <label for="sidebar-toggle" class="cursor-pointer rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">Menú</label>
+    <div class="flex items-center justify-between bg-ink-800 px-4 py-3 text-white lg:hidden print:hidden">
+        <a href="{{ route('occupancy.index') }}" class="font-serif text-xl font-semibold">{{ config('app.name') }}</a>
+        <label for="sidebar-toggle" class="cursor-pointer rounded-lg border border-ink-500 px-3 py-1.5 text-sm font-semibold text-ink-50 hover:bg-ink-700">Menú</label>
     </div>
 
-    <aside class="hidden w-full shrink-0 flex-col gap-6 border-b border-gray-200 bg-white px-3 py-4 peer-checked:flex lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:overflow-y-auto lg:border-r lg:border-b-0 print:hidden">
-        <a href="{{ route('occupancy.index') }}" class="hidden px-3 text-base font-semibold lg:block">{{ config('app.name') }}</a>
+    <aside class="hidden w-full shrink-0 flex-col gap-6 bg-ink-800 px-4 py-5 text-ink-50 [scrollbar-color:var(--color-ink-600)_transparent] peer-checked:flex lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-68 lg:overflow-y-auto print:hidden">
+        <a href="{{ route('occupancy.index') }}" class="hidden px-3 font-serif text-2xl font-semibold tracking-tight text-white lg:block">{{ config('app.name') }}</a>
 
         @isset($activeBranch)
-            <a href="{{ route('active-branch.edit') }}" class="flex flex-col rounded-md bg-gray-100 px-3 py-2 text-sm hover:bg-gray-200">
-                <span class="font-medium text-gray-900">{{ $activeBranch->name }}</span>
-                <span class="text-gray-600">Fecha de negocio {{ $activeBranch->current_business_date->format('d/m/Y') }}</span>
+            <a href="{{ route('active-branch.edit') }}" class="flex flex-col gap-0.5 rounded-lg bg-ink-900 px-3 py-2.5 text-sm ring-1 ring-ink-700 hover:bg-ink-950">
+                <span class="text-base font-semibold text-white">{{ $activeBranch->name }}</span>
+                <span class="text-ink-200">Fecha de negocio {{ $activeBranch->current_business_date->format('d/m/Y') }}</span>
             </a>
         @endisset
 
@@ -64,7 +65,7 @@
             @isset($activeBranch)
                 @can('gestionar', [\App\Models\Room::class, $activeBranch])
                     <div class="flex flex-col gap-1">
-                        <h2 class="px-3 text-xs font-semibold tracking-wide text-gray-500 uppercase">Configuración</h2>
+                        <h2 class="px-3 pb-1 text-xs font-semibold tracking-wider text-ink-200 uppercase">Configuración</h2>
                         <x-nav-link :href="route('rooms.index')" :active="request()->routeIs('rooms.*')">Habitaciones</x-nav-link>
                         @can('gestionar', [\App\Models\RoomRate::class, $activeBranch])
                             <x-nav-link :href="route('room-rates.index')" :active="request()->routeIs('room-rates.*')">Tarifas</x-nav-link>
@@ -84,7 +85,7 @@
 
             @can('gestionar', \App\Models\Branch::class)
                 <div class="flex flex-col gap-1">
-                    <h2 class="px-3 text-xs font-semibold tracking-wide text-gray-500 uppercase">Administración</h2>
+                    <h2 class="px-3 pb-1 text-xs font-semibold tracking-wider text-ink-200 uppercase">Administración</h2>
                     <x-nav-link :href="route('branches.index')" :active="request()->routeIs('branches.*')">Sucursales</x-nav-link>
                     <x-nav-link :href="route('room-types.index')" :active="request()->routeIs('room-types.*')">Tipos de habitación</x-nav-link>
                     <x-nav-link :href="route('expense-categories.index')" :active="request()->routeIs('expense-categories.*')">Categorías de gasto</x-nav-link>
@@ -95,25 +96,28 @@
             @endcan
         </nav>
 
-        <div class="flex items-center justify-between gap-3 border-t border-gray-200 px-3 pt-4 text-sm lg:mt-auto">
-            <span class="truncate text-gray-600">{{ auth()->user()->name }}</span>
+        <div class="flex items-center justify-between gap-3 border-t border-ink-700 px-3 pt-4 text-sm lg:mt-auto">
+            <span class="truncate text-ink-100">{{ auth()->user()->name }}</span>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit" class="text-gray-500 hover:text-gray-900">Salir</button>
+                <button type="submit" class="font-semibold text-ink-200 underline-offset-4 hover:text-white hover:underline">Salir</button>
             </form>
         </div>
     </aside>
 
     <main class="min-w-0 flex-1">
-        <div class="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 lg:px-8">
-            <h1 class="text-xl font-semibold">{{ $title }}</h1>
+        <div class="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 lg:px-10 lg:py-8">
+            <header class="flex flex-col gap-3 pb-2">
+                <h1 class="font-serif text-3xl font-semibold tracking-tight text-ink-900 lg:text-[2.625rem]">{{ $title }}</h1>
+                <div class="guilloche-rule print:hidden" aria-hidden="true"></div>
+            </header>
 
             @if (session('status'))
-                <div class="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 print:hidden" role="status">{{ session('status') }}</div>
+                <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-base text-emerald-900 print:hidden" role="status">{{ session('status') }}</div>
             @endif
 
             @if ($errors->any())
-                <div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+                <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-base text-red-900" role="alert">
                     <ul class="flex list-inside list-disc flex-col gap-1">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>

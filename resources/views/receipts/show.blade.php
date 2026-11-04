@@ -38,7 +38,7 @@
             </div>
             <div class="flex flex-col gap-1">
                 <dt class="text-gray-500">Importe</dt>
-                <dd @class(['text-lg font-semibold', 'line-through' => $isVoided])>Bs {{ $receipt->amount }}</dd>
+                <dd @class(['figures text-2xl', 'line-through' => $isVoided])>Bs {{ $receipt->amount }}</dd>
             </div>
         </dl>
 
@@ -50,7 +50,7 @@
         </p>
 
         @if ($isVoided)
-            <p class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+            <p class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
                 Anulado por {{ $receipt->voidedByUser->name }} el {{ $receipt->voided_at->timezone($receipt->branch->timezone)->format('d/m/Y H:i') }}: {{ $receipt->void_reason }}
             </p>
         @endif
@@ -58,7 +58,7 @@
 
     <div class="flex flex-wrap items-start gap-4 print:hidden">
         @unless ($isVoided)
-            <button type="button" onclick="window.print()" class="inline-flex items-center rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-gray-700">Imprimir</button>
+            <button type="button" onclick="window.print()" class="inline-flex items-center rounded-lg bg-denom-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-denom-800">Imprimir</button>
         @endunless
         <a href="{{ $receipt->folio->urlDeDetalle() }}" class="inline-flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900">Volver</a>
 
@@ -68,7 +68,7 @@
                     @csrf
                     <label class="sr-only" for="void-reason">Motivo de la anulación</label>
                     <input id="void-reason" name="void_reason" required placeholder="Motivo de la anulación"
-                        class="w-64 rounded-md border border-gray-300 px-3 py-2 text-sm">
+                        class="w-64 rounded-lg border border-gray-300 px-3 py-2 text-sm">
                     <x-button variant="danger">Anular recibo</x-button>
                 </form>
             @endcan

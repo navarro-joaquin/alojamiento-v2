@@ -45,7 +45,7 @@
 
         <x-card title="{{ $isOpen ? 'Efectivo esperado' : 'Sesión cerrada' }}">
             @if ($isOpen)
-                <p class="text-3xl font-semibold">Bs {{ $expectedCash }}</p>
+                <p class="figures text-4xl text-ink-900">Bs {{ $expectedCash }}</p>
                 <p class="text-sm text-gray-600">Fondo inicial más entradas y menos salidas en efectivo.</p>
 
                 @can('cerrar', $cashSession)
@@ -55,7 +55,7 @@
                         @include('cash-sessions.partials.denominations', ['fieldName' => 'denominations'])
                         <label class="flex flex-col gap-1 text-sm font-medium">
                             Observaciones
-                            <textarea name="closing_notes" rows="2" class="rounded-md border border-gray-300 px-3 py-2 font-normal">{{ old('closing_notes') }}</textarea>
+                            <textarea name="closing_notes" rows="2" class="rounded-lg border border-gray-300 px-3 py-2 font-normal">{{ old('closing_notes') }}</textarea>
                         </label>
                         <x-button>Cerrar caja</x-button>
                     </form>
@@ -77,7 +77,7 @@
                             <p class="text-sm text-gray-600">La diferencia supera el umbral de la sucursal. Revísela y deje constancia de lo que se hizo.</p>
                             <label class="flex flex-col gap-1 text-sm font-medium">
                                 Observaciones de la revisión
-                                <textarea name="review_notes" rows="2" required class="rounded-md border border-gray-300 px-3 py-2 font-normal">{{ old('review_notes') }}</textarea>
+                                <textarea name="review_notes" rows="2" required class="rounded-lg border border-gray-300 px-3 py-2 font-normal">{{ old('review_notes') }}</textarea>
                             </label>
                             <x-button>Dar por revisada</x-button>
                         </form>
@@ -95,15 +95,15 @@
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
-                    <thead class="text-gray-500">
+                    <thead class="border-b border-gray-300 text-ink-600">
                         <tr>
-                            <th class="py-2 pr-4 font-medium">Hora</th>
-                            <th class="py-2 pr-4 font-medium">Tipo</th>
-                            <th class="py-2 pr-4 font-medium">Usuario</th>
-                            <th class="py-2 pr-4 text-right font-medium">Esperado</th>
-                            <th class="py-2 pr-4 text-right font-medium">Contado</th>
-                            <th class="py-2 pr-4 text-right font-medium">Diferencia</th>
-                            <th class="py-2 font-medium">Observaciones</th>
+                            <th class="py-2 pr-4 font-semibold">Hora</th>
+                            <th class="py-2 pr-4 font-semibold">Tipo</th>
+                            <th class="py-2 pr-4 font-semibold">Usuario</th>
+                            <th class="py-2 pr-4 text-right font-semibold">Esperado</th>
+                            <th class="py-2 pr-4 text-right font-semibold">Contado</th>
+                            <th class="py-2 pr-4 text-right font-semibold">Diferencia</th>
+                            <th class="py-2 font-semibold">Observaciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -144,14 +144,14 @@
     <x-card title="Movimientos">
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">
-                <thead class="text-gray-500">
+                <thead class="border-b border-gray-300 text-ink-600">
                     <tr>
-                        <th class="py-2 pr-4 font-medium">Hora</th>
-                        <th class="py-2 pr-4 font-medium">Tipo</th>
-                        <th class="py-2 pr-4 font-medium">Descripción</th>
-                        <th class="py-2 pr-4 font-medium">Método</th>
-                        <th class="py-2 pr-4 font-medium">Usuario</th>
-                        <th class="py-2 text-right font-medium">Importe</th>
+                        <th class="py-2 pr-4 font-semibold">Hora</th>
+                        <th class="py-2 pr-4 font-semibold">Tipo</th>
+                        <th class="py-2 pr-4 font-semibold">Descripción</th>
+                        <th class="py-2 pr-4 font-semibold">Método</th>
+                        <th class="py-2 pr-4 font-semibold">Usuario</th>
+                        <th class="py-2 text-right font-semibold">Importe</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">

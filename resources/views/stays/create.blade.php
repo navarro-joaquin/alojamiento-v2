@@ -30,7 +30,7 @@
             </div>
             <label class="flex flex-col gap-1 text-sm font-medium">
                 Observaciones
-                <textarea name="notes" rows="2" class="rounded-md border border-gray-300 px-3 py-2 font-normal">{{ old('notes') }}</textarea>
+                <textarea name="notes" rows="2" class="rounded-lg border border-gray-300 px-3 py-2 font-normal">{{ old('notes') }}</textarea>
             </label>
         </x-card>
 

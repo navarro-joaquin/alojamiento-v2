@@ -7,7 +7,7 @@
                 {{ $denomination->etiqueta() }}
                 <input type="number" name="{{ $fieldName }}[{{ $denomination->value }}]" min="0" step="1"
                     value="{{ old("{$fieldName}.{$denomination->value}") }}"
-                    class="rounded-md border border-gray-300 px-2 py-1 font-normal">
+                    class="rounded-lg border border-gray-300 px-2 py-1 font-normal">
             </label>
         @endforeach
     </div>

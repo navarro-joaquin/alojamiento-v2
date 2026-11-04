@@ -15,12 +15,12 @@
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
-                    <thead class="text-gray-500">
+                    <thead class="border-b border-gray-300 text-ink-600">
                         <tr>
-                            <th class="py-2 pr-4 font-medium">Nombre</th>
-                            <th class="py-2 pr-4 font-medium">Correo</th>
-                            <th class="py-2 pr-4 font-medium">Rol</th>
-                            <th class="py-2 font-medium"><span class="sr-only">Acciones</span></th>
+                            <th class="py-2 pr-4 font-semibold">Nombre</th>
+                            <th class="py-2 pr-4 font-semibold">Correo</th>
+                            <th class="py-2 pr-4 font-semibold">Rol</th>
+                            <th class="py-2 font-semibold"><span class="sr-only">Acciones</span></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">

@@ -34,14 +34,14 @@
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
-                    <thead class="text-gray-500">
+                    <thead class="border-b border-gray-300 text-ink-600">
                         <tr>
-                            <th class="py-2 pr-4 font-medium">Fecha</th>
-                            <th class="py-2 pr-4 font-medium">Gasto</th>
-                            <th class="py-2 pr-4 font-medium">Método</th>
-                            <th class="py-2 pr-4 font-medium">Registró</th>
-                            <th class="py-2 pr-4 text-right font-medium">Importe</th>
-                            <th class="py-2 font-medium"><span class="sr-only">Acciones</span></th>
+                            <th class="py-2 pr-4 font-semibold">Fecha</th>
+                            <th class="py-2 pr-4 font-semibold">Gasto</th>
+                            <th class="py-2 pr-4 font-semibold">Método</th>
+                            <th class="py-2 pr-4 font-semibold">Registró</th>
+                            <th class="py-2 pr-4 text-right font-semibold">Importe</th>
+                            <th class="py-2 font-semibold"><span class="sr-only">Acciones</span></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 align-top">
@@ -61,7 +61,7 @@
                                             @csrf
                                             @if ($expense->payment_method->afectaEfectivo())
                                                 <label class="sr-only" for="approval-cash-session-{{ $expense->id }}">Caja de la que sale</label>
-                                                <select id="approval-cash-session-{{ $expense->id }}" name="approval_cash_session_id" class="rounded-md border border-gray-300 px-2 py-1 text-sm">
+                                                <select id="approval-cash-session-{{ $expense->id }}" name="approval_cash_session_id" class="rounded-lg border border-gray-300 px-2 py-1 text-sm">
                                                     @foreach ($cashSessionOptions as $cashSessionId => $cashRegisterName)
                                                         <option value="{{ $cashSessionId }}">{{ $cashRegisterName }}</option>
                                                     @endforeach
@@ -75,7 +75,7 @@
                                             @csrf
                                             <label class="sr-only" for="rejection-notes-{{ $expense->id }}">Motivo del rechazo</label>
                                             <input id="rejection-notes-{{ $expense->id }}" name="rejection_notes" required placeholder="Motivo"
-                                                class="w-32 rounded-md border border-gray-300 px-2 py-1 text-sm">
+                                                class="w-32 rounded-lg border border-gray-300 px-2 py-1 text-sm">
                                             <x-button variant="secondary" class="py-1">Rechazar</x-button>
                                         </form>
                                     @endcan
@@ -94,15 +94,15 @@
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
-                    <thead class="text-gray-500">
+                    <thead class="border-b border-gray-300 text-ink-600">
                         <tr>
-                            <th class="py-2 pr-4 font-medium">Fecha</th>
-                            <th class="py-2 pr-4 font-medium">Gasto</th>
-                            <th class="py-2 pr-4 font-medium">Método</th>
-                            <th class="py-2 pr-4 font-medium">Registró</th>
-                            <th class="py-2 pr-4 font-medium">Estado</th>
-                            <th class="py-2 pr-4 text-right font-medium">Importe</th>
-                            <th class="py-2 font-medium"><span class="sr-only">Acciones</span></th>
+                            <th class="py-2 pr-4 font-semibold">Fecha</th>
+                            <th class="py-2 pr-4 font-semibold">Gasto</th>
+                            <th class="py-2 pr-4 font-semibold">Método</th>
+                            <th class="py-2 pr-4 font-semibold">Registró</th>
+                            <th class="py-2 pr-4 font-semibold">Estado</th>
+                            <th class="py-2 pr-4 text-right font-semibold">Importe</th>
+                            <th class="py-2 font-semibold"><span class="sr-only">Acciones</span></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 align-top">
@@ -139,7 +139,7 @@
                                                 @csrf
                                                 @if ($expense->payment_method->afectaEfectivo())
                                                     <label class="sr-only" for="void-cash-session-{{ $expense->id }}">Caja a la que vuelve</label>
-                                                    <select id="void-cash-session-{{ $expense->id }}" name="void_cash_session_id" class="rounded-md border border-gray-300 px-2 py-1 text-sm">
+                                                    <select id="void-cash-session-{{ $expense->id }}" name="void_cash_session_id" class="rounded-lg border border-gray-300 px-2 py-1 text-sm">
                                                         @foreach ($cashSessionOptions as $cashSessionId => $cashRegisterName)
                                                             <option value="{{ $cashSessionId }}" @selected($cashSessionId === $expense->cash_session_id)>{{ $cashRegisterName }}</option>
                                                         @endforeach
@@ -147,7 +147,7 @@
                                                 @endif
                                                 <label class="sr-only" for="void-reason-{{ $expense->id }}">Motivo de la anulación</label>
                                                 <input id="void-reason-{{ $expense->id }}" name="void_reason" required placeholder="Motivo"
-                                                    class="w-32 rounded-md border border-gray-300 px-2 py-1 text-sm">
+                                                    class="w-32 rounded-lg border border-gray-300 px-2 py-1 text-sm">
                                                 <x-button variant="secondary" class="py-1">Anular</x-button>
                                             </form>
                                         @endcan

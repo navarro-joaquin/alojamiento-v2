@@ -3,7 +3,7 @@
 
     @if ($canManageRegisters)
         <div>
-            <a href="{{ route('cash-registers.create') }}" class="inline-flex rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-gray-700">Nueva caja</a>
+            <a href="{{ route('cash-registers.create') }}" class="inline-flex rounded-lg bg-denom-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-denom-800">Nueva caja</a>
         </div>
     @endif
 
@@ -74,13 +74,13 @@
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
-                    <thead class="text-gray-500">
+                    <thead class="border-b border-gray-300 text-ink-600">
                         <tr>
-                            <th class="py-2 pr-4 font-medium">Caja</th>
-                            <th class="py-2 pr-4 font-medium">Cierre</th>
-                            <th class="py-2 pr-4 font-medium">Cerrada por</th>
-                            <th class="py-2 pr-4 text-right font-medium">Diferencia</th>
-                            <th class="py-2 font-medium">Estado</th>
+                            <th class="py-2 pr-4 font-semibold">Caja</th>
+                            <th class="py-2 pr-4 font-semibold">Cierre</th>
+                            <th class="py-2 pr-4 font-semibold">Cerrada por</th>
+                            <th class="py-2 pr-4 text-right font-semibold">Diferencia</th>
+                            <th class="py-2 font-semibold">Estado</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">

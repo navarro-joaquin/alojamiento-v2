@@ -5,15 +5,15 @@
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
-                    <thead class="text-gray-500">
+                    <thead class="border-b border-gray-300 text-ink-600">
                         <tr>
-                            <th class="py-2 pr-4 font-medium">Habitación</th>
-                            <th class="py-2 pr-4 font-medium">Huésped</th>
-                            <th class="py-2 pr-4 font-medium">Solicitud</th>
-                            <th class="py-2 pr-4 text-right font-medium">Deuda solicitada</th>
-                            <th class="py-2 pr-4 text-right font-medium">Deuda actual</th>
-                            <th class="py-2 pr-4 font-medium">Estado</th>
-                            <th class="py-2 font-medium"><span class="sr-only">Acciones</span></th>
+                            <th class="py-2 pr-4 font-semibold">Habitación</th>
+                            <th class="py-2 pr-4 font-semibold">Huésped</th>
+                            <th class="py-2 pr-4 font-semibold">Solicitud</th>
+                            <th class="py-2 pr-4 text-right font-semibold">Deuda solicitada</th>
+                            <th class="py-2 pr-4 text-right font-semibold">Deuda actual</th>
+                            <th class="py-2 pr-4 font-semibold">Estado</th>
+                            <th class="py-2 font-semibold"><span class="sr-only">Acciones</span></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 align-top">
@@ -57,7 +57,7 @@
                                             @csrf
                                             <label class="sr-only" for="rejection-notes-{{ $checkoutException->id }}">Motivo del rechazo</label>
                                             <input id="rejection-notes-{{ $checkoutException->id }}" name="rejection_notes" required placeholder="Motivo"
-                                                class="w-32 rounded-md border border-gray-300 px-2 py-1 text-sm">
+                                                class="w-32 rounded-lg border border-gray-300 px-2 py-1 text-sm">
                                             <x-button variant="secondary" class="py-1">
                                                 {{ $checkoutException->status === \App\Enums\CheckoutExceptionStatus::Requested ? 'Rechazar' : 'Revocar' }}
                                             </x-button>

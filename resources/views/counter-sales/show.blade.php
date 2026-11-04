@@ -32,7 +32,7 @@
             </div>
         </dl>
         @if ($isVoided)
-            <p class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+            <p class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
                 Anulada por {{ $counterSale->voidedByUser->name }} el {{ $counterSale->voided_at->timezone($activeBranch->timezone)->format('d/m/Y H:i') }}: {{ $counterSale->void_reason }}
             </p>
         @endif
@@ -41,12 +41,12 @@
     <x-card title="Productos">
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">
-                <thead class="text-gray-500">
+                <thead class="border-b border-gray-300 text-ink-600">
                     <tr>
-                        <th class="py-2 pr-4 font-medium">Producto</th>
-                        <th class="py-2 pr-4 text-right font-medium">Cantidad</th>
-                        <th class="py-2 pr-4 text-right font-medium">Precio</th>
-                        <th class="py-2 text-right font-medium">Importe</th>
+                        <th class="py-2 pr-4 font-semibold">Producto</th>
+                        <th class="py-2 pr-4 text-right font-semibold">Cantidad</th>
+                        <th class="py-2 pr-4 text-right font-semibold">Precio</th>
+                        <th class="py-2 text-right font-semibold">Importe</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -66,13 +66,13 @@
     <x-card title="Pagos">
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">
-                <thead class="text-gray-500">
+                <thead class="border-b border-gray-300 text-ink-600">
                     <tr>
-                        <th class="py-2 pr-4 font-medium">Método</th>
-                        <th class="py-2 pr-4 font-medium">Caja</th>
-                        <th class="py-2 pr-4 text-right font-medium">Importe</th>
-                        <th class="py-2 pr-4 text-right font-medium">Devuelto</th>
-                        <th class="py-2 font-medium">Recibo</th>
+                        <th class="py-2 pr-4 font-semibold">Método</th>
+                        <th class="py-2 pr-4 font-semibold">Caja</th>
+                        <th class="py-2 pr-4 text-right font-semibold">Importe</th>
+                        <th class="py-2 pr-4 text-right font-semibold">Devuelto</th>
+                        <th class="py-2 font-semibold">Recibo</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">

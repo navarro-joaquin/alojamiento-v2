@@ -1,0 +1,668 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-04T19:14:32.516Z",
+  "title": "Design System: Alojamiento",
+  "extensions": {
+    "colorMeta": {
+      "ink-sidebar": {
+        "role": "secondary",
+        "displayName": "Tinta de la barra",
+        "canonical": "#24305e",
+        "tonalRamp": [
+          "#121935",
+          "#1b2449",
+          "#24305e",
+          "#2d3866",
+          "#4c588c",
+          "#8e98c2",
+          "#d9ddec",
+          "#eef0f7"
+        ]
+      },
+      "ink-deep": {
+        "role": "secondary",
+        "displayName": "Tinta profunda",
+        "canonical": "#1b2449",
+        "tonalRamp": [
+          "#121935",
+          "#1b2449",
+          "#24305e",
+          "#2d3866",
+          "#4c588c",
+          "#8e98c2",
+          "#d9ddec",
+          "#eef0f7"
+        ]
+      },
+      "ink-night": {
+        "role": "secondary",
+        "displayName": "Tinta nocturna",
+        "canonical": "#121935",
+        "tonalRamp": [
+          "#121935",
+          "#1b2449",
+          "#24305e",
+          "#2d3866",
+          "#4c588c",
+          "#8e98c2",
+          "#d9ddec",
+          "#eef0f7"
+        ]
+      },
+      "ink-hover": {
+        "role": "secondary",
+        "displayName": "Tinta de hover",
+        "canonical": "#2d3866",
+        "tonalRamp": [
+          "#121935",
+          "#1b2449",
+          "#24305e",
+          "#2d3866",
+          "#4c588c",
+          "#8e98c2",
+          "#d9ddec",
+          "#eef0f7"
+        ]
+      },
+      "ink-mist": {
+        "role": "secondary",
+        "displayName": "Niebla de tinta",
+        "canonical": "#d9ddec",
+        "tonalRamp": [
+          "#121935",
+          "#1b2449",
+          "#24305e",
+          "#2d3866",
+          "#4c588c",
+          "#8e98c2",
+          "#d9ddec",
+          "#eef0f7"
+        ]
+      },
+      "ink-wash": {
+        "role": "secondary",
+        "displayName": "Lavado de tinta",
+        "canonical": "#eef0f7",
+        "tonalRamp": [
+          "#121935",
+          "#1b2449",
+          "#24305e",
+          "#2d3866",
+          "#4c588c",
+          "#8e98c2",
+          "#d9ddec",
+          "#eef0f7"
+        ]
+      },
+      "denom-violet": {
+        "role": "primary",
+        "displayName": "Morado de denominación",
+        "canonical": "#6a3d8f",
+        "tonalRamp": [
+          "#40235a",
+          "#552f74",
+          "#6a3d8f",
+          "#7a4ba3",
+          "#b896d4",
+          "#d6c2e8",
+          "#ebe0f4",
+          "#f5f0fa"
+        ]
+      },
+      "denom-violet-deep": {
+        "role": "primary",
+        "displayName": "Morado de denominación profundo",
+        "canonical": "#552f74",
+        "tonalRamp": [
+          "#40235a",
+          "#552f74",
+          "#6a3d8f",
+          "#7a4ba3",
+          "#b896d4",
+          "#d6c2e8",
+          "#ebe0f4",
+          "#f5f0fa"
+        ]
+      },
+      "denom-focus": {
+        "role": "primary",
+        "displayName": "Morado de foco",
+        "canonical": "#7a4ba3",
+        "tonalRamp": [
+          "#40235a",
+          "#552f74",
+          "#6a3d8f",
+          "#7a4ba3",
+          "#b896d4",
+          "#d6c2e8",
+          "#ebe0f4",
+          "#f5f0fa"
+        ]
+      },
+      "denom-selection": {
+        "role": "primary",
+        "displayName": "Morado de selección",
+        "canonical": "#d6c2e8",
+        "tonalRamp": [
+          "#40235a",
+          "#552f74",
+          "#6a3d8f",
+          "#7a4ba3",
+          "#b896d4",
+          "#d6c2e8",
+          "#ebe0f4",
+          "#f5f0fa"
+        ]
+      },
+      "security-paper": {
+        "role": "neutral",
+        "displayName": "Papel de seguridad",
+        "canonical": "#f4f1ea",
+        "tonalRamp": [
+          "#1c2340",
+          "#2a2b38",
+          "#3e3b37",
+          "#545049",
+          "#6b665c",
+          "#c6bdaa",
+          "#ddd6c7",
+          "#f4f1ea"
+        ]
+      },
+      "card-paper": {
+        "role": "neutral",
+        "displayName": "Papel de tarjeta",
+        "canonical": "#fffdf8",
+        "tonalRamp": [
+          "#1c2340",
+          "#2a2b38",
+          "#3e3b37",
+          "#545049",
+          "#6b665c",
+          "#c6bdaa",
+          "#ddd6c7",
+          "#f4f1ea"
+        ]
+      },
+      "field-white": {
+        "role": "neutral",
+        "displayName": "Blanco de campo",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#1c2340",
+          "#2a2b38",
+          "#3e3b37",
+          "#545049",
+          "#6b665c",
+          "#c6bdaa",
+          "#ddd6c7",
+          "#f4f1ea"
+        ]
+      },
+      "paper-rule": {
+        "role": "neutral",
+        "displayName": "Filete de papel",
+        "canonical": "#ddd6c7",
+        "tonalRamp": [
+          "#1c2340",
+          "#2a2b38",
+          "#3e3b37",
+          "#545049",
+          "#6b665c",
+          "#c6bdaa",
+          "#ddd6c7",
+          "#f4f1ea"
+        ]
+      },
+      "paper-stroke": {
+        "role": "neutral",
+        "displayName": "Trazo de papel",
+        "canonical": "#c6bdaa",
+        "tonalRamp": [
+          "#1c2340",
+          "#2a2b38",
+          "#3e3b37",
+          "#545049",
+          "#6b665c",
+          "#c6bdaa",
+          "#ddd6c7",
+          "#f4f1ea"
+        ]
+      },
+      "paper-tag": {
+        "role": "neutral",
+        "displayName": "Etiqueta de papel",
+        "canonical": "#ebe6db",
+        "tonalRamp": [
+          "#1c2340",
+          "#2a2b38",
+          "#3e3b37",
+          "#545049",
+          "#6b665c",
+          "#c6bdaa",
+          "#ddd6c7",
+          "#f4f1ea"
+        ]
+      },
+      "muted-ink": {
+        "role": "neutral",
+        "displayName": "Tinta apagada",
+        "canonical": "#545049",
+        "tonalRamp": [
+          "#1c2340",
+          "#2a2b38",
+          "#3e3b37",
+          "#545049",
+          "#6b665c",
+          "#c6bdaa",
+          "#ddd6c7",
+          "#f4f1ea"
+        ]
+      },
+      "label-ink": {
+        "role": "neutral",
+        "displayName": "Tinta de etiqueta",
+        "canonical": "#3e3b37",
+        "tonalRamp": [
+          "#1c2340",
+          "#2a2b38",
+          "#3e3b37",
+          "#545049",
+          "#6b665c",
+          "#c6bdaa",
+          "#ddd6c7",
+          "#f4f1ea"
+        ]
+      },
+      "body-ink": {
+        "role": "neutral",
+        "displayName": "Tinta de cuerpo",
+        "canonical": "#1c2340",
+        "tonalRamp": [
+          "#1c2340",
+          "#2a2b38",
+          "#3e3b37",
+          "#545049",
+          "#6b665c",
+          "#c6bdaa",
+          "#ddd6c7",
+          "#f4f1ea"
+        ]
+      },
+      "free-teal": {
+        "role": "tertiary",
+        "displayName": "Verde azulado disponible",
+        "canonical": "#2b7a6c",
+        "tonalRamp": [
+          "#123a33",
+          "#1d574d",
+          "#24695d",
+          "#2b7a6c",
+          "#5fa596",
+          "#a9d3c8",
+          "#cfe6e0",
+          "#e9f4f1"
+        ]
+      },
+      "free-teal-deep": {
+        "role": "tertiary",
+        "displayName": "Verde azulado disponible profundo",
+        "canonical": "#1d574d",
+        "tonalRamp": [
+          "#123a33",
+          "#1d574d",
+          "#24695d",
+          "#2b7a6c",
+          "#5fa596",
+          "#a9d3c8",
+          "#cfe6e0",
+          "#e9f4f1"
+        ]
+      },
+      "free-teal-wash": {
+        "role": "tertiary",
+        "displayName": "Lavado disponible",
+        "canonical": "#e9f4f1",
+        "tonalRamp": [
+          "#123a33",
+          "#1d574d",
+          "#24695d",
+          "#2b7a6c",
+          "#5fa596",
+          "#a9d3c8",
+          "#cfe6e0",
+          "#e9f4f1"
+        ]
+      },
+      "occupied-blue": {
+        "role": "tertiary",
+        "displayName": "Azul ocupada (Bs 10)",
+        "canonical": "#2a5aa8",
+        "tonalRamp": [
+          "#162f58",
+          "#1f437e",
+          "#254f93",
+          "#2a5aa8",
+          "#6e8fca",
+          "#b3c6e8",
+          "#d3def2",
+          "#eaf0fa"
+        ]
+      },
+      "occupied-blue-deep": {
+        "role": "tertiary",
+        "displayName": "Azul ocupada profundo",
+        "canonical": "#1f437e",
+        "tonalRamp": [
+          "#162f58",
+          "#1f437e",
+          "#254f93",
+          "#2a5aa8",
+          "#6e8fca",
+          "#b3c6e8",
+          "#d3def2",
+          "#eaf0fa"
+        ]
+      },
+      "occupied-blue-wash": {
+        "role": "tertiary",
+        "displayName": "Lavado ocupada",
+        "canonical": "#eaf0fa",
+        "tonalRamp": [
+          "#162f58",
+          "#1f437e",
+          "#254f93",
+          "#2a5aa8",
+          "#6e8fca",
+          "#b3c6e8",
+          "#d3def2",
+          "#eaf0fa"
+        ]
+      },
+      "dirty-orange": {
+        "role": "tertiary",
+        "displayName": "Naranja sucia (Bs 20)",
+        "canonical": "#c2512a",
+        "tonalRamp": [
+          "#5c2311",
+          "#8a3519",
+          "#a64322",
+          "#c2512a",
+          "#d98a69",
+          "#efc2a8",
+          "#f5dacb",
+          "#fbefe8"
+        ]
+      },
+      "dirty-orange-deep": {
+        "role": "tertiary",
+        "displayName": "Naranja sucia profundo",
+        "canonical": "#8a3519",
+        "tonalRamp": [
+          "#5c2311",
+          "#8a3519",
+          "#a64322",
+          "#c2512a",
+          "#d98a69",
+          "#efc2a8",
+          "#f5dacb",
+          "#fbefe8"
+        ]
+      },
+      "dirty-orange-wash": {
+        "role": "tertiary",
+        "displayName": "Lavado sucia",
+        "canonical": "#fbefe8",
+        "tonalRamp": [
+          "#5c2311",
+          "#8a3519",
+          "#a64322",
+          "#c2512a",
+          "#d98a69",
+          "#efc2a8",
+          "#f5dacb",
+          "#fbefe8"
+        ]
+      },
+      "alert-red": {
+        "role": "tertiary",
+        "displayName": "Rojo alerta (Bs 100)",
+        "canonical": "#b3261e",
+        "tonalRamp": [
+          "#55110e",
+          "#7f1a15",
+          "#99201a",
+          "#b3261e",
+          "#cf6d66",
+          "#ebb5b1",
+          "#f3d2cf",
+          "#fbeceb"
+        ]
+      },
+      "alert-red-deep": {
+        "role": "tertiary",
+        "displayName": "Rojo alerta profundo",
+        "canonical": "#7f1a15",
+        "tonalRamp": [
+          "#55110e",
+          "#7f1a15",
+          "#99201a",
+          "#b3261e",
+          "#cf6d66",
+          "#ebb5b1",
+          "#f3d2cf",
+          "#fbeceb"
+        ]
+      },
+      "alert-red-wash": {
+        "role": "tertiary",
+        "displayName": "Lavado alerta",
+        "canonical": "#fbeceb",
+        "tonalRamp": [
+          "#55110e",
+          "#7f1a15",
+          "#99201a",
+          "#b3261e",
+          "#cf6d66",
+          "#ebb5b1",
+          "#f3d2cf",
+          "#fbeceb"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Título de página, uno por pantalla; 30 px en móvil, 42 px desde 1024 px."
+      },
+      "figures": {
+        "displayName": "Cifra grabada",
+        "purpose": "Números de habitación, cifras de resumen e importes destacados (utilidad figures)."
+      },
+      "title": {
+        "displayName": "Título de tarjeta",
+        "purpose": "Encabezado opcional de tarjeta."
+      },
+      "body": {
+        "displayName": "Cuerpo",
+        "purpose": "Texto general, valores de campos y enlaces de navegación."
+      },
+      "label": {
+        "displayName": "Etiqueta",
+        "purpose": "Botones y etiquetas de formulario."
+      },
+      "caption": {
+        "displayName": "Pastilla",
+        "purpose": "Pastillas de estado y rótulos de grupo de la barra; mínimo absoluto de 14 px."
+      }
+    },
+    "shadows": [
+      {
+        "name": "hoja-de-papel",
+        "value": "0 1px 3px rgb(28 35 64 / 0.06)",
+        "purpose": "Tarjetas, placas de habitación y cifras de resumen."
+      },
+      {
+        "name": "boton-acunado",
+        "value": "0 1px 3px 0 rgb(64 35 90 / 0.2), 0 1px 2px -1px rgb(64 35 90 / 0.2)",
+        "purpose": "Botón principal morado."
+      },
+      {
+        "name": "pastilla-activa",
+        "value": "0 1px 3px 0 rgb(18 25 53 / 0.3), 0 1px 2px -1px rgb(18 25 53 / 0.3)",
+        "purpose": "Enlace activo sobre la barra de tinta."
+      },
+      {
+        "name": "panel-sobre-tinta",
+        "value": "0 20px 25px -5px rgb(18 25 53 / 0.3), 0 8px 10px -6px rgb(18 25 53 / 0.3)",
+        "purpose": "Solo el panel de la pantalla de ingreso."
+      }
+    ],
+    "motion": [
+      {
+        "name": "transicion-color",
+        "value": "color, background-color, border-color 150ms cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Hover de botones y enlaces de navegación; no hay otro movimiento."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón principal",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "La única acción principal de una tarjeta o formulario.",
+      "html": "<button class=\"ds-btn-primary\">Registrar ingreso</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 8px; background: var(--color-denom-700, #6a3d8f); color: #fff; padding: 10px 16px; border: none; border-radius: 8px; font: 600 15px/1.45 'Public Sans', ui-sans-serif, system-ui, sans-serif; box-shadow: 0 1px 3px 0 rgb(64 35 90 / 0.2), 0 1px 2px -1px rgb(64 35 90 / 0.2); cursor: pointer; transition: background-color 150ms; } .ds-btn-primary:hover { background: var(--color-denom-800, #552f74); } .ds-btn-primary:focus-visible { outline: 2px solid var(--color-denom-600, #7a4ba3); outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Botón secundario",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Acciones de apoyo, como guardar el estado de limpieza.",
+      "html": "<button class=\"ds-btn-secondary\">Guardar</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: var(--color-ink-800, #24305e); padding: 10px 16px; border: 1px solid var(--color-gray-300, #c6bdaa); border-radius: 8px; font: 600 15px/1.45 'Public Sans', ui-sans-serif, system-ui, sans-serif; cursor: pointer; transition: background-color 150ms, border-color 150ms; } .ds-btn-secondary:hover { border-color: var(--color-ink-300, #8e98c2); background: var(--color-ink-50, #eef0f7); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--color-denom-600, #7a4ba3); outline-offset: 2px; }"
+    },
+    {
+      "name": "Campo",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo con etiqueta encima; fondo blanco puro sobre papel.",
+      "html": "<label class=\"ds-field\">Nombre<input class=\"ds-input\" value=\"Juan Pérez\"></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 6px; font: 600 15px/1.45 'Public Sans', ui-sans-serif, system-ui, sans-serif; color: var(--color-gray-700, #3e3b37); } .ds-input { background: #fff; color: var(--color-gray-900, #1c2340); border: 1px solid var(--color-gray-300, #c6bdaa); border-radius: 8px; padding: 10px 12px; font: 400 16px/1.5 'Public Sans', ui-sans-serif, system-ui, sans-serif; caret-color: var(--color-denom-700, #6a3d8f); } .ds-input:focus-visible { outline: 2px solid var(--color-denom-600, #7a4ba3); outline-offset: 1px; border-color: var(--color-denom-600, #7a4ba3); }"
+    },
+    {
+      "name": "Navegación lateral",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Barra de tinta con el enlace activo en morado de denominación.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-link ds-nav-active\" aria-current=\"page\" href=\"#\">Ocupación</a><a class=\"ds-nav-link\" href=\"#\">Cajas</a><span class=\"ds-nav-group\">Configuración</span><a class=\"ds-nav-link\" href=\"#\">Habitaciones</a></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; gap: 4px; width: 240px; padding: 20px 16px; background: var(--color-ink-800, #24305e); } .ds-nav-link { border-radius: 8px; padding: 8px 12px; font: 400 16px/1.5 'Public Sans', ui-sans-serif, system-ui, sans-serif; color: var(--color-ink-100, #d9ddec); text-decoration: none; transition: background-color 150ms, color 150ms; } .ds-nav-link:hover { background: var(--color-ink-700, #2d3866); color: #fff; } .ds-nav-link:focus-visible { outline: 2px solid var(--color-denom-600, #7a4ba3); outline-offset: 2px; } .ds-nav-active, .ds-nav-active:hover { background: var(--color-denom-700, #6a3d8f); color: #fff; font-weight: 600; box-shadow: 0 1px 3px 0 rgb(18 25 53 / 0.3); } .ds-nav-group { margin-top: 20px; padding: 0 12px 4px; font: 600 14px/1.35 'Public Sans', ui-sans-serif, system-ui, sans-serif; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-ink-200, #b5bcd9); }"
+    },
+    {
+      "name": "Pastillas de estado",
+      "kind": "chip",
+      "refersTo": "badge-free",
+      "description": "Indicadores de estado por color de denominación.",
+      "html": "<span class=\"ds-badge ds-badge-free\">Disponible</span> <span class=\"ds-badge ds-badge-occupied\">Ocupada</span> <span class=\"ds-badge ds-badge-dirty\">Sucia</span> <span class=\"ds-badge ds-badge-alert\">En mantenimiento</span> <span class=\"ds-badge ds-badge-neutral\">Limpia</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; border-radius: 9999px; padding: 2px 10px; font: 600 14px/1.35 'Public Sans', ui-sans-serif, system-ui, sans-serif; } .ds-badge-free { background: #e9f4f1; color: #1d574d; box-shadow: inset 0 0 0 1px #a9d3c8; } .ds-badge-occupied { background: #eaf0fa; color: #1f437e; box-shadow: inset 0 0 0 1px #b3c6e8; } .ds-badge-dirty { background: #fbefe8; color: #8a3519; box-shadow: inset 0 0 0 1px #efc2a8; } .ds-badge-alert { background: #fbeceb; color: #7f1a15; box-shadow: inset 0 0 0 1px #ebb5b1; } .ds-badge-neutral { background: #ebe6db; color: #3e3b37; box-shadow: inset 0 0 0 1px #ddd6c7; }"
+    },
+    {
+      "name": "Tarjeta",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Hoja de papel cálido con filete fino y título serif opcional.",
+      "html": "<section class=\"ds-card\"><h2 class=\"ds-card-title\">Cobros</h2><p class=\"ds-card-body\">Saldo pendiente de la estadía.</p></section>",
+      "css": ".ds-card { display: flex; flex-direction: column; gap: 16px; background: #fffdf8; border: 1px solid #ddd6c7; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgb(28 35 64 / 0.06); } .ds-card-title { margin: 0; font: 600 20px/1.4 Fraunces, Georgia, serif; color: #1b2449; } .ds-card-body { margin: 0; font: 400 16px/1.5 'Public Sans', ui-sans-serif, system-ui, sans-serif; color: #1c2340; }"
+    },
+    {
+      "name": "Placa de habitación",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Placa de Ocupación con filete superior de estado y número en cifra grabada.",
+      "html": "<article class=\"ds-room\"><div class=\"ds-room-head\"><div><span class=\"ds-room-number\">101</span><span class=\"ds-room-meta\">Simple · 1 pers.</span></div><span class=\"ds-room-badge\">Disponible</span></div><a class=\"ds-room-action\" href=\"#\">Registrar ingreso</a></article>",
+      "css": ".ds-room { display: flex; flex-direction: column; gap: 12px; width: 260px; background: #fffdf8; border: 1px solid #ddd6c7; border-top: 5px solid #2b7a6c; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgb(28 35 64 / 0.06); } .ds-room-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; } .ds-room-number { display: block; font: 600 36px/1 Fraunces, Georgia, serif; font-variant-numeric: lining-nums tabular-nums; color: #1d574d; } .ds-room-meta { display: block; margin-top: 4px; font: 400 15px/1.45 'Public Sans', ui-sans-serif, system-ui, sans-serif; color: #545049; } .ds-room-badge { border-radius: 9999px; padding: 2px 10px; font: 600 14px/1.35 'Public Sans', ui-sans-serif, system-ui, sans-serif; background: #e9f4f1; color: #1d574d; box-shadow: inset 0 0 0 1px #a9d3c8; } .ds-room-action { align-self: flex-start; background: #6a3d8f; color: #fff; text-decoration: none; border-radius: 8px; padding: 8px 16px; font: 600 15px/1.45 'Public Sans', ui-sans-serif, system-ui, sans-serif; transition: background-color 150ms; } .ds-room-action:hover { background: #552f74; } .ds-room-action:focus-visible { outline: 2px solid var(--color-denom-600, #7a4ba3); outline-offset: 2px; }"
+    },
+    {
+      "name": "Encabezado con filete de guilloché",
+      "kind": "custom",
+      "refersTo": "display",
+      "description": "Título de página sobre el filete de guilloché; uno por página.",
+      "html": "<header class=\"ds-head\"><h1 class=\"ds-head-title\">Ocupación</h1><div class=\"ds-guilloche\" aria-hidden=\"true\"></div></header>",
+      "css": ".ds-head { display: flex; flex-direction: column; gap: 12px; background: #f4f1ea; padding: 16px; } .ds-head-title { margin: 0; font: 600 42px/1.2 Fraunces, Georgia, serif; letter-spacing: -0.025em; color: #1b2449; } .ds-guilloche { height: 14px; border-top: 1px solid #6a3d8f; border-bottom: 1px solid #6a3d8f; background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='12' viewBox='0 0 40 12'%3E%3Cg fill='none' stroke='%236a3d8f' stroke-width='0.9' stroke-opacity='0.8'%3E%3Cpath d='M0 6 C5 0 15 0 20 6 S35 12 40 6'/%3E%3Cpath d='M0 6 C5 12 15 12 20 6 S35 0 40 6'/%3E%3Cpath d='M0 3 C10 9 30 9 40 3' stroke-opacity='0.45'/%3E%3Cpath d='M0 9 C10 3 30 3 40 9' stroke-opacity='0.45'/%3E%3C/g%3E%3C/svg%3E\"); background-repeat: repeat-x; background-position: 0 center; background-size: 40px 12px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "El billete boliviano",
+    "overview": "Cada pantalla del mostrador se trata como un billete: tinta azul profunda, papel de seguridad marfil, grabado fino y un color por valor. La barra lateral es la franja de tinta (azul #24305e con texto marfil); el área de trabajo es el papel; las tarjetas son hojas de papel cálido con filete fino; y el morado de denominación aparece solo donde algo está seleccionado o es la acción principal. Los títulos, los números de habitación y las cifras grandes se componen en una serif grabada (Fraunces) con cifras alineadas y tabulares, como la numeración impresa de un billete.\n\nLa densidad es de herramienta de trabajo: cuadrículas de tarjetas, formularios directos, nada decorativo salvo un único gesto por página, el filete de guilloché bajo el título. Ninguna letra del sistema baja de 14 px: la escala de Tailwind se reescribió para que `xs` sea 14 px y `sm` 15 px, porque quien atiende el mostrador no debe forzar la vista. Los grises de Tailwind se redefinieron como tonos de papel y tinta, de modo que cualquier pantalla que use la escala gris hereda el mundo sin tocarla.\n\nEl estado de una habitación se lee por color, como el valor de un billete se lee por su color: verde azulado para disponible, azul Bs 10 para ocupada, naranja Bs 20 para sucia, rojo Bs 100 para fuera de servicio. El sistema rechaza la plantilla gris con un acento azul genérico que tenía antes.",
+    "keyCharacteristics": [
+      "Barra lateral de tinta azul fija a la izquierda; fondo de papel marfil a la derecha.",
+      "Morado de denominación reservado para selección y acción principal.",
+      "Serif grabada para títulos, números de habitación e importes; sans humanista para todo lo demás.",
+      "Filete de guilloché, uno por página, bajo el título.",
+      "Estado codificado por color de denominación en filete superior, cifra y pastilla.",
+      "Mínimo de 14 px en todo texto."
+    ],
+    "rules": [
+      {
+        "name": "The Denominación Rule",
+        "body": "El morado aparece solo en lo seleccionado (enlace activo, selección, casillas) y en la acción principal de cada tarjeta o formulario. Nunca como fondo decorativo, nunca en texto de lectura.",
+        "section": "colors"
+      },
+      {
+        "name": "The Valor por Color Rule",
+        "body": "Los estados de habitación usan exclusivamente los tokens free, occupied, dirty y alert. El morado no es un estado.",
+        "section": "colors"
+      },
+      {
+        "name": "The Papel y Tinta Rule",
+        "body": "La escala gris de Tailwind ya es papel y tinta; usar `gray-*` está permitido y hereda el mundo. No se introducen grises fríos ni otras escalas neutras.",
+        "section": "colors"
+      },
+      {
+        "name": "The Catorce Rule",
+        "body": "Nada baja de 14 px. La escala `text-xs` vale 14 px y `text-sm` 15 px; no se introducen tamaños arbitrarios menores.",
+        "section": "typography"
+      },
+      {
+        "name": "The Cifra Grabada Rule",
+        "body": "Todo número que se lee de un vistazo (habitación, conteo, importe destacado) va en Fraunces con cifras tabulares. Las tablas aplican cifras tabulares por defecto.",
+        "section": "typography"
+      },
+      {
+        "name": "The Papel Plano Rule",
+        "body": "Sobre papel, la profundidad es borde y tono. No se añaden sombras más fuertes que la hoja de papel a tarjetas o paneles del área de trabajo.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** usar el morado de denominación solo para lo seleccionado y la acción principal; una acción principal por tarjeta o formulario.",
+      "**Do** codificar el estado de una habitación con los tokens free, occupied, dirty y alert en sus tres usos: filete 600, cifra y texto 800, fondo 50.",
+      "**Do** componer títulos de página, números de habitación e importes destacados en Fraunces con cifras tabulares.",
+      "**Do** colocar el filete de guilloché una vez por página, bajo el título.",
+      "**Do** mantener todo texto en 14 px o más.",
+      "**Do** usar fondo blanco puro solo en campos editables; las superficies van en papel de tarjeta sobre papel de seguridad."
+    ],
+    "donts": [
+      "**Don't** repetir el filete de guilloché dentro de tarjetas ni usarlo como separador genérico.",
+      "**Don't** usar el morado como color de estado ni como fondo de bloques.",
+      "**Don't** introducir grises fríos, otras escalas neutras ni el azul genérico de la plantilla anterior.",
+      "**Don't** colocar rótulos en mayúsculas sobre títulos de página o de tarjeta; ese tratamiento es solo para los grupos de la barra lateral.",
+      "**Don't** copiar los rojos y verdes por defecto de Tailwind (`red-*`, `emerald-*`) que aún quedan en botones de peligro, mensajes de error y avisos de estado: son deriva previa al mundo, no parte del sistema."
+    ]
+  }
+}

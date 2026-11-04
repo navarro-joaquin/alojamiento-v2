@@ -24,7 +24,7 @@ document.querySelectorAll('[data-counter-sale]').forEach((form) => {
             const lineCentavos = quantity > 0 ? Math.round(Number(row.dataset.priceCents) * quantity) : 0;
 
             row.querySelector('[data-counter-sale-line-amount]').textContent = lineCentavos > 0 ? `Bs ${formatCentavos(lineCentavos)}` : '';
-            row.classList.toggle('bg-blue-50', lineCentavos > 0);
+            row.classList.toggle('bg-denom-50', lineCentavos > 0);
 
             return total + lineCentavos;
         }, 0);

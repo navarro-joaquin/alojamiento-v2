@@ -10,9 +10,9 @@
             @foreach ($warehouses as $warehouseOption)
                 <a href="{{ route('inventory.index', ['almacen' => $warehouseOption->id]) }}"
                     @class([
-                        'rounded-md px-3 py-1.5 text-sm font-medium',
-                        'bg-gray-900 text-white' => $warehouseOption->is($warehouse),
-                        'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50' => ! $warehouseOption->is($warehouse),
+                        'rounded-lg border px-3 py-1.5 text-sm font-semibold',
+                        'border-denom-700 bg-denom-700 text-white' => $warehouseOption->is($warehouse),
+                        'border-gray-300 bg-white text-gray-700 hover:bg-gray-50' => ! $warehouseOption->is($warehouse),
                     ])
                     @if ($warehouseOption->is($warehouse)) aria-current="page" @endif>{{ $warehouseOption->name }}</a>
             @endforeach
@@ -24,12 +24,12 @@
             @else
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm">
-                        <thead class="text-gray-500">
+                        <thead class="border-b border-gray-300 text-ink-600">
                             <tr>
-                                <th class="py-2 pr-4 font-medium">Producto</th>
-                                <th class="py-2 pr-4 text-right font-medium">Cantidad</th>
-                                <th class="py-2 pr-4 text-right font-medium">Costo promedio</th>
-                                <th class="py-2 text-right font-medium">Valorizado</th>
+                                <th class="py-2 pr-4 font-semibold">Producto</th>
+                                <th class="py-2 pr-4 text-right font-semibold">Cantidad</th>
+                                <th class="py-2 pr-4 text-right font-semibold">Costo promedio</th>
+                                <th class="py-2 text-right font-semibold">Valorizado</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
@@ -113,15 +113,15 @@
             @else
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm">
-                        <thead class="text-gray-500">
+                        <thead class="border-b border-gray-300 text-ink-600">
                             <tr>
-                                <th class="py-2 pr-4 font-medium">Fecha</th>
-                                <th class="py-2 pr-4 font-medium">Movimiento</th>
-                                <th class="py-2 pr-4 font-medium">Producto</th>
-                                <th class="py-2 pr-4 text-right font-medium">Cantidad</th>
-                                <th class="py-2 pr-4 text-right font-medium">Costo unitario</th>
-                                <th class="py-2 pr-4 text-right font-medium">Saldo</th>
-                                <th class="py-2 font-medium">Registró</th>
+                                <th class="py-2 pr-4 font-semibold">Fecha</th>
+                                <th class="py-2 pr-4 font-semibold">Movimiento</th>
+                                <th class="py-2 pr-4 font-semibold">Producto</th>
+                                <th class="py-2 pr-4 text-right font-semibold">Cantidad</th>
+                                <th class="py-2 pr-4 text-right font-semibold">Costo unitario</th>
+                                <th class="py-2 pr-4 text-right font-semibold">Saldo</th>
+                                <th class="py-2 font-semibold">Registró</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 align-top">

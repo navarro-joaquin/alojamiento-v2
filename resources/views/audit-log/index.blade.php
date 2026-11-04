@@ -16,13 +16,13 @@
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
-                    <thead class="text-gray-500">
+                    <thead class="border-b border-gray-300 text-ink-600">
                         <tr>
-                            <th class="py-2 pr-4 font-medium">Fecha</th>
-                            <th class="py-2 pr-4 font-medium">Usuario</th>
-                            <th class="py-2 pr-4 font-medium">Evento</th>
-                            <th class="py-2 pr-4 font-medium">Registro</th>
-                            <th class="py-2 font-medium">Detalle</th>
+                            <th class="py-2 pr-4 font-semibold">Fecha</th>
+                            <th class="py-2 pr-4 font-semibold">Usuario</th>
+                            <th class="py-2 pr-4 font-semibold">Evento</th>
+                            <th class="py-2 pr-4 font-semibold">Registro</th>
+                            <th class="py-2 font-semibold">Detalle</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 align-top">

@@ -72,13 +72,13 @@
     <x-card title="Historial">
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">
-                <thead class="text-gray-500">
+                <thead class="border-b border-gray-300 text-ink-600">
                     <tr>
-                        <th class="py-2 pr-4 font-medium">Fecha</th>
-                        <th class="py-2 pr-4 font-medium">Desde</th>
-                        <th class="py-2 pr-4 font-medium">Hacia</th>
-                        <th class="py-2 pr-4 font-medium">Observaciones</th>
-                        <th class="py-2 font-medium">Registró</th>
+                        <th class="py-2 pr-4 font-semibold">Fecha</th>
+                        <th class="py-2 pr-4 font-semibold">Desde</th>
+                        <th class="py-2 pr-4 font-semibold">Hacia</th>
+                        <th class="py-2 pr-4 font-semibold">Observaciones</th>
+                        <th class="py-2 font-semibold">Registró</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 align-top">

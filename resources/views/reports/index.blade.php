@@ -11,7 +11,7 @@
 
     <div class="grid gap-4 lg:grid-cols-3">
         <x-card title="Ocupación">
-            <p class="text-3xl font-semibold">{{ $report['occupancy']['rate'] }} %</p>
+            <p class="figures text-4xl text-ink-900">{{ $report['occupancy']['rate'] }} %</p>
             <p class="text-sm text-gray-600">{{ $report['occupancy']['nightsSold'] }} noches vendidas de {{ $report['occupancy']['roomNights'] }} disponibles.</p>
         </x-card>
 
@@ -45,13 +45,13 @@
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
-                    <thead class="text-gray-500">
+                    <thead class="border-b border-gray-300 text-ink-600">
                         <tr>
-                            <th class="py-2 pr-4 font-medium">Método</th>
-                            <th class="py-2 pr-4 text-right font-medium">Cobros</th>
-                            <th class="py-2 pr-4 text-right font-medium">Devoluciones</th>
-                            <th class="py-2 pr-4 text-right font-medium">Gastos</th>
-                            <th class="py-2 text-right font-medium">Neto</th>
+                            <th class="py-2 pr-4 font-semibold">Método</th>
+                            <th class="py-2 pr-4 text-right font-semibold">Cobros</th>
+                            <th class="py-2 pr-4 text-right font-semibold">Devoluciones</th>
+                            <th class="py-2 pr-4 text-right font-semibold">Gastos</th>
+                            <th class="py-2 text-right font-semibold">Neto</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -120,15 +120,15 @@
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
-                    <thead class="text-gray-500">
+                    <thead class="border-b border-gray-300 text-ink-600">
                         <tr>
-                            <th class="py-2 pr-4 font-medium">Fecha</th>
-                            <th class="py-2 pr-4 font-medium">Caja</th>
-                            <th class="py-2 pr-4 font-medium">Cerrada por</th>
-                            <th class="py-2 pr-4 text-right font-medium">Esperado</th>
-                            <th class="py-2 pr-4 text-right font-medium">Contado</th>
-                            <th class="py-2 pr-4 text-right font-medium">Diferencia</th>
-                            <th class="py-2 font-medium">Estado</th>
+                            <th class="py-2 pr-4 font-semibold">Fecha</th>
+                            <th class="py-2 pr-4 font-semibold">Caja</th>
+                            <th class="py-2 pr-4 font-semibold">Cerrada por</th>
+                            <th class="py-2 pr-4 text-right font-semibold">Esperado</th>
+                            <th class="py-2 pr-4 text-right font-semibold">Contado</th>
+                            <th class="py-2 pr-4 text-right font-semibold">Diferencia</th>
+                            <th class="py-2 font-semibold">Estado</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">

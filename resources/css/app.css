@@ -3,7 +3,144 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/*
+ * Mundo visual «Billete boliviano»: tinta azul, papel de seguridad marfil,
+ * grabado fino y un morado de denominación reservado para lo seleccionado y
+ * la acción principal. Los grises de Tailwind se redefinen como tonos de
+ * papel y tinta para que todas las pantallas compartan la misma paleta.
+ */
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Public Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+
+    /* Nada del mostrador baja de 14 px. */
+    --text-xs: 0.875rem;
+    --text-xs--line-height: 1.35;
+    --text-sm: 0.9375rem;
+    --text-sm--line-height: 1.45;
+    --text-base: 1rem;
+    --text-base--line-height: 1.5;
+
+    --color-gray-50: #f4f1ea;
+    --color-gray-100: #ebe6db;
+    --color-gray-200: #ddd6c7;
+    --color-gray-300: #c6bdaa;
+    --color-gray-400: #9d9584;
+    --color-gray-500: #6b665c;
+    --color-gray-600: #545049;
+    --color-gray-700: #3e3b37;
+    --color-gray-800: #2a2b38;
+    --color-gray-900: #1c2340;
+
+    --color-ink-50: #eef0f7;
+    --color-ink-100: #d9ddec;
+    --color-ink-200: #b5bcd9;
+    --color-ink-300: #8e98c2;
+    --color-ink-400: #6a76a8;
+    --color-ink-500: #4c588c;
+    --color-ink-600: #3a4575;
+    --color-ink-700: #2d3866;
+    --color-ink-800: #24305e;
+    --color-ink-900: #1b2449;
+    --color-ink-950: #121935;
+
+    /* Papel de las tarjetas: blanco cálido, no el blanco puro de los campos. */
+    --color-paper: #fffdf8;
+
+    /*
+     * Colores de estado tomados de las denominaciones: Bs 10 azul (ocupada),
+     * Bs 20 naranja (sucia), Bs 100 rojo (fuera de servicio) y verde azulado
+     * (disponible). El morado queda reservado para la selección.
+     */
+    --color-free-50: #e9f4f1;
+    --color-free-200: #a9d3c8;
+    --color-free-600: #2b7a6c;
+    --color-free-800: #1d574d;
+    --color-occupied-50: #eaf0fa;
+    --color-occupied-200: #b3c6e8;
+    --color-occupied-600: #2a5aa8;
+    --color-occupied-800: #1f437e;
+    --color-dirty-50: #fbefe8;
+    --color-dirty-200: #efc2a8;
+    --color-dirty-600: #c2512a;
+    --color-dirty-800: #8a3519;
+    --color-alert-50: #fbeceb;
+    --color-alert-200: #ebb5b1;
+    --color-alert-600: #b3261e;
+    --color-alert-800: #7f1a15;
+
+    --color-denom-50: #f5f0fa;
+    --color-denom-100: #ebe0f4;
+    --color-denom-200: #d6c2e8;
+    --color-denom-300: #b896d4;
+    --color-denom-500: #8a5bb3;
+    --color-denom-600: #7a4ba3;
+    --color-denom-700: #6a3d8f;
+    --color-denom-800: #552f74;
+    --color-denom-900: #40235a;
+}
+
+@layer base {
+    html {
+        accent-color: var(--color-denom-700);
+        caret-color: var(--color-denom-700);
+        scrollbar-color: var(--color-gray-300) transparent;
+    }
+
+    ::selection {
+        background-color: var(--color-denom-200);
+        color: var(--color-gray-900);
+    }
+
+    a {
+        text-underline-offset: 3px;
+    }
+
+    h1,
+    h2 {
+        text-wrap: balance;
+    }
+
+    table {
+        font-variant-numeric: tabular-nums;
+    }
+
+    input:not([type='checkbox'], [type='radio']),
+    select,
+    textarea {
+        background-color: #fff;
+    }
+
+    :where(input, select, textarea):focus-visible {
+        outline: 2px solid var(--color-denom-600);
+        outline-offset: 1px;
+        border-color: var(--color-denom-600);
+    }
+
+    :where(a, button, summary, label):focus-visible {
+        outline: 2px solid var(--color-denom-600);
+        outline-offset: 2px;
+    }
+}
+
+/*
+ * Filete de guilloché: dos ondas entrelazadas como las del borde de un
+ * billete. Es el gesto distintivo y vive una sola vez por página, bajo el
+ * título.
+ */
+@utility guilloche-rule {
+    height: 14px;
+    border-top: 1px solid var(--color-denom-700);
+    border-bottom: 1px solid var(--color-denom-700);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='12' viewBox='0 0 40 12'%3E%3Cg fill='none' stroke='%236a3d8f' stroke-width='0.9' stroke-opacity='0.8'%3E%3Cpath d='M0 6 C5 0 15 0 20 6 S35 12 40 6'/%3E%3Cpath d='M0 6 C5 12 15 12 20 6 S35 0 40 6'/%3E%3Cpath d='M0 3 C10 9 30 9 40 3' stroke-opacity='0.45'/%3E%3Cpath d='M0 9 C10 3 30 3 40 9' stroke-opacity='0.45'/%3E%3C/g%3E%3C/svg%3E");
+    background-repeat: repeat-x;
+    background-position: 0 center;
+    background-size: 40px 12px;
+}
+
+/* Cifras grabadas para importes y números de habitación. */
+@utility figures {
+    font-family: var(--font-serif);
+    font-variant-numeric: lining-nums tabular-nums;
+    font-weight: 600;
 }

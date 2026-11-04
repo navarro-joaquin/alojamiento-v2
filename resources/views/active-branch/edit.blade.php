@@ -7,7 +7,7 @@
             @method('PUT')
 
             @foreach ($branches as $branch)
-                <label class="flex items-center gap-3 rounded-md border border-gray-200 px-3 py-2 text-sm has-checked:border-gray-900">
+                <label class="flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-2 text-sm has-checked:border-denom-600 has-checked:bg-denom-50">
                     <input type="radio" name="branch_id" value="{{ $branch->id }}" @checked($branch->id === $activeBranchId) required>
                     <span class="flex flex-col">
                         <span class="font-medium">{{ $branch->name }}</span>

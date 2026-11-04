@@ -55,14 +55,14 @@
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
-                    <thead class="text-gray-500">
+                    <thead class="border-b border-gray-300 text-ink-600">
                         <tr>
-                            <th class="py-2 pr-4 font-medium">Número</th>
-                            <th class="py-2 pr-4 font-medium">Desde</th>
-                            <th class="py-2 pr-4 font-medium">Hacia</th>
-                            <th class="py-2 pr-4 text-right font-medium">Productos</th>
-                            <th class="py-2 pr-4 font-medium">Estado</th>
-                            <th class="py-2 font-medium"><span class="sr-only">Acciones</span></th>
+                            <th class="py-2 pr-4 font-semibold">Número</th>
+                            <th class="py-2 pr-4 font-semibold">Desde</th>
+                            <th class="py-2 pr-4 font-semibold">Hacia</th>
+                            <th class="py-2 pr-4 text-right font-semibold">Productos</th>
+                            <th class="py-2 pr-4 font-semibold">Estado</th>
+                            <th class="py-2 font-semibold"><span class="sr-only">Acciones</span></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">

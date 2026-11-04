@@ -6,6 +6,6 @@
     </div>
     <label class="flex flex-col gap-1 text-sm font-medium">
         Descripción
-        <textarea name="description" rows="2" class="rounded-md border border-gray-300 px-3 py-2 font-normal">{{ old('description', $roomType->description) }}</textarea>
+        <textarea name="description" rows="2" class="rounded-lg border border-gray-300 px-3 py-2 font-normal">{{ old('description', $roomType->description) }}</textarea>
     </label>
 </x-card>

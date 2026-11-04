@@ -21,22 +21,22 @@
 
                         <label class="flex max-w-sm flex-col gap-1 text-sm font-medium">
                             Buscar producto
-                            <input type="search" class="rounded-md border border-gray-300 px-3 py-2 font-normal" placeholder="Nombre o código" data-counter-sale-search>
+                            <input type="search" class="rounded-lg border border-gray-300 px-3 py-2 font-normal" placeholder="Nombre o código" data-counter-sale-search>
                         </label>
 
                         @error('items')
                             <p class="text-sm text-red-700">{{ $message }}</p>
                         @enderror
 
-                        <div class="max-h-[28rem] overflow-auto rounded-md border border-gray-200">
+                        <div class="max-h-[28rem] overflow-auto rounded-lg border border-gray-200">
                             <table class="w-full text-left text-sm">
-                                <thead class="sticky top-0 bg-gray-50 text-gray-500">
+                                <thead class="sticky top-0 border-b border-gray-300 bg-gray-50 text-ink-600">
                                     <tr>
-                                        <th class="px-3 py-2 font-medium">Producto</th>
-                                        <th class="px-3 py-2 text-right font-medium">Precio</th>
-                                        <th class="px-3 py-2 text-right font-medium">Existencias</th>
-                                        <th class="w-32 px-3 py-2 font-medium">Cantidad</th>
-                                        <th class="px-3 py-2 text-right font-medium">Importe</th>
+                                        <th class="px-3 py-2 font-semibold">Producto</th>
+                                        <th class="px-3 py-2 text-right font-semibold">Precio</th>
+                                        <th class="px-3 py-2 text-right font-semibold">Existencias</th>
+                                        <th class="w-32 px-3 py-2 font-semibold">Cantidad</th>
+                                        <th class="px-3 py-2 text-right font-semibold">Importe</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100">
@@ -55,7 +55,7 @@
                                                 <label class="sr-only" for="quantity-{{ $product->id }}">Cantidad de {{ $product->name }}</label>
                                                 <input id="quantity-{{ $product->id }}" name="items[{{ $product->id }}][quantity]" value="{{ old("items.{$product->id}.quantity") }}"
                                                     type="number" min="0" max="{{ $availableQuantity }}" step="0.01" inputmode="decimal"
-                                                    @class(['w-24 rounded-md border px-2 py-1 text-right', 'border-red-500' => $errors->has("items.{$product->id}.quantity"), 'border-gray-300' => ! $errors->has("items.{$product->id}.quantity")])
+                                                    @class(['w-24 rounded-lg border px-2 py-1 text-right', 'border-red-500' => $errors->has("items.{$product->id}.quantity"), 'border-gray-300' => ! $errors->has("items.{$product->id}.quantity")])
                                                     data-counter-sale-quantity>
                                                 @error("items.{$product->id}.quantity")
                                                     <span class="block text-xs text-red-700">{{ $message }}</span>
@@ -95,15 +95,15 @@
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
-                    <thead class="text-gray-500">
+                    <thead class="border-b border-gray-300 text-ink-600">
                         <tr>
-                            <th class="py-2 pr-4 font-medium">Número</th>
-                            <th class="py-2 pr-4 font-medium">Fecha</th>
-                            <th class="py-2 pr-4 font-medium">Cliente</th>
-                            <th class="py-2 pr-4 font-medium">Método</th>
-                            <th class="py-2 pr-4 text-right font-medium">Total</th>
-                            <th class="py-2 pr-4 font-medium">Estado</th>
-                            <th class="py-2 font-medium"><span class="sr-only">Acciones</span></th>
+                            <th class="py-2 pr-4 font-semibold">Número</th>
+                            <th class="py-2 pr-4 font-semibold">Fecha</th>
+                            <th class="py-2 pr-4 font-semibold">Cliente</th>
+                            <th class="py-2 pr-4 font-semibold">Método</th>
+                            <th class="py-2 pr-4 text-right font-semibold">Total</th>
+                            <th class="py-2 pr-4 font-semibold">Estado</th>
+                            <th class="py-2 font-semibold"><span class="sr-only">Acciones</span></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">

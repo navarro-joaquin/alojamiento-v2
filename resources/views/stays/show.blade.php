@@ -47,7 +47,7 @@
         </x-card>
 
         <x-card title="Saldo">
-            <p @class(['text-3xl font-semibold', 'text-red-700' => $balance > 0, 'text-green-700' => $balance < 0])>
+            <p @class(['figures text-4xl text-ink-900', 'text-red-700!' => $balance > 0, 'text-emerald-700!' => $balance < 0])>
                 Bs {{ $balance > 0 ? $balance : ($balance < 0 ? $balance * -1 : '0.00') }}
             </p>
             <p class="text-sm text-gray-600">
@@ -87,13 +87,13 @@
     <x-card title="Cargos">
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">
-                <thead class="text-gray-500">
+                <thead class="border-b border-gray-300 text-ink-600">
                     <tr>
-                        <th class="py-2 pr-4 font-medium">Fecha</th>
-                        <th class="py-2 pr-4 font-medium">Concepto</th>
-                        <th class="py-2 pr-4 text-right font-medium">Cantidad</th>
-                        <th class="py-2 pr-4 text-right font-medium">Importe</th>
-                        <th class="py-2 font-medium"><span class="sr-only">Acciones</span></th>
+                        <th class="py-2 pr-4 font-semibold">Fecha</th>
+                        <th class="py-2 pr-4 font-semibold">Concepto</th>
+                        <th class="py-2 pr-4 text-right font-semibold">Cantidad</th>
+                        <th class="py-2 pr-4 text-right font-semibold">Importe</th>
+                        <th class="py-2 font-semibold"><span class="sr-only">Acciones</span></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -118,7 +118,7 @@
                                             @csrf
                                             <label class="sr-only" for="void-reason-{{ $stayCharge->id }}">Motivo de la anulación</label>
                                             <input id="void-reason-{{ $stayCharge->id }}" name="void_reason" required placeholder="Motivo"
-                                                class="w-32 rounded-md border border-gray-300 px-2 py-1 text-sm">
+                                                class="w-32 rounded-lg border border-gray-300 px-2 py-1 text-sm">
                                             <x-button variant="secondary" class="py-1">Anular</x-button>
                                         </form>
                                     @endcan
@@ -136,16 +136,16 @@
     <x-card title="Pagos">
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">
-                <thead class="text-gray-500">
+                <thead class="border-b border-gray-300 text-ink-600">
                     <tr>
-                        <th class="py-2 pr-4 font-medium">Fecha</th>
-                        <th class="py-2 pr-4 font-medium">Tipo</th>
-                        <th class="py-2 pr-4 font-medium">Método</th>
-                        <th class="py-2 pr-4 font-medium">Caja</th>
-                        <th class="py-2 pr-4 text-right font-medium">Importe</th>
-                        <th class="py-2 pr-4 text-right font-medium">Devuelto</th>
-                        <th class="py-2 pr-4 font-medium">Recibo</th>
-                        <th class="py-2 font-medium">Factura externa</th>
+                        <th class="py-2 pr-4 font-semibold">Fecha</th>
+                        <th class="py-2 pr-4 font-semibold">Tipo</th>
+                        <th class="py-2 pr-4 font-semibold">Método</th>
+                        <th class="py-2 pr-4 font-semibold">Caja</th>
+                        <th class="py-2 pr-4 text-right font-semibold">Importe</th>
+                        <th class="py-2 pr-4 text-right font-semibold">Devuelto</th>
+                        <th class="py-2 pr-4 font-semibold">Recibo</th>
+                        <th class="py-2 font-semibold">Factura externa</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 align-top">
@@ -174,7 +174,7 @@
                                         @method('PUT')
                                         <label class="sr-only" for="external-invoice-{{ $payment->id }}">Número de factura</label>
                                         <input id="external-invoice-{{ $payment->id }}" name="external_invoice_number" value="{{ $payment->external_invoice_number }}" placeholder="N.º de factura"
-                                            class="w-28 rounded-md border border-gray-300 px-2 py-1 text-sm">
+                                            class="w-28 rounded-lg border border-gray-300 px-2 py-1 text-sm">
                                         <x-button variant="secondary" class="py-1">Guardar</x-button>
                                     </form>
                                 @else

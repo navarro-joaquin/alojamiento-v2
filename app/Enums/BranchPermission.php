@@ -15,6 +15,7 @@ enum BranchPermission: string
     case VoidCharges = 'charges.void';
     case CollectPayments = 'payments.collect';
     case RefundPayments = 'payments.refund';
+    case VoidReceipts = 'receipts.void';
     case RequestCheckoutExceptions = 'checkout_exceptions.request';
     case ApproveCheckoutExceptions = 'checkout_exceptions.approve';
     case RegisterExpenses = 'expenses.register';
@@ -49,6 +50,7 @@ enum BranchPermission: string
             self::VoidCharges => 'Anular cargos',
             self::CollectPayments => 'Cobrar pagos',
             self::RefundPayments => 'Devolver pagos',
+            self::VoidReceipts => 'Anular recibos',
             self::RequestCheckoutExceptions => 'Solicitar salidas con deuda',
             self::ApproveCheckoutExceptions => 'Autorizar salidas con deuda',
             self::RegisterExpenses => 'Registrar gastos',

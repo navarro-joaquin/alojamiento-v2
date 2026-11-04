@@ -143,21 +143,47 @@
                         <th class="py-2 pr-4 font-medium">Método</th>
                         <th class="py-2 pr-4 font-medium">Caja</th>
                         <th class="py-2 pr-4 text-right font-medium">Importe</th>
-                        <th class="py-2 text-right font-medium">Devuelto</th>
+                        <th class="py-2 pr-4 text-right font-medium">Devuelto</th>
+                        <th class="py-2 pr-4 font-medium">Recibo</th>
+                        <th class="py-2 font-medium">Factura externa</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
+                <tbody class="divide-y divide-gray-100 align-top">
                     @forelse ($stay->payments as $payment)
+                        @php($issuedReceipt = $payment->receipts->first())
                         <tr>
                             <td class="py-2 pr-4">{{ $payment->paid_at->timezone($activeBranch->timezone)->format('d/m/Y H:i') }}</td>
                             <td class="py-2 pr-4">{{ $payment->payment_type->etiqueta() }}</td>
                             <td class="py-2 pr-4">{{ $payment->payment_method->etiqueta() }}{{ $payment->reference ? " · {$payment->reference}" : '' }}</td>
                             <td class="py-2 pr-4">{{ $payment->cashSession->cashRegister->name }}</td>
                             <td class="py-2 pr-4 text-right">Bs {{ $payment->amount }}</td>
-                            <td class="py-2 text-right">{{ $payment->refunded_amount ? "Bs {$payment->refunded_amount}" : '' }}</td>
+                            <td class="py-2 pr-4 text-right">{{ $payment->refunded_amount ? "Bs {$payment->refunded_amount}" : '' }}</td>
+                            <td class="py-2 pr-4">
+                                @if ($issuedReceipt)
+                                    <a href="{{ route('receipts.show', $issuedReceipt) }}" class="underline">{{ $issuedReceipt->numeroCompleto() }}</a>
+                                @elseif ($payment->status === \App\Enums\PaymentStatus::Confirmed)
+                                    @can('emitir', [\App\Models\Receipt::class, $payment])
+                                        <a href="{{ route('payments.receipts.create', $payment) }}" class="underline">Emitir recibo</a>
+                                    @endcan
+                                @endif
+                            </td>
+                            <td class="py-2">
+                                @can('registrarFacturaExterna', $payment)
+                                    <form method="POST" action="{{ route('payments.external-invoice.update', $payment) }}" class="flex gap-2">
+                                        @csrf
+                                        @method('PUT')
+                                        <label class="sr-only" for="external-invoice-{{ $payment->id }}">Número de factura</label>
+                                        <input id="external-invoice-{{ $payment->id }}" name="external_invoice_number" value="{{ $payment->external_invoice_number }}" placeholder="N.º de factura"
+                                            class="w-28 rounded-md border border-gray-300 px-2 py-1 text-sm">
+                                        <x-button variant="secondary" class="py-1">Guardar</x-button>
+                                    </form>
+                                @else
+                                    {{ $payment->external_invoice_number }}
+                                @endcan
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="py-4 text-gray-500">Sin pagos.</td></tr>
+                        <tr><td colspan="8" class="py-4 text-gray-500">Sin pagos.</td></tr>
                     @endforelse
                 </tbody>
             </table>

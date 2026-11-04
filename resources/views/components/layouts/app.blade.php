@@ -9,7 +9,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-gray-50 text-gray-900 antialiased">
-    <header class="border-b border-gray-200 bg-white">
+    <header class="border-b border-gray-200 bg-white print:hidden">
         <div class="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-3">
             <nav class="flex items-center gap-6 text-sm font-medium">
                 <a href="{{ route('occupancy.index') }}" class="text-base font-semibold">{{ config('app.name') }}</a>
@@ -74,7 +74,7 @@
         <h1 class="text-xl font-semibold">{{ $title }}</h1>
 
         @if (session('status'))
-            <div class="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800" role="status">{{ session('status') }}</div>
+            <div class="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 print:hidden" role="status">{{ session('status') }}</div>
         @endif
 
         @if ($errors->any())

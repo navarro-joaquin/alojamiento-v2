@@ -206,6 +206,21 @@ class BusinessRuleException extends Exception
         return new self('Solo se pueden anular gastos confirmados.');
     }
 
+    public static function pagoConReciboVigente(string $receiptNumber): self
+    {
+        return new self("El pago ya tiene el recibo {$receiptNumber}: anúlelo antes de emitir otro.");
+    }
+
+    public static function reciboDePagoNoConfirmado(): self
+    {
+        return new self('Solo se emiten recibos de pagos confirmados.');
+    }
+
+    public static function reciboYaAnulado(): self
+    {
+        return new self('El recibo ya está anulado.');
+    }
+
     public static function saldoAFavorNoReembolsable(Number $remainingAmount): self
     {
         return new self("No hay pagos suficientes para devolver el saldo a favor (faltan Bs {$remainingAmount}).");

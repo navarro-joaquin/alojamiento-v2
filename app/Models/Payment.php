@@ -92,6 +92,16 @@ class Payment extends Model
     }
 
     /**
+     * The receipt in force and any voided ones it replaced.
+     *
+     * @return HasMany<Receipt, $this>
+     */
+    public function receipts(): HasMany
+    {
+        return $this->hasMany(Receipt::class);
+    }
+
+    /**
      * @return MorphMany<CashMovement, $this>
      */
     public function cashMovements(): MorphMany

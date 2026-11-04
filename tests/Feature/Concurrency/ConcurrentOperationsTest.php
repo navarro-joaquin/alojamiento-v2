@@ -12,6 +12,7 @@ use App\Models\CashSession;
 use App\Models\ExpenseCategory;
 use App\Models\Guest;
 use App\Models\Payment;
+use App\Models\ReceiptSequence;
 use App\Models\Room;
 use App\Models\RoomRate;
 use App\Models\Stay;
@@ -21,6 +22,7 @@ use App\Services\CashService;
 use App\Services\ChargeService;
 use App\Services\ExpenseService;
 use App\Services\NightAuditService;
+use App\Services\ReceiptService;
 use App\Services\ReceptionService;
 use App\Services\StayBalanceService;
 use Carbon\CarbonImmutable;
@@ -278,6 +280,26 @@ it('does not let two cash expenses take out more than the register holds', funct
     expect($succeeded)->toHaveCount(1)
         ->and(array_values($failed))->toBe(['El gasto supera el efectivo de la caja (Bs 50.00).'])
         ->and((string) app(CashService::class)->calcularEfectivoEsperado($cashSession))->toBe('50.00');
+});
+
+it('gives receipts issued at the same time consecutive numbers', function () {
+    $stay = crearEstadiaEndeudada('250.00');
+    $sequence = ReceiptSequence::factory()->create(['branch_id' => $stay->branch_id, 'prefix' => 'CEN']);
+    $firstPaymentId = Payment::factory()->for($stay)->create()->id;
+    $secondPaymentId = Payment::factory()->for($stay)->create()->id;
+    $userId = User::factory()->create()->id;
+
+    $emitir = function (int $paymentId) use ($userId): Closure {
+        return static fn () => app(ReceiptService::class)->emitir(Payment::findOrFail($paymentId), User::findOrFail($userId), 'Ana Quispe')->number;
+    };
+
+    ['exitosas' => $succeeded] = separarResultados(ConcurrentRace::ejecutar('receipt_sequences', $sequence->id, [
+        'pago 1' => $emitir($firstPaymentId),
+        'pago 2' => $emitir($secondPaymentId),
+    ]));
+
+    expect(collect($succeeded)->sort()->values()->all())->toBe([1, 2])
+        ->and($sequence->refresh()->next_number)->toBe(3);
 });
 
 it('charges each night once when the night audit runs twice at the same time', function () {

@@ -6,6 +6,7 @@ use App\Enums\DocumentType;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\PaymentType;
+use App\Enums\ReceiptStatus;
 use App\Http\Requests\StoreStayRequest;
 use App\Models\CashSession;
 use App\Models\Payment;
@@ -63,7 +64,7 @@ class StayController extends Controller
             'room.roomType',
             'guests',
             'charges' => fn ($query) => $query->with('createdByUser')->orderBy('service_date')->orderBy('id'),
-            'payments' => fn ($query) => $query->with(['cashSession.cashRegister', 'createdByUser'])
+            'payments' => fn ($query) => $query->with(['cashSession.cashRegister', 'createdByUser', 'receipts' => fn ($query) => $query->where('status', ReceiptStatus::Issued)])
                 ->withSum(['refunds as refunded_amount' => fn ($query) => $query->confirmadas()], 'amount')
                 ->orderBy('paid_at'),
         ]);

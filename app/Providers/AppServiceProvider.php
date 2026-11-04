@@ -14,6 +14,8 @@ use App\Models\ExpenseCategory;
 use App\Models\Guest;
 use App\Models\Payment;
 use App\Models\PaymentRefund;
+use App\Models\Receipt;
+use App\Models\ReceiptSequence;
 use App\Models\Room;
 use App\Models\RoomRate;
 use App\Models\RoomStatusLog;
@@ -93,6 +95,8 @@ class AppServiceProvider extends ServiceProvider
             'payment' => Payment::class,
             'payment_refund' => PaymentRefund::class,
             'permission' => Permission::class,
+            'receipt' => Receipt::class,
+            'receipt_sequence' => ReceiptSequence::class,
             'role' => Role::class,
             'room' => Room::class,
             'room_rate' => RoomRate::class,

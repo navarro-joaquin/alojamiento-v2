@@ -26,6 +26,8 @@ beforeEach(function () {
     $this->store = Warehouse::factory()->for($this->branch)->create(['name' => 'Tienda']);
     $this->soda = Product::factory()->vendible('12.50')->create(['name' => 'Gaseosa 500 ml']);
     InventoryBalance::factory()->for($this->store)->for($this->soda)->create(['quantity' => '10.000']);
+    $this->water = Product::factory()->vendible('8.00')->create(['name' => 'Agua 600 ml']);
+    InventoryBalance::factory()->for($this->store)->for($this->water)->create(['quantity' => '5.000']);
     $this->receptionist = usuarioDeMostrador($this->branch, BranchRole::Receptionist);
 });
 
@@ -49,8 +51,8 @@ function datosDeVentaDeMostrador(array $overrides = []): array
         'warehouse_id' => $test->store->id,
         'cash_session_id' => $test->cashSession->id,
         'items' => [
-            ['product_id' => $test->soda->id, 'quantity' => '2'],
-            ['product_id' => '', 'quantity' => ''],
+            $test->soda->id => ['product_id' => $test->soda->id, 'quantity' => '2'],
+            $test->water->id => ['product_id' => $test->water->id, 'quantity' => ''],
         ],
         'holder_name' => 'Juan Pérez',
         'payment_method' => 'cash',
@@ -97,6 +99,38 @@ it('issues a receipt of a counter sale to its client', function () {
         ->assertOk()
         ->assertSee("Venta de mostrador #{$payment->folio_id}")
         ->assertSee(route('counter-sales.show', $payment->folio_id));
+});
+
+it('lists the products for sale that the chosen warehouse has in stock', function () {
+    $minibar = Warehouse::factory()->for($this->branch)->create(['name' => 'Minibar']);
+    $beer = Product::factory()->vendible('20.00')->create(['name' => 'Cerveza 355 ml']);
+    InventoryBalance::factory()->for($minibar)->for($beer)->create(['quantity' => '6.000']);
+    $soldOut = Product::factory()->vendible('15.00')->create(['name' => 'Jugo agotado']);
+    InventoryBalance::factory()->for($this->store)->for($soldOut)->create(['quantity' => '0.000']);
+    $supply = Product::factory()->create(['name' => 'Papel higiénico', 'is_sellable' => false]);
+    InventoryBalance::factory()->for($this->store)->for($supply)->create(['quantity' => '30.000']);
+
+    $this->actingAs($this->receptionist)
+        ->get(route('counter-sales.index', ['almacen' => $this->store->id]))
+        ->assertOk()
+        ->assertSeeInOrder(['Agua 600 ml', 'Bs 8.00', '5', 'Gaseosa 500 ml', 'Bs 12.50', '10'])
+        ->assertSee('name="warehouse_id" value="'.$this->store->id.'"', false)
+        ->assertDontSee('Cerveza 355 ml')
+        ->assertDontSee('Jugo agotado')
+        ->assertDontSee('Papel higiénico');
+
+    $this->actingAs($this->receptionist)
+        ->get(route('counter-sales.index', ['almacen' => $minibar->id]))
+        ->assertSee('Cerveza 355 ml')
+        ->assertDontSee('Gaseosa 500 ml');
+});
+
+it('asks for at least one quantity', function () {
+    $this->actingAs($this->receptionist)
+        ->post(route('counter-sales.store'), datosDeVentaDeMostrador(['items' => [$this->soda->id => ['product_id' => $this->soda->id, 'quantity' => '']]]))
+        ->assertSessionHasErrors('operation');
+
+    expect(Folio::query()->where('folio_type', FolioType::Counter)->exists())->toBeFalse();
 });
 
 it('shows a stock shortage as a form error', function () {

@@ -7,6 +7,7 @@ use App\Enums\PaymentMethod;
 use App\Enums\ReceiptStatus;
 use App\Models\CashSession;
 use App\Models\Folio;
+use App\Models\InventoryBalance;
 use App\Models\Product;
 use App\Models\Warehouse;
 use App\Services\CounterSaleService;
@@ -21,10 +22,17 @@ use Illuminate\View\View;
  */
 class CounterSaleController extends Controller
 {
+    /**
+     * The catalog lists what the chosen warehouse (`?almacen=`, by default the
+     * first one) has in stock and is for sale.
+     */
     public function index(Request $request): View
     {
         $branch = $this->sucursalActiva($request);
         Gate::authorize('verVentasDeMostrador', [Folio::class, $branch]);
+
+        $warehouses = $branch->warehouses()->activos()->orderBy('name')->get();
+        $selectedWarehouse = $warehouses->firstWhere('id', $request->integer('almacen')) ?? $warehouses->first();
 
         return view('counter-sales.index', [
             'counterSales' => Folio::query()
@@ -35,8 +43,16 @@ class CounterSaleController extends Controller
                 ->latest('id')
                 ->limit(50)
                 ->get(),
-            'warehouses' => $branch->warehouses()->activos()->orderBy('name')->get(),
-            'products' => Product::query()->activos()->vendibles()->orderBy('name')->get(),
+            'warehouses' => $warehouses,
+            'selectedWarehouse' => $selectedWarehouse,
+            'saleBalances' => $selectedWarehouse === null ? collect() : InventoryBalance::query()
+                ->whereBelongsTo($selectedWarehouse)
+                ->where('quantity', '>', 0)
+                ->whereHas('product', fn ($query) => $query->activos()->vendibles())
+                ->with('product')
+                ->get()
+                ->sortBy('product.name', SORT_NATURAL | SORT_FLAG_CASE)
+                ->values(),
             'openCashSessions' => CashSession::query()
                 ->abiertas()
                 ->whereHas('cashRegister', fn ($query) => $query->whereBelongsTo($branch))
@@ -47,7 +63,7 @@ class CounterSaleController extends Controller
     }
 
     /**
-     * Rows of the form without a product are ignored.
+     * Catalog rows left without a quantity are ignored.
      */
     public function store(Request $request, CounterSaleService $counterSaleService): RedirectResponse
     {
@@ -58,8 +74,8 @@ class CounterSaleController extends Controller
             'warehouse_id' => ['required', 'integer', Rule::exists(Warehouse::class, 'id')->where('branch_id', $branch->id)],
             'cash_session_id' => ['required', 'integer', Rule::exists(CashSession::class, 'id')],
             'items' => ['required', 'array'],
-            'items.*.product_id' => ['nullable', 'integer', 'distinct', Rule::exists(Product::class, 'id')],
-            'items.*.quantity' => ['nullable', 'required_with:items.*.product_id', 'decimal:0,2', 'gt:0', 'max:9999'],
+            'items.*.product_id' => ['required', 'integer', 'distinct', Rule::exists(Product::class, 'id')],
+            'items.*.quantity' => ['nullable', 'decimal:0,2', 'gt:0', 'max:9999'],
             'holder_name' => ['nullable', 'string', 'max:255'],
             'payment_method' => ['required', Rule::enum(PaymentMethod::class)],
             'reference' => ['nullable', 'string', 'max:100'],
@@ -76,7 +92,7 @@ class CounterSaleController extends Controller
         ]);
 
         $quantitiesByProduct = collect($validated['items'])
-            ->filter(fn (array $item): bool => filled($item['product_id'] ?? null))
+            ->filter(fn (array $item): bool => filled($item['quantity'] ?? null))
             ->mapWithKeys(fn (array $item): array => [(int) $item['product_id'] => (string) $item['quantity']])
             ->all();
 

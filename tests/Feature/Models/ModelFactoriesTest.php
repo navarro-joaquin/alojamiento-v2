@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\FolioType;
 use App\Models\AssetMovement;
 use App\Models\Branch;
 use App\Models\CashMovement;
@@ -7,6 +8,7 @@ use App\Models\CashRegister;
 use App\Models\CashSession;
 use App\Models\Employee;
 use App\Models\FixedAsset;
+use App\Models\Folio;
 use App\Models\Guest;
 use App\Models\InventoryBalance;
 use App\Models\InventoryMovement;
@@ -48,6 +50,7 @@ test('the factory persists a valid record', function (string $modelClass) {
     'room rate' => RoomRate::class,
     'guest' => Guest::class,
     'stay' => Stay::class,
+    'folio' => Folio::class,
     'stay room assignment' => StayRoomAssignment::class,
     'stay charge' => StayCharge::class,
     'cash register' => CashRegister::class,
@@ -72,8 +75,15 @@ test('a stay belongs to the branch of its room', function () {
     expect($stay->branch_id)->toBe($stay->room->branch_id);
 });
 
-test('a payment is collected in a cash register of the stay branch', function () {
+test('a stay opens its own folio', function () {
+    $stay = Stay::factory()->create();
+
+    expect($stay->folio->branch_id)->toBe($stay->branch_id)
+        ->and($stay->folio->folio_type)->toBe(FolioType::Stay);
+});
+
+test('a payment is collected in a cash register of the folio branch', function () {
     $payment = Payment::factory()->create();
 
-    expect($payment->cashSession->cashRegister->branch_id)->toBe($payment->stay->branch_id);
+    expect($payment->cashSession->cashRegister->branch_id)->toBe($payment->folio->branch_id);
 });

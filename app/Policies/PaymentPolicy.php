@@ -10,11 +10,11 @@ class PaymentPolicy
 {
     public function devolver(User $user, Payment $payment): bool
     {
-        return $user->tienePermisoEnSucursal(BranchPermission::RefundPayments, $payment->stay->branch_id);
+        return $user->tienePermisoEnSucursal(BranchPermission::RefundPayments, $payment->folio->branch_id);
     }
 
     public function registrarFacturaExterna(User $user, Payment $payment): bool
     {
-        return $user->tienePermisoEnSucursal(BranchPermission::CollectPayments, $payment->stay->branch_id);
+        return $user->tienePermisoEnSucursal(BranchPermission::CollectPayments, $payment->folio->branch_id);
     }
 }

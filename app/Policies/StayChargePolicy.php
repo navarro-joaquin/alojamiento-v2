@@ -10,6 +10,6 @@ class StayChargePolicy
 {
     public function anular(User $user, StayCharge $stayCharge): bool
     {
-        return $user->tienePermisoEnSucursal(BranchPermission::VoidCharges, $stayCharge->stay->branch_id);
+        return $user->tienePermisoEnSucursal(BranchPermission::VoidCharges, $stayCharge->folio->branch_id);
     }
 }

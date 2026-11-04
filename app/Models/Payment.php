@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 #[Fillable([
-    'stay_id',
+    'folio_id',
     'cash_session_id',
     'created_by',
     'payment_method',
@@ -60,11 +60,11 @@ class Payment extends Model
     }
 
     /**
-     * @return BelongsTo<Stay, $this>
+     * @return BelongsTo<Folio, $this>
      */
-    public function stay(): BelongsTo
+    public function folio(): BelongsTo
     {
-        return $this->belongsTo(Stay::class);
+        return $this->belongsTo(Folio::class);
     }
 
     /**

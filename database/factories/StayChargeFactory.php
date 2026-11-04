@@ -24,6 +24,7 @@ class StayChargeFactory extends Factory
     {
         return [
             'stay_id' => Stay::factory(),
+            'folio_id' => fn (array $attributes) => Stay::find($attributes['stay_id'])->folio->id,
             'charge_type' => ChargeType::Lodging,
             'direction' => ChargeDirection::Debit,
             'description' => 'Noche de alojamiento',

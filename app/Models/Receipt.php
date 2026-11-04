@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 #[Fillable([
     'branch_id',
-    'stay_id',
+    'folio_id',
     'payment_id',
     'prefix',
     'number',
@@ -71,11 +71,11 @@ class Receipt extends Model
     }
 
     /**
-     * @return BelongsTo<Stay, $this>
+     * @return BelongsTo<Folio, $this>
      */
-    public function stay(): BelongsTo
+    public function folio(): BelongsTo
     {
-        return $this->belongsTo(Stay::class);
+        return $this->belongsTo(Folio::class);
     }
 
     /**

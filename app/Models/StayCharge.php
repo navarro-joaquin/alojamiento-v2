@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
+    'folio_id',
     'stay_id',
     'charge_type',
     'direction',
@@ -64,6 +65,16 @@ class StayCharge extends Model
     }
 
     /**
+     * @return BelongsTo<Folio, $this>
+     */
+    public function folio(): BelongsTo
+    {
+        return $this->belongsTo(Folio::class);
+    }
+
+    /**
+     * The stay the charge comes from, whatever folio it is billed to.
+     *
      * @return BelongsTo<Stay, $this>
      */
     public function stay(): BelongsTo

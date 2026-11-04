@@ -10,7 +10,7 @@ use App\Models\Stay;
 use App\Models\StayCharge;
 use App\Models\User;
 use App\Services\ChargeService;
-use App\Services\StayBalanceService;
+use App\Services\FolioBalanceService;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -66,7 +66,7 @@ describe('registrarCargo', function () {
         $stayCharge = app(ChargeService::class)->registrarCargo($stay, User::factory()->create(), ChargeType::LateCheckOut, 'Salida a las 16:00', '1', '80.00');
 
         expect($stayCharge->charge_type)->toBe(ChargeType::LateCheckOut)
-            ->and((string) app(StayBalanceService::class)->calcular($stay))->toBe('80.00');
+            ->and((string) app(FolioBalanceService::class)->calcular($stay->folio))->toBe('80.00');
     });
 
     it('rejects types that are not charged manually', function (ChargeType $chargeType) {
@@ -99,7 +99,7 @@ describe('registrarDescuento', function () {
         $discount = app(ChargeService::class)->registrarDescuento($stay, User::factory()->create(), 'Cliente frecuente', '25.00');
 
         expect($discount->direction)->toBe(ChargeDirection::Credit)
-            ->and((string) app(StayBalanceService::class)->calcular($stay))->toBe('225.00');
+            ->and((string) app(FolioBalanceService::class)->calcular($stay->folio))->toBe('225.00');
     });
 
     it('rejects an amount that is not positive', function () {
@@ -118,7 +118,7 @@ describe('anularCargo', function () {
         expect($voidedCharge->status)->toBe(ChargeStatus::Voided)
             ->and($voidedCharge->voided_by)->toBe($user->id)
             ->and($voidedCharge->void_reason)->toBe('Cargo duplicado')
-            ->and((string) app(StayBalanceService::class)->calcular($stay))->toBe('0.00');
+            ->and((string) app(FolioBalanceService::class)->calcular($stay->folio))->toBe('0.00');
     });
 
     it('rejects a charge that is already voided', function () {

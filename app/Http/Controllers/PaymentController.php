@@ -32,7 +32,7 @@ class PaymentController extends Controller
         ]);
 
         $payment = $cashService->cobrarPago(
-            $stay,
+            $stay->folio,
             CashSession::findOrFail($validated['cash_session_id']),
             $request->user(),
             PaymentMethod::from($validated['payment_method']),

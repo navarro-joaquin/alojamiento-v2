@@ -10,8 +10,8 @@ use App\Models\Stay;
 use App\Models\StayCharge;
 use App\Models\User;
 use App\Services\CheckoutExceptionService;
+use App\Services\FolioBalanceService;
 use App\Services\ReceptionService;
-use App\Services\StayBalanceService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -42,7 +42,7 @@ it('requests an exception for the current debt', function () {
 });
 
 it('does not request an exception for a stay without debt', function () {
-    Payment::factory()->for($this->stay)->create(['amount' => '250.00']);
+    Payment::factory()->for($this->stay->folio)->create(['amount' => '250.00']);
 
     app(CheckoutExceptionService::class)->solicitar($this->stay, $this->requester, 'Paga mañana');
 })->throws(BusinessRuleException::class, 'no tiene saldo pendiente');
@@ -117,7 +117,7 @@ it('checks out with the authorized debt and consumes the exception', function ()
     $completedStay = app(ReceptionService::class)->registrarSalida($this->stay, $this->operator);
 
     expect($completedStay->status)->toBe(StayStatus::Completed)
-        ->and((string) app(StayBalanceService::class)->calcular($completedStay))->toBe('250.00')
+        ->and((string) app(FolioBalanceService::class)->calcular($completedStay->folio))->toBe('250.00')
         ->and($checkoutException->refresh()->status)->toBe(CheckoutExceptionStatus::Used)
         ->and($checkoutException->used_at)->not->toBeNull();
     $this->assertDatabaseHas('activity_log', ['event' => 'stay.checked_out', 'subject_id' => $this->stay->id, 'properties->checkout_exception_id' => $checkoutException->id]);

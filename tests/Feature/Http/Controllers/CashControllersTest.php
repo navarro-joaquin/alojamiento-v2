@@ -74,8 +74,8 @@ it('shows the expected cash and the net amount of each method', function () {
     $stay = Stay::factory()->for(Room::factory()->for($this->branch))->create();
     StayCharge::factory()->for($stay)->create(['total_amount' => '400.00']);
     $user = cajeroConRol($this->branch);
-    app(CashService::class)->cobrarPago($stay, $cashSession, $user, PaymentMethod::Cash, PaymentType::Settlement, '250.00', (string) Str::uuid());
-    app(CashService::class)->cobrarPago($stay, $cashSession, $user, PaymentMethod::Card, PaymentType::Settlement, '150.00', (string) Str::uuid());
+    app(CashService::class)->cobrarPago($stay->folio, $cashSession, $user, PaymentMethod::Cash, PaymentType::Settlement, '250.00', (string) Str::uuid());
+    app(CashService::class)->cobrarPago($stay->folio, $cashSession, $user, PaymentMethod::Card, PaymentType::Settlement, '150.00', (string) Str::uuid());
 
     $this->actingAs($user)
         ->get(route('cash-sessions.show', $cashSession))

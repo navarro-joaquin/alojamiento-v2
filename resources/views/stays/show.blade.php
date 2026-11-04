@@ -97,7 +97,7 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
-                    @forelse ($stay->charges as $stayCharge)
+                    @forelse ($stay->folio->charges as $stayCharge)
                         @php($isVoided = $stayCharge->status === \App\Enums\ChargeStatus::Voided)
                         <tr @class(['text-gray-400 line-through' => $isVoided])>
                             <td class="py-2 pr-4">{{ $stayCharge->service_date->format('d/m/Y') }}</td>
@@ -149,7 +149,7 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 align-top">
-                    @forelse ($stay->payments as $payment)
+                    @forelse ($stay->folio->payments as $payment)
                         @php($issuedReceipt = $payment->receipts->first())
                         <tr>
                             <td class="py-2 pr-4">{{ $payment->paid_at->timezone($activeBranch->timezone)->format('d/m/Y H:i') }}</td>

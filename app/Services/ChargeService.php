@@ -18,10 +18,10 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Charges, discounts and voids on a stay. Amounts are always positive; the
- * direction gives the sign. Product sales take the stock out in the same
- * transaction, and voiding them puts it back. Authorization for discounts
- * and voids is the caller's responsibility.
+ * Charges, discounts and voids on a stay, billed to the stay's folio.
+ * Amounts are always positive; the direction gives the sign. Product sales
+ * take the stock out in the same transaction, and voiding them puts it back.
+ * Authorization for discounts and voids is the caller's responsibility.
  */
 class ChargeService
 {
@@ -57,6 +57,7 @@ class ChargeService
 
         try {
             return DB::transaction(fn (): StayCharge => $stay->charges()->create([
+                'folio_id' => $stay->folio->id,
                 'charge_type' => ChargeType::Lodging,
                 'direction' => ChargeDirection::Debit,
                 'description' => 'Noche del '.$serviceDate->format('d/m/Y'),
@@ -130,6 +131,7 @@ class ChargeService
             $saleMovement = $this->inventoryService->registrarVenta($warehouse, $product, $user, $quantity, "Estadía #{$lockedStay->id}");
 
             $stayCharge = $lockedStay->charges()->create([
+                'folio_id' => $lockedStay->folio->id,
                 'charge_type' => ChargeType::Product,
                 'direction' => ChargeDirection::Debit,
                 'description' => $product->name,
@@ -226,6 +228,7 @@ class ChargeService
 
             $stayCharge = $lockedStay->charges()->create([
                 ...$attributes,
+                'folio_id' => $lockedStay->folio->id,
                 'service_date' => $lockedStay->branch->current_business_date,
                 'status' => ChargeStatus::Confirmed,
                 'created_by' => $user->id,

@@ -24,7 +24,7 @@ beforeEach(function () {
 function sucursalDelSujeto(Model $subject): int
 {
     return match (true) {
-        $subject instanceof StayCharge, $subject instanceof Payment => $subject->stay->branch_id,
+        $subject instanceof StayCharge, $subject instanceof Payment => $subject->folio->branch_id,
         $subject instanceof CashSession => $subject->cashRegister->branch_id,
         default => $subject->branch_id,
     };

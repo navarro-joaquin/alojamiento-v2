@@ -7,6 +7,7 @@ use App\Enums\PaymentStatus;
 use App\Enums\PaymentType;
 use App\Models\CashRegister;
 use App\Models\CashSession;
+use App\Models\Folio;
 use App\Models\Payment;
 use App\Models\Stay;
 use App\Models\User;
@@ -26,9 +27,9 @@ class PaymentFactory extends Factory
     public function definition(): array
     {
         return [
-            'stay_id' => Stay::factory(),
+            'folio_id' => fn () => Stay::factory()->create()->folio->id,
             'cash_session_id' => fn (array $attributes) => CashSession::factory()->for(
-                CashRegister::factory()->state(['branch_id' => Stay::find($attributes['stay_id'])->branch_id])
+                CashRegister::factory()->state(['branch_id' => Folio::find($attributes['folio_id'])->branch_id])
             ),
             'created_by' => User::factory(),
             'payment_method' => PaymentMethod::Cash,

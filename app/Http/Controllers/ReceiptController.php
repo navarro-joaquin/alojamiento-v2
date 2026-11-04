@@ -19,13 +19,13 @@ class ReceiptController extends Controller
      */
     public function create(Request $request, Payment $payment): View
     {
-        $this->asegurarDeLaSucursalActiva($request, $payment->stay->branch_id);
+        $this->asegurarDeLaSucursalActiva($request, $payment->folio->branch_id);
         Gate::authorize('emitir', [Receipt::class, $payment]);
 
-        $primaryGuest = $payment->stay->guests()->wherePivot('is_primary', true)->first();
+        $primaryGuest = $payment->folio->stay->guests()->wherePivot('is_primary', true)->first();
 
         return view('receipts.create', [
-            'payment' => $payment->load('stay.room'),
+            'payment' => $payment->load('folio.stay.room'),
             'holderName' => $primaryGuest ? "{$primaryGuest->first_name} {$primaryGuest->last_name}" : '',
             'holderDocument' => $primaryGuest ? $this->formatearDocumento($primaryGuest) : '',
         ]);
@@ -33,7 +33,7 @@ class ReceiptController extends Controller
 
     public function store(Request $request, Payment $payment, ReceiptService $receiptService): RedirectResponse
     {
-        $this->asegurarDeLaSucursalActiva($request, $payment->stay->branch_id);
+        $this->asegurarDeLaSucursalActiva($request, $payment->folio->branch_id);
         Gate::authorize('emitir', [Receipt::class, $payment]);
 
         $validated = $request->validate([
@@ -55,7 +55,7 @@ class ReceiptController extends Controller
         Gate::authorize('ver', $receipt);
 
         return view('receipts.show', [
-            'receipt' => $receipt->load(['branch', 'stay.room', 'payment', 'issuedByUser', 'voidedByUser']),
+            'receipt' => $receipt->load(['branch', 'folio.stay.room', 'payment', 'issuedByUser', 'voidedByUser']),
         ]);
     }
 

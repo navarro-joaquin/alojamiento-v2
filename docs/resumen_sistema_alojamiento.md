@@ -214,7 +214,8 @@ Registra cada cambio de habitación a mitad de la estadía. El cargo nocturno us
 
 #### `stay_charges`
 - `id`
-- `stay_id` → `stays.id`
+- `folio_id` → `folios.id` (la cuenta a la que se factura el cargo; ver sección 3.5)
+- `stay_id` → `stays.id` (la estadía de la que proviene el cargo)
 - `charge_type`: `lodging`, `late_check_out`, `product`, `service`, `discount`, `adjustment`
 - `direction`: `debit` (aumenta la deuda) o `credit` (descuento/ajuste a favor)
 - `description`
@@ -321,7 +322,15 @@ El primer movimiento de cada activo es su alta (sin origen).
 
 ### 3.5 Caja, pagos, devoluciones y gastos
 
-**Decisión:** las cuentas compartidas (*folios*) no entran en la fase 1. Cargos y pagos se vinculan directamente a la estadía (`stay_id` obligatorio). Las ventas a personas que no son huéspedes, los grupos o empresas con un solo pagador y los anticipos de reservas quedan para la fase 4, cuando se evaluará introducir `folios` con una migración de datos.
+**Decisión (fase 4):** cargos, pagos y recibos pertenecen a una **cuenta** (*folio*), no directamente a la estadía. Cada estadía tiene su propia cuenta, que se abre en el check-in; su saldo es lo que debe el huésped. Las ventas de mostrador a personas que no se hospedan y las cuentas de grupos o empresas son cuentas sin estadía. Las fases 1 a 3 vinculaban cargos y pagos a la estadía; la migración `move_charges_payments_and_receipts_to_folios` abrió una cuenta por cada estadía existente y les pasó sus cargos, pagos y recibos.
+
+#### `folios`
+- `id`
+- `branch_id` → `branches.id`
+- `folio_type`: `stay` (cuenta de una estadía) o `counter` (venta de mostrador)
+- `stay_id` → `stays.id` nullable, `UNIQUE`: solo y siempre en las cuentas `stay` (`CHECK folios_stay_only_for_stay_type`)
+- `holder_name` nullable (titular de las cuentas sin estadía)
+- `created_by` → `users.id`
 
 #### `cash_registers`
 - `id`
@@ -368,7 +377,7 @@ Permite registrar arqueos durante la sesión compartida (por ejemplo, en cada ca
 
 #### `payments`
 - `id`
-- `stay_id` → `stays.id`
+- `folio_id` → `folios.id`
 - `cash_session_id` → `cash_sessions.id`
 - `created_by` → `users.id` (operador responsable)
 - `payment_method`: `cash`, `card`, `bank_transfer`, `qr` (pago QR interbancario, habitual en Bolivia)
@@ -480,7 +489,7 @@ La numeración correlativa se obtiene bloqueando la fila de la secuencia dentro 
 #### `receipts`
 - `id`
 - `branch_id` → `branches.id`
-- `stay_id` → `stays.id`
+- `folio_id` → `folios.id`
 - `payment_id` → `payments.id` (los recibos de devolución quedan pendientes)
 - `prefix` (copiado de la secuencia) y `number` (`UNIQUE(branch_id, number)`); se imprime como `CEN-000042`
 - `holder_name`, `holder_document` nullable (cifrado)
@@ -512,18 +521,21 @@ Todos los servicios que bloquean más de una fila lo hacen en este orden, y omit
 2. `cash_sessions`
 3. `stays`
 4. `rooms`
-5. `payments`
-6. `checkout_exceptions`
-7. `expenses`
-8. `inventory_transfers`
-9. `inventory_balances` (si son varios, ordenados por producto)
-10. `receipt_sequences`
+5. `folios` (una cuenta de estadía se bloquea después de su estadía)
+6. `payments`
+7. `checkout_exceptions`
+8. `expenses`
+9. `inventory_transfers`
+10. `inventory_balances` (si son varios, ordenados por producto)
+11. `receipt_sequences`
 
 Bloquear siempre en el mismo orden evita interbloqueos (deadlocks) entre cobro, devolución, check-out y cierre.
 
 **Nivel de aislamiento:** la conexión MySQL usa `READ COMMITTED` (`config/database.php`). Con el `REPEATABLE READ` por defecto, una transacción que espera un bloqueo conserva la *snapshot* tomada en su primera lectura, y al obtener el bloqueo calcula el saldo con datos viejos. Así se detectó que dos cobros simultáneos desde cajas distintas podían cobrar dos veces la misma deuda. Por la misma razón, la comprobación de `operation_uuid` se repite **después** de obtener los bloqueos.
 
-### Saldo de una estadía
+### Saldo de una cuenta
+
+El saldo se calcula por cuenta (`FolioBalanceService`); el de una estadía es el de su propia cuenta.
 
 `saldo = cargos débito confirmados - cargos crédito confirmados - pagos confirmados + devoluciones confirmadas`
 
@@ -548,7 +560,7 @@ Solo cuentan movimientos con `affects_cash = true`. Los pagos con tarjeta, trans
 ### Cobro
 
 En una transacción:
-1. Bloquear sesión de caja y estadía (orden canónico).
+1. Bloquear sesión de caja, estadía y cuenta (orden canónico).
 2. Verificar que la caja esté abierta (no `closing`) y que pertenezca a la sucursal de la estadía.
 3. Verificar que la estadía esté activa y que el usuario tenga permiso en esa sucursal.
 4. Validar método, importe positivo y límite según `payment_type` (saldo vigente para `settlement`; tope de anticipo para `deposit`).
@@ -558,7 +570,7 @@ En una transacción:
 
 ### Devolución
 
-1. Bloquear la sesión de caja (si es en efectivo), la estadía y el pago original (orden canónico).
+1. Bloquear la sesión de caja (si es en efectivo), la estadía, la cuenta y el pago original (orden canónico).
 2. Sumar las devoluciones confirmadas existentes.
 3. Rechazar si la nueva devolución excede el saldo reembolsable del pago o el **saldo a favor** de la estadía. Una devolución nunca crea deuda: si un cargo estaba mal, primero se anula o se descuenta y después se devuelve el saldo a favor resultante.
 4. Validar sesión de caja abierta si se devuelve efectivo.
@@ -613,8 +625,8 @@ Ubicación: `app/Services/`. Estados en `app/Enums/`.
 
 **Convención de nombres:** los métodos y funciones propios se nombran en español y en camelCase (`cobrarPago()`, `registrarIngreso()`). Las clases, las relaciones Eloquent, las tablas y las columnas siguen en inglés, según la convención de Laravel. Los métodos que exige el framework (`up()`, `down()`, `handle()`, `authorize()`, `rules()`, `casts()`…) conservan su nombre.
 
-### `StayBalanceService`
-Responsabilidad: calcular el saldo pendiente (o a favor) con los cargos débito/crédito, pagos y devoluciones confirmados. Usa aritmética decimal segura y los enums de estado.
+### `FolioBalanceService`
+Responsabilidad: calcular el saldo pendiente (o a favor) de una cuenta con los cargos débito/crédito, pagos y devoluciones confirmados. Usa aritmética decimal segura y los enums de estado.
 
 ### `RateService`
 Responsabilidad: resolver la tarifa aplicable y validar que no haya vigencias solapadas.
@@ -659,7 +671,7 @@ La autorización usa Policies que consultan permisos de `spatie/laravel-permissi
 ## 6. Fragmentos de implementación ya bosquejados
 
 En la conversación se bosquejaron ejemplos de:
-- `StayBalanceService::calcular()`.
+- `FolioBalanceService::calcular()` (antes `StayBalanceService`).
 - `CashService::cobrarPago()`.
 - `CashService::cerrarSesion()`.
 - `ReceptionService::registrarIngreso()`.
@@ -759,14 +771,14 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
 - **Fase 1:** sucursales, usuarios y permisos por sucursal, habitaciones, tarifas, huéspedes, estadías, cargos (incluida la auditoría nocturna), pagos y caja.
 - **Fase 2:** devoluciones (además de la devolución de saldo a favor en el check-out, que va en la fase 1), gastos, excepciones de deuda, arqueos parciales, recibos internos y reportes financieros.
 - **Fase 3:** inventario, ventas de productos y activos fijos.
-- **Fase 4:** reservas, disponibilidad por rango de fechas y cuentas compartidas (`folios`) para grupos, empresas y ventas a no huéspedes.
+- **Fase 4:** cuentas (`folios`) para ventas a no huéspedes, grupos y empresas. Las reservas y la disponibilidad por rango de fechas salieron del alcance: el negocio no toma reservas anticipadas.
 
 ### Prioridad sugerida dentro de la fase 1
 
 1. ✅ Configurar MySQL para desarrollo y pruebas (sección 13; `phpunit.xml` usa `alojamiento_test`).
 2. ✅ Instalar `spatie/laravel-permission` 8.x (teams con `branch_id`) y `spatie/laravel-activitylog` 5.x.
 3. ✅ Migraciones de la fase 1, con `up()`/`down()`, FK `RESTRICT`, restricciones `CHECK` y columnas generadas únicas: `branches`, `employees`, ALTER `users`, índice por sucursal en `activity_log`, `room_types`, `rooms`, `room_status_logs`, `room_rates`, `guests`, `stays`, `stay_room_assignments`, `stay_guests`, `stay_charges`, `cash_registers`, `cash_sessions`, `payments`, `payment_refunds`, `cash_movements`. Las garantías de base de datos están cubiertas por `tests/Feature/DatabaseConstraintsTest.php`.
-   - Quedan para fases posteriores: recibos (fase 2) y las columnas `product_id`/`inventory_movement_id` de `stay_charges` (fase 3, mediante ALTER).
+   - Los recibos se agregaron en la fase 2 y las columnas `product_id`/`inventory_movement_id` de `stay_charges` en la fase 3, mediante ALTER.
 4. ✅ Enums de estados en `app/Enums/` (string-backed, con `etiqueta()` en español). Algunos incluyen reglas: `PaymentMethod::afectaEfectivo()`, `CashSessionStatus::aceptaMovimientos()` y `HousekeepingStatus::permiteAsignacion()`.
 5. ✅ Modelos Eloquent de la fase 1 con relaciones, casts a enums y decimales, scopes (`activas`, `confirmados`, `confirmadas`, `abiertas`) y factories con estados en español. Notas:
    - Morph map estricto en `AppServiceProvider` (`payment`, `payment_refund`, `user`…): las columnas polimórficas guardan alias, no nombres de clase.
@@ -787,7 +799,7 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
 9. ✅ Auditoría y Policies por sucursal. Notas:
    - El middleware global `AddRequestContext` genera un `request_id` (UUID propio; nunca se acepta el que envía el cliente) y guarda `request_id` e `ip_address` en `Context`. `AuditService` los toma de ahí y la respuesta los devuelve en `X-Request-Id`. Si hay un proxy delante, configurar `TrustProxies` para que `ip_address` sea la del cliente.
    - Permisos y roles definidos en `App\Enums\BranchPermission` y `App\Enums\BranchRole` (`permisos()`); `RolesAndPermissionsSeeder` los crea como roles globales y resincroniza sus permisos en cada ejecución.
-   - Recepcionista: ingresos, cambios de habitación, salidas, cargos, cobros, apertura y cierre de caja y estado de limpieza. Descuentos, anulaciones, devoluciones y estado operativo quedan para supervisor y administrador. Limpieza solo cambia el estado de limpieza; almacenero no tiene permisos hasta la fase 3.
+   - Recepcionista: ingresos, cambios de habitación, salidas, cargos, cobros, apertura y cierre de caja y estado de limpieza. Descuentos, anulaciones, devoluciones y estado operativo quedan para supervisor y administrador. Limpieza solo cambia el estado de limpieza; los permisos del almacenero (inventario y activos fijos) se agregaron en la fase 3.
    - Las Policies (`RoomPolicy`, `StayPolicy`, `StayChargePolicy`, `PaymentPolicy`, `CashRegisterPolicy`, `CashSessionPolicy`) usan como habilidad el nombre del método del servicio (`registrarIngreso`, `anular`…) y evalúan el permiso **en la sucursal del registro**, con `User::tienePermisoEnSucursal()`, sin depender de la sucursal activa en la sesión.
    - La salida incluye la devolución del saldo a favor, así que solo exige `stays.check_out`.
    - Un `Gate::before` deniega todo a usuarios inactivos o vinculados a un empleado inactivo.
@@ -869,6 +881,17 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
 
 **Fase 3 completa.**
 
+### Prioridad sugerida dentro de la fase 4
+
+1. ✅ Cuentas (`folios`) sin cambios visibles:
+   - Cada estadía abre su cuenta en el check-in. Cargos, pagos y recibos llevan `folio_id`; los cargos conservan `stay_id` como la estadía de la que provienen, y pagos y recibos dejan de tener `stay_id`.
+   - `FolioBalanceService` reemplaza a `StayBalanceService`; cobro, devolución, check-out, excepciones de deuda, recibos y reportes usan el saldo de la cuenta. `CashService::cobrarPago()` recibe la cuenta y bloquea estadía → cuenta.
+   - La migración abre una cuenta por cada estadía existente y le pasa sus cargos, pagos y recibos; también se puede revertir.
+2. Ventas de mostrador a personas que no se hospedan.
+3. Catálogo de empresas (razón social, NIT, contacto), cada una al contado o a crédito.
+4. Grupos: una cuenta del grupo o empresa recibe las noches de sus habitaciones; los consumos los paga cada huésped en su cuenta.
+5. Cuentas por cobrar de las empresas a crédito.
+
 ## 11. Criterios mínimos para considerar el módulo financiero seguro
 
 - No se puede cobrar dos veces una misma solicitud por un reintento; un reintento con datos distintos se rechaza.
@@ -892,7 +915,7 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
 | 2 | Moneda | Una sola: boliviano (Bs) | Sin columna `currency`. |
 | 3 | Política de cobro | Noche a noche con anticipo permitido | Auditoría nocturna; `payment_type = deposit` con tope `deposit_limit_nights`. |
 | 4 | Saldo a favor al salir | Devolver siempre | Check-out (sección 4): devolución obligatoria en la misma transacción. |
-| 5 | Cuentas compartidas (`folios`) | No en la fase 1; se evalúan en la fase 4 | `payments.stay_id` obligatorio; sin ventas a no huéspedes. |
+| 5 | Cuentas compartidas (`folios`) | Se introducen en la fase 4 | Cargos, pagos y recibos pertenecen a una cuenta; cada estadía tiene la suya. |
 | 6 | Late check-out | Manual | Cargo `late_check_out` registrado por un operador con permiso. |
 | 7 | Umbrales de caja y gastos | Configurables por sucursal, con valor global por defecto | Columnas en `branches` y `config/lodging.php`. |
 | 8 | Representación del dinero | `DECIMAL(12,2)` + `BcMath\Number` | Migraciones, casts `decimal:2` y servicios. |
@@ -900,6 +923,9 @@ Los reportes financieros deben distinguir ingresos registrados (cargos), cobros 
 | 10 | Interfaz | Blade + Tailwind CSS | Sección 9. |
 | 11 | Conservación de datos de huéspedes | Indefinida | Cifrado del documento y control de acceso estricto. |
 | 12 | Facturación | Externa al sistema | Solo recibos internos y `external_invoice_number` (sección 3.7). |
+| 13 | Reservas | El negocio no toma reservas anticipadas | Sin reservas ni disponibilidad por fechas; todo ingreso es directo. |
+| 14 | Empresas y grupos | Catálogo de empresas; cada una paga al contado o a crédito | Fase 4: la cuenta del grupo se salda al salir o queda como cuenta por cobrar. |
+| 15 | Qué paga el grupo | Solo el alojamiento | Las noches van a la cuenta del grupo; los consumos, a la cuenta de cada estadía. |
 
 ### Puntos a confirmar antes de producción
 

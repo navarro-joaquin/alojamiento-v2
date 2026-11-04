@@ -15,8 +15,8 @@ use App\Models\Stay;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Services\ChargeService;
+use App\Services\FolioBalanceService;
 use App\Services\InventoryService;
-use App\Services\StayBalanceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 
@@ -60,7 +60,7 @@ it('charges the product at its sale price and takes it out of stock', function (
             'reference' => "Estadía #{$this->stay->id}",
         ])
         ->and($this->balance->fresh()->quantity)->toBe('8.000')
-        ->and((string) app(StayBalanceService::class)->calcular($this->stay))->toBe('25.00');
+        ->and((string) app(FolioBalanceService::class)->calcular($this->stay->folio))->toBe('25.00');
     $this->assertDatabaseHas('activity_log', ['event' => 'stay_charge.product_sold', 'subject_id' => $stayCharge->id]);
     $this->assertDatabaseHas('activity_log', ['event' => 'inventory.sale', 'subject_id' => $stayCharge->inventory_movement_id]);
 });
@@ -91,7 +91,7 @@ it('returns the stock at its original cost when the sale is voided', function ()
     ])
         // (14 × 7.5 + 3 × 6) / 17 = 7.2353
         ->and($this->balance->fresh()->only(['quantity', 'average_cost']))->toBe(['quantity' => '17.000', 'average_cost' => '7.2353'])
-        ->and((string) app(StayBalanceService::class)->calcular($this->stay))->toBe('0.00');
+        ->and((string) app(FolioBalanceService::class)->calcular($this->stay->folio))->toBe('0.00');
 });
 
 it('only sells active products marked for sale', function () {

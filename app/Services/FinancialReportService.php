@@ -30,7 +30,7 @@ use Illuminate\Support\Collection;
 class FinancialReportService
 {
     public function __construct(
-        private StayBalanceService $stayBalanceService,
+        private FolioBalanceService $folioBalanceService,
     ) {}
 
     /**
@@ -52,7 +52,7 @@ class FinancialReportService
 
         $charges = StayCharge::query()
             ->confirmados()
-            ->whereHas('stay', fn ($query) => $query->whereBelongsTo($branch))
+            ->whereHas('folio', fn ($query) => $query->whereBelongsTo($branch))
             ->whereBetween('service_date', [$fromDate->toDateString(), $toDate->toDateString()])
             ->selectRaw('charge_type, direction, SUM(total_amount) as total')
             ->groupBy('charge_type', 'direction')
@@ -67,7 +67,7 @@ class FinancialReportService
 
         $payments = Payment::query()
             ->confirmados()
-            ->whereHas('stay', fn ($query) => $query->whereBelongsTo($branch))
+            ->whereHas('folio', fn ($query) => $query->whereBelongsTo($branch))
             ->where('paid_at', '>=', $windowStart)
             ->where('paid_at', '<', $windowEnd)
             ->selectRaw('payment_method, COUNT(*) as operations, SUM(amount) as total')
@@ -81,7 +81,7 @@ class FinancialReportService
 
         $refunds = PaymentRefund::query()
             ->confirmadas()
-            ->whereHas('payment.stay', fn ($query) => $query->whereBelongsTo($branch))
+            ->whereHas('payment.folio', fn ($query) => $query->whereBelongsTo($branch))
             ->where('refunded_at', '>=', $windowStart)
             ->where('refunded_at', '<', $windowEnd)
             ->selectRaw('refund_method, COUNT(*) as operations, SUM(amount) as total')
@@ -128,11 +128,11 @@ class FinancialReportService
             'occupancy' => $this->calcularOcupacion($branch, $fromDate, $toDate),
             'paymentsWithoutInvoice' => Payment::query()
                 ->confirmados()
-                ->whereHas('stay', fn ($query) => $query->whereBelongsTo($branch))
+                ->whereHas('folio', fn ($query) => $query->whereBelongsTo($branch))
                 ->where('paid_at', '>=', $windowStart)
                 ->where('paid_at', '<', $windowEnd)
                 ->whereNull('external_invoice_number')
-                ->with('stay.room')
+                ->with('folio.stay.room')
                 ->orderBy('paid_at')
                 ->limit(200)
                 ->get(),
@@ -154,9 +154,9 @@ class FinancialReportService
                 ->orWhere(fn ($query) => $query
                     ->where('status', StayStatus::Completed)
                     ->whereHas('checkoutExceptions', fn ($query) => $query->where('status', CheckoutExceptionStatus::Used))))
-            ->with(['room', 'guests'])
+            ->with(['room', 'guests', 'folio'])
             ->get()
-            ->map(fn (Stay $stay): array => ['stay' => $stay, 'balance' => $this->stayBalanceService->calcular($stay)])
+            ->map(fn (Stay $stay): array => ['stay' => $stay, 'balance' => $this->folioBalanceService->calcular($stay->folio)])
             ->filter(fn (array $row): bool => $row['balance'] > 0)
             ->sort(fn (array $first, array $second): int => $second['balance'] <=> $first['balance'])
             ->values();
@@ -213,7 +213,7 @@ class FinancialReportService
         $nightsSold = StayCharge::query()
             ->confirmados()
             ->where('charge_type', ChargeType::Lodging)
-            ->whereHas('stay', fn ($query) => $query->whereBelongsTo($branch))
+            ->whereHas('folio', fn ($query) => $query->whereBelongsTo($branch))
             ->whereBetween('service_date', [$fromDate->toDateString(), $toDate->toDateString()])
             ->count();
 

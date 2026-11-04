@@ -14,8 +14,8 @@ use App\Models\RoomRate;
 use App\Models\Stay;
 use App\Models\StayCharge;
 use App\Models\User;
+use App\Services\FolioBalanceService;
 use App\Services\ReceptionService;
-use App\Services\StayBalanceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -46,7 +46,7 @@ function registrarIngresoEn(Room $room, ?Guest $primaryGuest = null): Stay
 }
 
 describe('registrarIngreso', function () {
-    it('creates the stay at the resolved rate with its guests and first night', function () {
+    it('creates the stay at the resolved rate with its guests, folio and first night', function () {
         $room = crearHabitacionConTarifa(crearSucursalDeRecepcion(), '280.00');
         $primaryGuest = Guest::factory()->create();
         $companion = Guest::factory()->create();
@@ -60,7 +60,9 @@ describe('registrarIngreso', function () {
             ->and($stay->roomAssignments()->sole()->room_id)->toBe($room->id);
 
         $firstNight = $stay->charges()->sole();
-        expect($firstNight->charge_type)->toBe(ChargeType::Lodging)
+        expect($firstNight->folio_id)->toBe($stay->folio->id)
+            ->and($stay->folio->branch_id)->toBe($room->branch_id)
+            ->and($firstNight->charge_type)->toBe(ChargeType::Lodging)
             ->and($firstNight->service_date->toDateString())->toBe('2026-11-03')
             ->and($firstNight->total_amount)->toBe('280.00');
 
@@ -162,7 +164,7 @@ describe('cambiarHabitacion', function () {
 describe('registrarSalida', function () {
     it('completes a settled stay and frees the room', function () {
         $stay = registrarIngresoEn(crearHabitacionConTarifa(crearSucursalDeRecepcion()));
-        Payment::factory()->for($stay)->create(['amount' => '250.00']);
+        Payment::factory()->for($stay->folio)->create(['amount' => '250.00']);
 
         $completedStay = app(ReceptionService::class)->registrarSalida($stay, User::factory()->create());
 
@@ -181,7 +183,7 @@ describe('registrarSalida', function () {
 
     it('refunds the credit in cash from the open session before leaving', function () {
         $stay = registrarIngresoEn(crearHabitacionConTarifa(crearSucursalDeRecepcion()));
-        $deposit = Payment::factory()->for($stay)->anticipo()->create(['amount' => '500.00']);
+        $deposit = Payment::factory()->for($stay->folio)->anticipo()->create(['amount' => '500.00']);
 
         app(ReceptionService::class)->registrarSalida($stay, User::factory()->create(), $deposit->cashSession);
 
@@ -189,13 +191,13 @@ describe('registrarSalida', function () {
         expect($refund->amount)->toBe('250.00')
             ->and($refund->refund_method)->toBe(PaymentMethod::Cash)
             ->and($refund->cashMovements()->exists())->toBeTrue()
-            ->and((string) app(StayBalanceService::class)->calcular($stay))->toBe('0.00');
+            ->and((string) app(FolioBalanceService::class)->calcular($stay->folio))->toBe('0.00');
     });
 
     it('refunds the credit starting with the most recent payment', function () {
         $stay = registrarIngresoEn(crearHabitacionConTarifa(crearSucursalDeRecepcion()));
-        $olderCashPayment = Payment::factory()->for($stay)->anticipo()->create(['amount' => '200.00', 'paid_at' => now()->subHour()]);
-        $newerCardPayment = Payment::factory()->for($stay)->anticipo()->conTarjeta()->create(['amount' => '200.00', 'paid_at' => now()]);
+        $olderCashPayment = Payment::factory()->for($stay->folio)->anticipo()->create(['amount' => '200.00', 'paid_at' => now()->subHour()]);
+        $newerCardPayment = Payment::factory()->for($stay->folio)->anticipo()->conTarjeta()->create(['amount' => '200.00', 'paid_at' => now()]);
 
         app(ReceptionService::class)->registrarSalida($stay, User::factory()->create());
 
@@ -205,7 +207,7 @@ describe('registrarSalida', function () {
 
     it('rejects a cash refund without a session and keeps the stay active', function () {
         $stay = registrarIngresoEn(crearHabitacionConTarifa(crearSucursalDeRecepcion()));
-        Payment::factory()->for($stay)->anticipo()->create(['amount' => '500.00']);
+        Payment::factory()->for($stay->folio)->anticipo()->create(['amount' => '500.00']);
 
         expect(fn () => app(ReceptionService::class)->registrarSalida($stay, User::factory()->create()))
             ->toThrow(BusinessRuleException::class, 'requiere una sesión de caja abierta');

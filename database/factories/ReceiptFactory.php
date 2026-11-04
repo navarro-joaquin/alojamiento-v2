@@ -22,8 +22,8 @@ class ReceiptFactory extends Factory
     {
         return [
             'payment_id' => Payment::factory(),
-            'stay_id' => fn (array $attributes) => Payment::find($attributes['payment_id'])->stay_id,
-            'branch_id' => fn (array $attributes) => Payment::find($attributes['payment_id'])->stay->branch_id,
+            'folio_id' => fn (array $attributes) => Payment::find($attributes['payment_id'])->folio_id,
+            'branch_id' => fn (array $attributes) => Payment::find($attributes['payment_id'])->folio->branch_id,
             'prefix' => 'SUC',
             'number' => fake()->unique()->numberBetween(1, 999999),
             'holder_name' => fake()->name(),

@@ -5,6 +5,7 @@ use App\Models\CashRegister;
 use App\Models\CashSession;
 use App\Models\Expense;
 use App\Models\FixedAsset;
+use App\Models\Folio;
 use App\Models\Guest;
 use App\Models\InventoryBalance;
 use App\Models\InventoryMovement;
@@ -176,3 +177,19 @@ test('an asset code is unique', function () {
 
     FixedAsset::factory()->create(['asset_code' => 'AF-1']);
 })->throws(QueryException::class, 'Duplicate entry');
+
+test('a stay has a single folio', function () {
+    $stay = Stay::factory()->create();
+
+    Folio::factory()->deEstadia($stay)->create();
+})->throws(QueryException::class, 'Duplicate entry');
+
+test('only a stay folio belongs to a stay', function () {
+    $stay = Stay::factory()->create();
+
+    Folio::factory()->create(['branch_id' => $stay->branch_id, 'stay_id' => $stay->id]);
+})->throws(QueryException::class, 'folios_stay_only_for_stay_type');
+
+test('a stay folio needs its stay', function () {
+    Folio::factory()->create(['folio_type' => 'stay']);
+})->throws(QueryException::class, 'folios_stay_only_for_stay_type');

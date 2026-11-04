@@ -18,7 +18,7 @@ use App\Models\Stay;
 use App\Models\StayCharge;
 use App\Models\User;
 use App\Services\CashService;
-use App\Services\StayBalanceService;
+use App\Services\FolioBalanceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -57,7 +57,7 @@ function crearEstadiaConSaldoAFavor(?Branch $branch = null): Stay
 function cobrarEfectivo(Stay $stay, CashSession $cashSession, string $amount, ?string $operationUuid = null, PaymentType $paymentType = PaymentType::Settlement): Payment
 {
     return app(CashService::class)->cobrarPago(
-        $stay,
+        $stay->folio,
         $cashSession,
         User::factory()->create(),
         PaymentMethod::Cash,
@@ -120,7 +120,7 @@ describe('cobrarPago', function () {
         $cashSession = crearSesionAbiertaEn($stay->branch);
 
         $payment = app(CashService::class)->cobrarPago(
-            $stay, $cashSession, User::factory()->create(), PaymentMethod::Card, PaymentType::Settlement, '250.00', (string) Str::uuid(),
+            $stay->folio, $cashSession, User::factory()->create(), PaymentMethod::Card, PaymentType::Settlement, '250.00', (string) Str::uuid(),
         );
 
         expect($payment->cashMovements()->sole()->affects_cash)->toBeFalse();
@@ -136,7 +136,7 @@ describe('cobrarPago', function () {
         $stay = crearEstadiaConDeuda(Branch::factory()->create(['deposit_limit_nights' => 2]));
 
         $payment = app(CashService::class)->cobrarPago(
-            $stay, crearSesionAbiertaEn($stay->branch), User::factory()->create(), PaymentMethod::Cash, PaymentType::Deposit, '750.00', (string) Str::uuid(),
+            $stay->folio, crearSesionAbiertaEn($stay->branch), User::factory()->create(), PaymentMethod::Cash, PaymentType::Deposit, '750.00', (string) Str::uuid(),
         );
 
         expect($payment->payment_type)->toBe(PaymentType::Deposit);
@@ -146,7 +146,7 @@ describe('cobrarPago', function () {
         $stay = crearEstadiaConDeuda(Branch::factory()->create(['deposit_limit_nights' => 2]));
 
         app(CashService::class)->cobrarPago(
-            $stay, crearSesionAbiertaEn($stay->branch), User::factory()->create(), PaymentMethod::Cash, PaymentType::Deposit, '750.01', (string) Str::uuid(),
+            $stay->folio, crearSesionAbiertaEn($stay->branch), User::factory()->create(), PaymentMethod::Cash, PaymentType::Deposit, '750.01', (string) Str::uuid(),
         );
     })->throws(BusinessRuleException::class, 'supera el máximo permitido');
 
@@ -155,7 +155,7 @@ describe('cobrarPago', function () {
         $stay = crearEstadiaConDeuda();
 
         app(CashService::class)->cobrarPago(
-            $stay, crearSesionAbiertaEn($stay->branch), User::factory()->create(), PaymentMethod::Cash, PaymentType::Deposit, '500.01', (string) Str::uuid(),
+            $stay->folio, crearSesionAbiertaEn($stay->branch), User::factory()->create(), PaymentMethod::Cash, PaymentType::Deposit, '500.01', (string) Str::uuid(),
         );
     })->throws(BusinessRuleException::class, 'supera el máximo permitido');
 
@@ -194,7 +194,7 @@ describe('cobrarPago', function () {
 
         cobrarEfectivo($stay, $cashSession, '250.00');
 
-        expect((string) app(StayBalanceService::class)->calcular($stay))->toBe('0.00');
+        expect((string) app(FolioBalanceService::class)->calcular($stay->folio))->toBe('0.00');
     });
 
     it('rejects an amount that is not positive', function () {
@@ -246,7 +246,7 @@ describe('devolverPago', function () {
     it('refunds a card payment without a session or cash movement', function () {
         $stay = crearEstadiaConSaldoAFavor();
         $payment = app(CashService::class)->cobrarPago(
-            $stay, crearSesionAbiertaEn($stay->branch), User::factory()->create(), PaymentMethod::Card, PaymentType::Deposit, '250.00', (string) Str::uuid(),
+            $stay->folio, crearSesionAbiertaEn($stay->branch), User::factory()->create(), PaymentMethod::Card, PaymentType::Deposit, '250.00', (string) Str::uuid(),
         );
 
         $refund = app(CashService::class)->devolverPago($payment, User::factory()->create(), '250.00', 'Cancelación', (string) Str::uuid());
@@ -296,7 +296,7 @@ describe('devolverPago', function () {
 
         app(CashService::class)->devolverPago($payment, User::factory()->create(), '30.00', 'Ajuste', (string) Str::uuid(), $cashSession);
 
-        expect((string) app(StayBalanceService::class)->calcular($stay))->toBe('0.00');
+        expect((string) app(FolioBalanceService::class)->calcular($stay->folio))->toBe('0.00');
     });
 
     it('does not refund a settled stay', function () {
@@ -315,7 +315,7 @@ describe('cerrarSesion', function () {
         $cashSession = crearSesionAbiertaEn($stay->branch);
         $cashPayment = cobrarEfectivo($stay, $cashSession, '250.00');
         app(CashService::class)->cobrarPago(
-            $stay, $cashSession, User::factory()->create(), PaymentMethod::Card, PaymentType::Deposit, '280.00', (string) Str::uuid(),
+            $stay->folio, $cashSession, User::factory()->create(), PaymentMethod::Card, PaymentType::Deposit, '280.00', (string) Str::uuid(),
         );
         app(CashService::class)->devolverPago($cashPayment, User::factory()->create(), '30.00', 'Ajuste', (string) Str::uuid(), $cashSession);
 

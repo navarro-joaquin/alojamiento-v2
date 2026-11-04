@@ -13,6 +13,7 @@ use App\Models\Employee;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use App\Models\FixedAsset;
+use App\Models\Folio;
 use App\Models\Guest;
 use App\Models\InventoryBalance;
 use App\Models\InventoryMovement;
@@ -101,6 +102,7 @@ class AppServiceProvider extends ServiceProvider
             'expense' => Expense::class,
             'expense_category' => ExpenseCategory::class,
             'fixed_asset' => FixedAsset::class,
+            'folio' => Folio::class,
             'guest' => Guest::class,
             'inventory_balance' => InventoryBalance::class,
             'inventory_movement' => InventoryMovement::class,

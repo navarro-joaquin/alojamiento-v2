@@ -15,7 +15,7 @@ class PaymentExternalInvoiceController extends Controller
 {
     public function update(Request $request, Payment $payment, ReceiptService $receiptService): RedirectResponse
     {
-        $this->asegurarDeLaSucursalActiva($request, $payment->stay->branch_id);
+        $this->asegurarDeLaSucursalActiva($request, $payment->folio->branch_id);
         Gate::authorize('registrarFacturaExterna', $payment);
 
         $validated = $request->validate([
@@ -24,6 +24,6 @@ class PaymentExternalInvoiceController extends Controller
 
         $receiptService->registrarFacturaExterna($payment, $request->user(), $validated['external_invoice_number'] ?? null);
 
-        return redirect()->route('stays.show', $payment->stay)->with('status', 'Número de factura guardado.');
+        return redirect()->route('stays.show', $payment->folio->stay)->with('status', 'Número de factura guardado.');
     }
 }

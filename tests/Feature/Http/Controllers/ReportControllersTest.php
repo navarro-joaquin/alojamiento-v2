@@ -57,7 +57,7 @@ it('keeps reports away from the receptionist', function () {
 });
 
 it('lets only the branch admin browse the audit log of the branch', function () {
-    $payment = Payment::factory()->for($this->stay)->create();
+    $payment = Payment::factory()->for($this->stay->folio)->create();
     $audit = app(AuditService::class);
     $audit->registrar('cash', 'payment.collected', $payment, $this->receptionist, $this->branch->id, ['amount' => '250.00']);
     $audit->registrar('reception', 'stay.checked_in', $this->stay, $this->receptionist, $this->branch->id);

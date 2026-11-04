@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable([
     'branch_id',
@@ -110,6 +112,18 @@ class Stay extends Model
     }
 
     /**
+     * The stay's own account. Its balance is what the guest owes.
+     *
+     * @return HasOne<Folio, $this>
+     */
+    public function folio(): HasOne
+    {
+        return $this->hasOne(Folio::class);
+    }
+
+    /**
+     * Charges that come from this stay, whatever folio they are billed to.
+     *
      * @return HasMany<StayCharge, $this>
      */
     public function charges(): HasMany
@@ -118,11 +132,13 @@ class Stay extends Model
     }
 
     /**
-     * @return HasMany<Payment, $this>
+     * Payments applied to the stay's own folio.
+     *
+     * @return HasManyThrough<Payment, Folio, $this>
      */
-    public function payments(): HasMany
+    public function payments(): HasManyThrough
     {
-        return $this->hasMany(Payment::class);
+        return $this->hasManyThrough(Payment::class, Folio::class);
     }
 
     /**

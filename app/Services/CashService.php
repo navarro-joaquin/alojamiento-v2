@@ -17,6 +17,7 @@ use App\Exceptions\IdempotencyConflictException;
 use App\Models\CashCount;
 use App\Models\CashRegister;
 use App\Models\CashSession;
+use App\Models\Folio;
 use App\Models\Payment;
 use App\Models\PaymentRefund;
 use App\Models\Stay;
@@ -30,13 +31,13 @@ use Illuminate\Support\Facades\DB;
  * Every operation that moves money through a cash register.
  *
  * Rows are always locked in the canonical order: cash_registers → cash_sessions
- * → stays → payments. Payments and refunds are idempotent on their operation UUID.
+ * → stays → folios → payments. Payments and refunds are idempotent on their operation UUID.
  * Authorization (permissions and branch access) is the caller's responsibility.
  */
 class CashService
 {
     public function __construct(
-        private StayBalanceService $stayBalanceService,
+        private FolioBalanceService $folioBalanceService,
         private AuditService $auditService,
     ) {}
 
@@ -87,7 +88,8 @@ class CashService
     }
 
     /**
-     * Collect a payment for an active stay, or the debt left by a completed one.
+     * Collect a payment on a folio: that of an active stay, or the debt left by
+     * a completed one.
      *
      * A settlement may not exceed the outstanding balance. A deposit may leave the
      * guest in credit by at most the branch deposit limit (nights × agreed rate).
@@ -96,7 +98,7 @@ class CashService
      * @throws IdempotencyConflictException
      */
     public function cobrarPago(
-        Stay $stay,
+        Folio $folio,
         CashSession $cashSession,
         User $user,
         PaymentMethod $paymentMethod,
@@ -112,7 +114,7 @@ class CashService
         }
 
         $requestHash = $this->calcularHashSolicitud([
-            'stay_id' => $stay->id,
+            'folio_id' => $folio->id,
             'cash_session_id' => $cashSession->id,
             'payment_method' => $paymentMethod->value,
             'payment_type' => $paymentType->value,
@@ -127,7 +129,7 @@ class CashService
 
         try {
             return DB::transaction(fn (): Payment => $this->registrarPago(
-                $stay, $cashSession, $user, $paymentMethod, $paymentType, $amount, $operationUuid, $requestHash, $reference,
+                $folio, $cashSession, $user, $paymentMethod, $paymentType, $amount, $operationUuid, $requestHash, $reference,
             ));
         } catch (UniqueConstraintViolationException $exception) {
             $concurrentPayment = Payment::query()->where('operation_uuid', $operationUuid)->first()
@@ -139,9 +141,9 @@ class CashService
 
     /**
      * Refund part or all of a confirmed payment through its original method.
-     * Only the stay's credit can be refunded, so a refund never creates debt:
+     * Only the folio's credit can be refunded, so a refund never creates debt:
      * a wrong charge is voided or discounted first. Cash refunds leave the
-     * register and therefore need an open session of the stay's branch.
+     * register and therefore need an open session of the folio's branch.
      *
      * @throws BusinessRuleException
      * @throws IdempotencyConflictException
@@ -345,7 +347,7 @@ class CashService
     }
 
     private function registrarPago(
-        Stay $stay,
+        Folio $folio,
         CashSession $cashSession,
         User $user,
         PaymentMethod $paymentMethod,
@@ -356,7 +358,8 @@ class CashService
         ?string $reference,
     ): Payment {
         $lockedSession = $this->bloquearSesionAbierta($cashSession);
-        $lockedStay = Stay::query()->with('branch')->lockForUpdate()->findOrFail($stay->id);
+        $lockedFolio = $this->bloquearFolio($folio);
+        $lockedStay = $lockedFolio->stay;
 
         $concurrentPayment = Payment::query()->where('operation_uuid', $operationUuid)->first();
 
@@ -364,7 +367,7 @@ class CashService
             return $this->resolverReintento($concurrentPayment, $requestHash, $operationUuid);
         }
 
-        if ($lockedSession->cashRegister->branch_id !== $lockedStay->branch_id) {
+        if ($lockedSession->cashRegister->branch_id !== $lockedFolio->branch_id) {
             throw BusinessRuleException::sesionDeOtraSucursal();
         }
 
@@ -376,9 +379,9 @@ class CashService
             throw BusinessRuleException::estadiaNoActiva();
         }
 
-        $this->verificarLimiteDePago($lockedStay, $paymentType, $amount);
+        $this->verificarLimiteDePago($lockedFolio, $paymentType, $amount);
 
-        $payment = $lockedStay->payments()->create([
+        $payment = $lockedFolio->payments()->create([
             'cash_session_id' => $lockedSession->id,
             'created_by' => $user->id,
             'payment_method' => $paymentMethod,
@@ -404,7 +407,8 @@ class CashService
             'occurred_at' => $payment->paid_at,
         ]);
 
-        $this->auditService->registrar('cash', 'payment.collected', $payment, $user, $lockedStay->branch_id, [
+        $this->auditService->registrar('cash', 'payment.collected', $payment, $user, $lockedFolio->branch_id, [
+            'folio_id' => $lockedFolio->id,
             'stay_id' => $lockedStay->id,
             'amount' => $payment->amount,
             'payment_method' => $paymentMethod->value,
@@ -424,8 +428,8 @@ class CashService
         string $requestHash,
     ): PaymentRefund {
         $lockedSession = $cashSession !== null ? $this->bloquearSesionAbierta($cashSession) : null;
-        $lockedStay = Stay::query()->lockForUpdate()->findOrFail($payment->stay_id);
-        $lockedPayment = Payment::query()->lockForUpdate()->findOrFail($payment->id)->setRelation('stay', $lockedStay);
+        $lockedFolio = $this->bloquearFolio($payment->folio);
+        $lockedPayment = Payment::query()->lockForUpdate()->findOrFail($payment->id)->setRelation('folio', $lockedFolio);
 
         $concurrentRefund = PaymentRefund::query()->where('operation_uuid', $operationUuid)->first();
 
@@ -433,7 +437,7 @@ class CashService
             return $this->resolverReintento($concurrentRefund, $requestHash, $operationUuid);
         }
 
-        if ($lockedSession !== null && $lockedSession->cashRegister->branch_id !== $lockedPayment->stay->branch_id) {
+        if ($lockedSession !== null && $lockedSession->cashRegister->branch_id !== $lockedFolio->branch_id) {
             throw BusinessRuleException::sesionDeOtraSucursal();
         }
 
@@ -448,7 +452,7 @@ class CashService
             throw BusinessRuleException::devolucionSuperaReembolsable($refundableAmount);
         }
 
-        $creditAmount = $this->stayBalanceService->calcular($lockedStay) * -1;
+        $creditAmount = $this->folioBalanceService->calcular($lockedFolio) * -1;
 
         if ($amount > $creditAmount) {
             throw BusinessRuleException::devolucionSuperaSaldoAFavor($creditAmount > 0 ? $creditAmount : new Number('0.00'));
@@ -481,7 +485,7 @@ class CashService
             ]);
         }
 
-        $this->auditService->registrar('cash', 'payment.refunded', $refund, $user, $lockedPayment->stay->branch_id, [
+        $this->auditService->registrar('cash', 'payment.refunded', $refund, $user, $lockedFolio->branch_id, [
             'payment_id' => $lockedPayment->id,
             'amount' => $refund->amount,
             'reason' => $reason,
@@ -507,11 +511,23 @@ class CashService
     }
 
     /**
+     * Lock a folio after the stay that owns it, with both loaded.
+     */
+    private function bloquearFolio(Folio $folio): Folio
+    {
+        $lockedStay = $folio->stay_id !== null
+            ? Stay::query()->with('branch')->lockForUpdate()->findOrFail($folio->stay_id)
+            : null;
+
+        return Folio::query()->with('branch')->lockForUpdate()->findOrFail($folio->id)->setRelation('stay', $lockedStay);
+    }
+
+    /**
      * @throws BusinessRuleException
      */
-    private function verificarLimiteDePago(Stay $stay, PaymentType $paymentType, Number $amount): void
+    private function verificarLimiteDePago(Folio $folio, PaymentType $paymentType, Number $amount): void
     {
-        $balance = $this->stayBalanceService->calcular($stay);
+        $balance = $this->folioBalanceService->calcular($folio);
 
         if ($paymentType === PaymentType::Settlement) {
             if ($amount > $balance) {
@@ -521,8 +537,8 @@ class CashService
             return;
         }
 
-        $depositLimitNights = $stay->branch->deposit_limit_nights ?? (int) config('lodging.deposit_limit_nights');
-        $maximumDeposit = ($balance + new Number((string) $stay->rate_amount) * $depositLimitNights)->round(2);
+        $depositLimitNights = $folio->branch->deposit_limit_nights ?? (int) config('lodging.deposit_limit_nights');
+        $maximumDeposit = ($balance + new Number((string) $folio->stay->rate_amount) * $depositLimitNights)->round(2);
 
         if ($amount > $maximumDeposit) {
             throw BusinessRuleException::anticipoSuperaTope($maximumDeposit > 0 ? $maximumDeposit : new Number('0.00'));

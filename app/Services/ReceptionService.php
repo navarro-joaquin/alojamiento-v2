@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\FolioType;
 use App\Enums\HousekeepingStatus;
 use App\Enums\StayStatus;
 use App\Exceptions\BusinessRuleException;
@@ -22,7 +23,7 @@ use Illuminate\Support\Str;
  * Check-in, room change and check-out.
  *
  * Rows are locked in the canonical order: cash_sessions → stays → rooms
- * (several rooms by id) → payments → checkout_exceptions. Authorization is the caller's responsibility.
+ * (several rooms by id) → folios → payments → checkout_exceptions. Authorization is the caller's responsibility.
  */
 class ReceptionService
 {
@@ -30,15 +31,16 @@ class ReceptionService
         private RateService $rateService,
         private ChargeService $chargeService,
         private HousekeepingService $housekeepingService,
-        private StayBalanceService $stayBalanceService,
+        private FolioBalanceService $folioBalanceService,
         private CashService $cashService,
         private CheckoutExceptionService $checkoutExceptionService,
         private AuditService $auditService,
     ) {}
 
     /**
-     * Register a walk-in: resolve the rate, create the stay with its guests,
-     * charge the first night on the branch business date and mark the room dirty.
+     * Register a walk-in: resolve the rate, create the stay with its guests and
+     * its folio, charge the first night on the branch business date and mark
+     * the room dirty.
      *
      * @param  list<Guest>  $companions
      *
@@ -87,6 +89,12 @@ class ReceptionService
                     'rate_amount' => $stay->rate_amount,
                     'assigned_from' => $stay->check_in_at,
                     'changed_by' => $user->id,
+                ]);
+
+                $stay->folio()->create([
+                    'branch_id' => $stay->branch_id,
+                    'folio_type' => FolioType::Stay,
+                    'created_by' => $user->id,
                 ]);
 
                 $stay->guests()->attach($primaryGuest->id, ['is_primary' => true]);
@@ -194,7 +202,7 @@ class ReceptionService
             $lockedStay = $this->bloquearEstadiaActiva($stay);
             $lockedRoom = Room::query()->lockForUpdate()->findOrFail($lockedStay->room_id);
 
-            $balance = $this->stayBalanceService->calcular($lockedStay);
+            $balance = $this->folioBalanceService->calcular($lockedStay->folio);
 
             $checkoutException = $balance > 0
                 ? $this->checkoutExceptionService->consumir($lockedStay, $user, $balance)
@@ -235,7 +243,7 @@ class ReceptionService
     {
         $remainingAmount = $creditAmount;
 
-        $payments = $stay->payments()
+        $payments = $stay->folio->payments()
             ->confirmados()
             ->withSum(['refunds as refunded_amount' => fn ($query) => $query->confirmadas()], 'amount')
             ->orderByDesc('paid_at')

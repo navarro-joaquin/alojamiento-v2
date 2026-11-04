@@ -19,7 +19,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->branch = Branch::factory()->create(['code' => 'CEN']);
     $this->stay = Stay::factory()->for(Room::factory()->for($this->branch))->create();
-    $this->payment = Payment::factory()->for($this->stay)->create(['amount' => '250.00']);
+    $this->payment = Payment::factory()->for($this->stay->folio)->create(['amount' => '250.00']);
     $this->clerk = User::factory()->create();
 });
 
@@ -27,7 +27,7 @@ it('numbers the receipts of a branch correlatively with its code', function () {
     $service = app(ReceiptService::class);
 
     $firstReceipt = $service->emitir($this->payment, $this->clerk, 'Ana Quispe', '1234567-1A');
-    $secondReceipt = $service->emitir(Payment::factory()->for($this->stay)->create(), $this->clerk, 'Ana Quispe');
+    $secondReceipt = $service->emitir(Payment::factory()->for($this->stay->folio)->create(), $this->clerk, 'Ana Quispe');
     $otherBranchReceipt = $service->emitir(Payment::factory()->create(), $this->clerk, 'Luis Mamani');
 
     expect($firstReceipt->numeroCompleto())->toBe('CEN-000001')

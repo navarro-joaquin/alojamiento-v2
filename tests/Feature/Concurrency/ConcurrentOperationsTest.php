@@ -26,12 +26,12 @@ use App\Models\Warehouse;
 use App\Services\CashService;
 use App\Services\ChargeService;
 use App\Services\ExpenseService;
+use App\Services\FolioBalanceService;
 use App\Services\InventoryService;
 use App\Services\InventoryTransferService;
 use App\Services\NightAuditService;
 use App\Services\ReceiptService;
 use App\Services\ReceptionService;
-use App\Services\StayBalanceService;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Support\Str;
@@ -89,7 +89,7 @@ it('registers a payment only once when the same request arrives twice at the sam
     $operationUuid = (string) Str::uuid();
 
     $cobrar = static fn () => app(CashService::class)->cobrarPago(
-        Stay::findOrFail($stayId), CashSession::findOrFail($cashSessionId), User::findOrFail($userId),
+        Stay::findOrFail($stayId)->folio, CashSession::findOrFail($cashSessionId), User::findOrFail($userId),
         PaymentMethod::Cash, PaymentType::Settlement, '250.00', $operationUuid,
     )->id;
 
@@ -126,8 +126,8 @@ it('registers a full refund only once when the same request arrives twice at the
 
 it('does not let two refunds of different payments exceed the credit together', function () {
     $stay = crearEstadiaEndeudada('250.00');
-    $firstPaymentId = Payment::factory()->for($stay)->anticipo()->conTarjeta()->create(['amount' => '250.00'])->id;
-    $secondPaymentId = Payment::factory()->for($stay)->anticipo()->conTarjeta()->create(['amount' => '250.00'])->id;
+    $firstPaymentId = Payment::factory()->for($stay->folio)->anticipo()->conTarjeta()->create(['amount' => '250.00'])->id;
+    $secondPaymentId = Payment::factory()->for($stay->folio)->anticipo()->conTarjeta()->create(['amount' => '250.00'])->id;
     $userId = User::factory()->create()->id;
 
     $devolver = function (int $paymentId) use ($userId): Closure {
@@ -143,7 +143,7 @@ it('does not let two refunds of different payments exceed the credit together', 
 
     expect($succeeded)->toHaveCount(1)
         ->and(array_values($failed))->toBe(['La devolución supera el saldo a favor del huésped (Bs 0.00). Anule o descuente primero lo cobrado de más.'])
-        ->and((string) app(StayBalanceService::class)->calcular($stay))->toBe('0.00');
+        ->and((string) app(FolioBalanceService::class)->calcular($stay->folio))->toBe('0.00');
 });
 
 it('does not let two payments from different registers exceed the balance together', function () {
@@ -155,7 +155,7 @@ it('does not let two payments from different registers exceed the balance togeth
 
     $cobrarEn = function (int $cashSessionId) use ($stayId, $userId): Closure {
         return static fn () => app(CashService::class)->cobrarPago(
-            Stay::findOrFail($stayId), CashSession::findOrFail($cashSessionId), User::findOrFail($userId),
+            Stay::findOrFail($stayId)->folio, CashSession::findOrFail($cashSessionId), User::findOrFail($userId),
             PaymentMethod::Cash, PaymentType::Settlement, '250.00', (string) Str::uuid(),
         )->id;
     };
@@ -167,7 +167,7 @@ it('does not let two payments from different registers exceed the balance togeth
 
     expect($succeeded)->toHaveCount(1)
         ->and(array_values($failed))->toBe(['El pago supera el saldo pendiente (Bs 0.00).'])
-        ->and((string) app(StayBalanceService::class)->calcular($stay))->toBe('0.00');
+        ->and((string) app(FolioBalanceService::class)->calcular($stay->folio))->toBe('0.00');
 });
 
 it('checks in only one stay when two receptionists take the same room', function () {
@@ -215,7 +215,7 @@ it('opens only one session when two users open the same register', function () {
 
 it('never completes a stay with a charge added during its check-out', function () {
     $stay = crearEstadiaEndeudada('250.00');
-    Payment::factory()->for($stay)->create(['amount' => '250.00']);
+    Payment::factory()->for($stay->folio)->create(['amount' => '250.00']);
     $userId = User::factory()->create()->id;
     $stayId = $stay->id;
 
@@ -237,7 +237,7 @@ it('never completes a stay with a charge added during its check-out', function (
             ->and($failed['cargo'])->toContain('no está activa');
     } else {
         expect($stay->status)->toBe(StayStatus::Active)
-            ->and((string) app(StayBalanceService::class)->calcular($stay))->toBe('15.00')
+            ->and((string) app(FolioBalanceService::class)->calcular($stay->folio))->toBe('15.00')
             ->and($failed['salida'])->toContain('saldo pendiente');
     }
 });
@@ -252,7 +252,7 @@ it('keeps the expected cash of a closing session consistent with a payment colle
     ['exitosas' => $succeeded, 'fallidas' => $failed] = separarResultados(ConcurrentRace::ejecutar('cash_sessions', $cashSession->id, [
         'cierre' => static fn () => app(CashService::class)->cerrarSesion(CashSession::findOrFail($cashSessionId), User::findOrFail($userId), '200.00')->id,
         'cobro' => static fn () => app(CashService::class)->cobrarPago(
-            Stay::findOrFail($stayId), CashSession::findOrFail($cashSessionId), User::findOrFail($userId),
+            Stay::findOrFail($stayId)->folio, CashSession::findOrFail($cashSessionId), User::findOrFail($userId),
             PaymentMethod::Cash, PaymentType::Settlement, '250.00', (string) Str::uuid(),
         )->id,
     ]));
@@ -292,8 +292,8 @@ it('does not let two cash expenses take out more than the register holds', funct
 it('gives receipts issued at the same time consecutive numbers', function () {
     $stay = crearEstadiaEndeudada('250.00');
     $sequence = ReceiptSequence::factory()->create(['branch_id' => $stay->branch_id, 'prefix' => 'CEN']);
-    $firstPaymentId = Payment::factory()->for($stay)->create()->id;
-    $secondPaymentId = Payment::factory()->for($stay)->create()->id;
+    $firstPaymentId = Payment::factory()->for($stay->folio)->create()->id;
+    $secondPaymentId = Payment::factory()->for($stay->folio)->create()->id;
     $userId = User::factory()->create()->id;
 
     $emitir = function (int $paymentId) use ($userId): Closure {

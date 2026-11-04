@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\StayStatus;
+use App\Models\Folio;
 use App\Models\Room;
 use App\Models\Stay;
 use App\Models\User;
@@ -32,6 +33,16 @@ class StayFactory extends Factory
             'adults' => 1,
             'children' => 0,
         ];
+    }
+
+    /**
+     * Every stay has its own folio, as the check-in opens it.
+     */
+    public function configure(): static
+    {
+        return $this->afterCreating(function (Stay $stay): void {
+            Folio::factory()->deEstadia($stay)->create();
+        });
     }
 
     public function finalizada(): static

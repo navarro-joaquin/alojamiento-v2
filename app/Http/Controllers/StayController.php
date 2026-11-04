@@ -14,9 +14,9 @@ use App\Models\Product;
 use App\Models\Room;
 use App\Models\Stay;
 use App\Services\ChargeService;
+use App\Services\FolioBalanceService;
 use App\Services\GuestService;
 use App\Services\ReceptionService;
-use App\Services\StayBalanceService;
 use BcMath\Number;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
@@ -57,20 +57,20 @@ class StayController extends Controller
         return redirect()->route('stays.show', $stay)->with('status', "Ingreso registrado en la habitación {$room->room_number}.");
     }
 
-    public function show(Request $request, Stay $stay, StayBalanceService $stayBalanceService): View
+    public function show(Request $request, Stay $stay, FolioBalanceService $folioBalanceService): View
     {
         $this->asegurarDeLaSucursalActiva($request, $stay->branch_id);
 
         $stay->load([
             'room.roomType',
             'guests',
-            'charges' => fn ($query) => $query->with('createdByUser')->orderBy('service_date')->orderBy('id'),
-            'payments' => fn ($query) => $query->with(['cashSession.cashRegister', 'createdByUser', 'receipts' => fn ($query) => $query->where('status', ReceiptStatus::Issued)])
+            'folio.charges' => fn ($query) => $query->with('createdByUser')->orderBy('service_date')->orderBy('id'),
+            'folio.payments' => fn ($query) => $query->with(['cashSession.cashRegister', 'createdByUser', 'receipts' => fn ($query) => $query->where('status', ReceiptStatus::Issued)])
                 ->withSum(['refunds as refunded_amount' => fn ($query) => $query->confirmadas()], 'amount')
                 ->orderBy('paid_at'),
         ]);
 
-        $balance = $stayBalanceService->calcular($stay);
+        $balance = $folioBalanceService->calcular($stay->folio);
         $openCheckoutException = $stay->checkoutExceptions()->abiertas()->with(['requestedByUser', 'approvedByUser'])->first();
 
         return view('stays.show', [
@@ -83,7 +83,7 @@ class StayController extends Controller
                 ->whereHas('cashRegister', fn ($query) => $query->whereBelongsTo($stay->branch))
                 ->with('cashRegister')
                 ->get(),
-            'refundablePayments' => $stay->payments
+            'refundablePayments' => $stay->folio->payments
                 ->filter(fn (Payment $payment): bool => $payment->status === PaymentStatus::Confirmed)
                 ->each(fn (Payment $payment) => $payment->refundable_amount = (string) (new Number($payment->amount) - new Number((string) ($payment->refunded_amount ?? '0'))))
                 ->filter(fn (Payment $payment): bool => new Number($payment->refundable_amount) > 0),

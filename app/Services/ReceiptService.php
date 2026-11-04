@@ -5,10 +5,11 @@ namespace App\Services;
 use App\Enums\PaymentStatus;
 use App\Enums\ReceiptStatus;
 use App\Exceptions\BusinessRuleException;
+use App\Models\Branch;
+use App\Models\Folio;
 use App\Models\Payment;
 use App\Models\Receipt;
 use App\Models\ReceiptSequence;
-use App\Models\Stay;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -35,7 +36,7 @@ class ReceiptService
     {
         return DB::transaction(function () use ($payment, $user, $holderName, $holderDocument): Receipt {
             $lockedPayment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
-            $stay = Stay::query()->with('branch')->findOrFail($lockedPayment->stay_id);
+            $folio = Folio::query()->with('branch')->findOrFail($lockedPayment->folio_id);
 
             if ($lockedPayment->status !== PaymentStatus::Confirmed) {
                 throw BusinessRuleException::reciboDePagoNoConfirmado();
@@ -43,11 +44,11 @@ class ReceiptService
 
             $this->verificarSinReciboVigente($lockedPayment);
 
-            $sequence = $this->bloquearSecuencia($stay);
+            $sequence = $this->bloquearSecuencia($folio->branch);
 
             $receipt = Receipt::create([
-                'branch_id' => $stay->branch_id,
-                'stay_id' => $stay->id,
+                'branch_id' => $folio->branch_id,
+                'folio_id' => $folio->id,
                 'payment_id' => $lockedPayment->id,
                 'prefix' => $sequence->prefix,
                 'number' => $sequence->next_number,
@@ -61,7 +62,7 @@ class ReceiptService
 
             $sequence->increment('next_number');
 
-            $this->auditService->registrar('cash', 'receipt.issued', $receipt, $user, $stay->branch_id, [
+            $this->auditService->registrar('cash', 'receipt.issued', $receipt, $user, $folio->branch_id, [
                 'payment_id' => $lockedPayment->id,
                 'number' => $receipt->numeroCompleto(),
                 'amount' => $receipt->amount,
@@ -109,12 +110,12 @@ class ReceiptService
     public function registrarFacturaExterna(Payment $payment, User $user, ?string $externalInvoiceNumber): Payment
     {
         return DB::transaction(function () use ($payment, $user, $externalInvoiceNumber): Payment {
-            $lockedPayment = Payment::query()->with('stay')->lockForUpdate()->findOrFail($payment->id);
+            $lockedPayment = Payment::query()->with('folio')->lockForUpdate()->findOrFail($payment->id);
             $previousNumber = $lockedPayment->external_invoice_number;
 
             $lockedPayment->update(['external_invoice_number' => $externalInvoiceNumber]);
 
-            $this->auditService->registrar('cash', 'payment.external_invoice_recorded', $lockedPayment, $user, $lockedPayment->stay->branch_id, [
+            $this->auditService->registrar('cash', 'payment.external_invoice_recorded', $lockedPayment, $user, $lockedPayment->folio->branch_id, [
                 'previous_number' => $previousNumber,
                 'external_invoice_number' => $externalInvoiceNumber,
             ]);
@@ -139,22 +140,22 @@ class ReceiptService
      * Lock the branch sequence, creating it on first use with the branch code
      * as prefix. The insert is ignored if another transaction created it.
      */
-    private function bloquearSecuencia(Stay $stay): ReceiptSequence
+    private function bloquearSecuencia(Branch $branch): ReceiptSequence
     {
-        $sequence = ReceiptSequence::query()->where('branch_id', $stay->branch_id)->lockForUpdate()->first();
+        $sequence = ReceiptSequence::query()->where('branch_id', $branch->id)->lockForUpdate()->first();
 
         if ($sequence !== null) {
             return $sequence;
         }
 
         ReceiptSequence::query()->insertOrIgnore([
-            'branch_id' => $stay->branch_id,
-            'prefix' => $stay->branch->code,
+            'branch_id' => $branch->id,
+            'prefix' => $branch->code,
             'next_number' => 1,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        return ReceiptSequence::query()->where('branch_id', $stay->branch_id)->lockForUpdate()->firstOrFail();
+        return ReceiptSequence::query()->where('branch_id', $branch->id)->lockForUpdate()->firstOrFail();
     }
 }

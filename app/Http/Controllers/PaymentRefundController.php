@@ -23,7 +23,7 @@ class PaymentRefundController extends Controller
         $this->asegurarDeLaSucursalActiva($request, $stay->branch_id);
 
         $validated = $request->validate([
-            'refund_payment_id' => ['required', 'integer', Rule::exists(Payment::class, 'id')->where('stay_id', $stay->id)],
+            'refund_payment_id' => ['required', 'integer', Rule::exists(Payment::class, 'id')->where('folio_id', $stay->folio->id)],
             'refund_cash_session_id' => ['nullable', 'integer', Rule::exists(CashSession::class, 'id')],
             'refund_amount' => ['required', 'decimal:0,2', 'gt:0', 'max:999999'],
             'refund_reason' => ['required', 'string', 'max:255'],

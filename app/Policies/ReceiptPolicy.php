@@ -15,7 +15,7 @@ class ReceiptPolicy
 {
     public function emitir(User $user, Payment $payment): bool
     {
-        return $user->tienePermisoEnSucursal(BranchPermission::CollectPayments, $payment->stay->branch_id);
+        return $user->tienePermisoEnSucursal(BranchPermission::CollectPayments, $payment->folio->branch_id);
     }
 
     public function ver(User $user, Receipt $receipt): bool

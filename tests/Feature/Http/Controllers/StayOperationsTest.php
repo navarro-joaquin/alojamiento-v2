@@ -15,7 +15,7 @@ use App\Models\Stay;
 use App\Models\StayCharge;
 use App\Models\User;
 use App\Models\Warehouse;
-use App\Services\StayBalanceService;
+use App\Services\FolioBalanceService;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -41,7 +41,7 @@ function operadorConRol(Branch $branch, BranchRole $role): User
 
 function saldoDe(Stay $stay): string
 {
-    return (string) app(StayBalanceService::class)->calcular($stay);
+    return (string) app(FolioBalanceService::class)->calcular($stay->folio);
 }
 
 it('adds a charge to the stay', function () {
@@ -112,7 +112,7 @@ it('shows a payment above the balance as a form error', function () {
 });
 
 it('checks out a settled stay', function () {
-    Payment::factory()->for($this->stay)->create(['amount' => '250.00']);
+    Payment::factory()->for($this->stay->folio)->create(['amount' => '250.00']);
 
     $this->actingAs(operadorConRol($this->branch, BranchRole::Receptionist))
         ->post(route('stays.check-out', $this->stay))
@@ -122,7 +122,7 @@ it('checks out a settled stay', function () {
 });
 
 it('refunds the credit in cash at check-out from the chosen register', function () {
-    Payment::factory()->for($this->stay)->anticipo()->create(['amount' => '300.00', 'cash_session_id' => $this->cashSession->id]);
+    Payment::factory()->for($this->stay->folio)->anticipo()->create(['amount' => '300.00', 'cash_session_id' => $this->cashSession->id]);
 
     $this->actingAs(operadorConRol($this->branch, BranchRole::Receptionist))
         ->post(route('stays.check-out', $this->stay), ['cash_session_id' => $this->cashSession->id])
@@ -180,7 +180,7 @@ function datosDeDevolucion(Payment $payment, array $overrides = []): array
 }
 
 it('refunds the credit of a stay once even if the form is submitted twice', function () {
-    $payment = Payment::factory()->for($this->stay)->for($this->cashSession)->anticipo()->create(['amount' => '300.00']);
+    $payment = Payment::factory()->for($this->stay->folio)->for($this->cashSession)->anticipo()->create(['amount' => '300.00']);
     $supervisor = operadorConRol($this->branch, BranchRole::Supervisor);
 
     $this->actingAs($supervisor)
@@ -203,7 +203,7 @@ it('refunds the credit of a stay once even if the form is submitted twice', func
 });
 
 it('shows a refund above the credit as a form error', function () {
-    $payment = Payment::factory()->for($this->stay)->for($this->cashSession)->anticipo()->conTarjeta()->create(['amount' => '300.00']);
+    $payment = Payment::factory()->for($this->stay->folio)->for($this->cashSession)->anticipo()->conTarjeta()->create(['amount' => '300.00']);
 
     $this->actingAs(operadorConRol($this->branch, BranchRole::Supervisor))
         ->from(route('stays.show', $this->stay))
@@ -215,7 +215,7 @@ it('shows a refund above the credit as a form error', function () {
 });
 
 it('refunds only with the refund permission and only payments of the stay', function () {
-    $payment = Payment::factory()->for($this->stay)->for($this->cashSession)->anticipo()->conTarjeta()->create(['amount' => '300.00']);
+    $payment = Payment::factory()->for($this->stay->folio)->for($this->cashSession)->anticipo()->conTarjeta()->create(['amount' => '300.00']);
     $receptionist = operadorConRol($this->branch, BranchRole::Receptionist);
 
     $this->actingAs($receptionist)->get(route('stays.show', $this->stay))->assertDontSee('Devolver saldo a favor');

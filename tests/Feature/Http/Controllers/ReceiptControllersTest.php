@@ -23,7 +23,7 @@ beforeEach(function () {
         Guest::factory()->create(['first_name' => 'Ana', 'last_name' => 'Quispe', 'document_number' => '1234567', 'document_complement' => '1A']),
         ['is_primary' => true],
     );
-    $this->payment = Payment::factory()->for($this->stay)->create(['amount' => '250.00']);
+    $this->payment = Payment::factory()->for($this->stay->folio)->create(['amount' => '250.00']);
     $this->receptionist = personalDeRecibos($this->branch, BranchRole::Receptionist);
     $this->supervisor = personalDeRecibos($this->branch, BranchRole::Supervisor);
 });

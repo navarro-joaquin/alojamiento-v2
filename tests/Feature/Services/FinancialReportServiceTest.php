@@ -33,10 +33,10 @@ beforeEach(function () {
     ]);
     StayCharge::factory()->for($this->stay)->create(['charge_type' => ChargeType::Lodging, 'total_amount' => '250.00', 'service_date' => '2026-11-04']);
 
-    $this->latePayment = Payment::factory()->for($this->stay)->create([
+    $this->latePayment = Payment::factory()->for($this->stay->folio)->create([
         'amount' => '200.00', 'paid_at' => CarbonImmutable::parse('2026-11-04 02:00', 'America/La_Paz')->utc(),
     ]);
-    Payment::factory()->for($this->stay)->create([
+    Payment::factory()->for($this->stay->folio)->create([
         'amount' => '100.00', 'payment_method' => PaymentMethod::Card, 'paid_at' => CarbonImmutable::parse('2026-11-04 05:00', 'America/La_Paz')->utc(),
     ]);
     PaymentRefund::factory()->for($this->latePayment)->create(['amount' => '30.00', 'refunded_at' => CarbonImmutable::parse('2026-11-03 15:00', 'America/La_Paz')->utc()]);
@@ -76,7 +76,7 @@ it('lists active stays that owe money and completed stays that left with debt', 
     CheckoutException::factory()->for($leftWithDebt)->create(['status' => CheckoutExceptionStatus::Used]);
     $paidOff = Stay::factory()->for(Room::factory()->for($this->branch))->create(['status' => StayStatus::Completed]);
     StayCharge::factory()->for($paidOff)->create(['total_amount' => '80.00']);
-    Payment::factory()->for($paidOff)->create(['amount' => '80.00']);
+    Payment::factory()->for($paidOff->folio)->create(['amount' => '80.00']);
 
     $outstanding = app(FinancialReportService::class)->listarSaldosPendientes($this->branch);
 

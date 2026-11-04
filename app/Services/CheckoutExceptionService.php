@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\DB;
 class CheckoutExceptionService
 {
     public function __construct(
-        private StayBalanceService $stayBalanceService,
+        private FolioBalanceService $folioBalanceService,
         private AuditService $auditService,
     ) {}
 
@@ -207,7 +207,7 @@ class CheckoutExceptionService
      */
     private function calcularDeuda(Stay $lockedStay): Number
     {
-        $balance = $this->stayBalanceService->calcular($lockedStay);
+        $balance = $this->folioBalanceService->calcular($lockedStay->folio);
 
         if ($balance <= 0) {
             throw BusinessRuleException::estadiaSinDeuda();

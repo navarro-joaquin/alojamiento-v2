@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CheckoutException;
 use App\Models\Stay;
 use App\Services\CheckoutExceptionService;
-use App\Services\StayBalanceService;
+use App\Services\FolioBalanceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -17,7 +17,7 @@ class CheckoutExceptionController extends Controller
      * Open requests and approvals of the active branch, with the current debt
      * of each stay so the approver sees whether it still matches.
      */
-    public function index(Request $request, StayBalanceService $stayBalanceService): View
+    public function index(Request $request, FolioBalanceService $folioBalanceService): View
     {
         $branch = $this->sucursalActiva($request);
         Gate::authorize('verPendientes', [CheckoutException::class, $branch]);
@@ -32,7 +32,7 @@ class CheckoutExceptionController extends Controller
         return view('checkout-exceptions.index', [
             'checkoutExceptions' => $checkoutExceptions,
             'currentDebts' => $checkoutExceptions->mapWithKeys(fn (CheckoutException $checkoutException): array => [
-                $checkoutException->id => $stayBalanceService->calcular($checkoutException->stay),
+                $checkoutException->id => $folioBalanceService->calcular($checkoutException->stay->folio),
             ]),
         ]);
     }

@@ -8,92 +8,105 @@
     <title>{{ $title }} · {{ config('app.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen bg-gray-50 text-gray-900 antialiased">
-    <header class="border-b border-gray-200 bg-white print:hidden">
-        <div class="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-3">
-            <nav class="flex items-center gap-6 text-sm font-medium">
-                <a href="{{ route('occupancy.index') }}" class="text-base font-semibold">{{ config('app.name') }}</a>
-                <a href="{{ route('occupancy.index') }}" @class(['hover:text-gray-900', 'text-gray-900' => request()->routeIs('occupancy.*'), 'text-gray-500' => ! request()->routeIs('occupancy.*')])>Ocupación</a>
+<body class="min-h-screen bg-gray-50 text-gray-900 antialiased lg:flex">
+    {{-- On small screens the checkbox shows and hides the sidebar without JavaScript. --}}
+    <input type="checkbox" id="sidebar-toggle" class="peer sr-only">
+
+    <div class="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 lg:hidden print:hidden">
+        <a href="{{ route('occupancy.index') }}" class="text-base font-semibold">{{ config('app.name') }}</a>
+        <label for="sidebar-toggle" class="cursor-pointer rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">Menú</label>
+    </div>
+
+    <aside class="hidden w-full shrink-0 flex-col gap-6 border-b border-gray-200 bg-white px-3 py-4 peer-checked:flex lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:overflow-y-auto lg:border-r lg:border-b-0 print:hidden">
+        <a href="{{ route('occupancy.index') }}" class="hidden px-3 text-base font-semibold lg:block">{{ config('app.name') }}</a>
+
+        @isset($activeBranch)
+            <a href="{{ route('active-branch.edit') }}" class="flex flex-col rounded-md bg-gray-100 px-3 py-2 text-sm hover:bg-gray-200">
+                <span class="font-medium text-gray-900">{{ $activeBranch->name }}</span>
+                <span class="text-gray-600">Fecha de negocio {{ $activeBranch->current_business_date->format('d/m/Y') }}</span>
+            </a>
+        @endisset
+
+        <nav class="flex flex-col gap-6" aria-label="Menú principal">
+            <div class="flex flex-col gap-1">
+                <x-nav-link :href="route('occupancy.index')" :active="request()->routeIs('occupancy.*', 'stays.*')">Ocupación</x-nav-link>
                 @isset($activeBranch)
                     @can('verCajas', [\App\Models\CashRegister::class, $activeBranch])
-                        <a href="{{ route('cash-registers.index') }}" @class(['hover:text-gray-900', 'text-gray-900' => request()->routeIs('cash-*'), 'text-gray-500' => ! request()->routeIs('cash-*')])>Cajas</a>
+                        <x-nav-link :href="route('cash-registers.index')" :active="request()->routeIs('cash-registers.index', 'cash-sessions.*')">Cajas</x-nav-link>
                     @endcan
                     @can('verPendientes', [\App\Models\CheckoutException::class, $activeBranch])
-                        <a href="{{ route('checkout-exceptions.index') }}" @class(['hover:text-gray-900', 'text-gray-900' => request()->routeIs('checkout-exceptions.*'), 'text-gray-500' => ! request()->routeIs('checkout-exceptions.*')])>Salidas con deuda</a>
+                        <x-nav-link :href="route('checkout-exceptions.index')" :active="request()->routeIs('checkout-exceptions.*')">Salidas con deuda</x-nav-link>
                     @endcan
                     @can('verGastos', [\App\Models\Expense::class, $activeBranch])
-                        <a href="{{ route('expenses.index') }}" @class(['hover:text-gray-900', 'text-gray-900' => request()->routeIs('expenses.*'), 'text-gray-500' => ! request()->routeIs('expenses.*')])>Gastos</a>
+                        <x-nav-link :href="route('expenses.index')" :active="request()->routeIs('expenses.*')">Gastos</x-nav-link>
                     @endcan
                     @can('verReportes', $activeBranch)
-                        <a href="{{ route('reports.index') }}" @class(['hover:text-gray-900', 'text-gray-900' => request()->routeIs('reports.*'), 'text-gray-500' => ! request()->routeIs('reports.*')])>Reportes</a>
+                        <x-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">Reportes</x-nav-link>
                     @endcan
                     @can('verAuditoria', $activeBranch)
-                        <a href="{{ route('audit-log.index') }}" @class(['hover:text-gray-900', 'text-gray-900' => request()->routeIs('audit-log.*'), 'text-gray-500' => ! request()->routeIs('audit-log.*')])>Auditoría</a>
-                    @endcan
-                    @can('gestionar', [\App\Models\Room::class, $activeBranch])
-                        <details class="relative">
-                            <summary class="cursor-pointer list-none text-gray-500 hover:text-gray-900">Configuración</summary>
-                            <div class="absolute left-0 z-10 mt-2 flex w-56 flex-col rounded-md border border-gray-200 bg-white py-1 shadow-lg">
-                                <a href="{{ route('rooms.index') }}" class="px-3 py-2 hover:bg-gray-50">Habitaciones</a>
-                                @can('gestionar', [\App\Models\RoomRate::class, $activeBranch])
-                                    <a href="{{ route('room-rates.index') }}" class="px-3 py-2 hover:bg-gray-50">Tarifas</a>
-                                @endcan
-                                @can('gestionar', [\App\Models\CashRegister::class, $activeBranch])
-                                    <a href="{{ route('cash-registers.create') }}" class="px-3 py-2 hover:bg-gray-50">Nueva caja</a>
-                                @endcan
-                                @can('gestionarPersonal', [\App\Models\User::class, $activeBranch])
-                                    <a href="{{ route('staff-members.index') }}" class="px-3 py-2 hover:bg-gray-50">Personal</a>
-                                @endcan
-                            </div>
-                        </details>
+                        <x-nav-link :href="route('audit-log.index')" :active="request()->routeIs('audit-log.*')">Auditoría</x-nav-link>
                     @endcan
                 @endisset
-                @can('gestionar', \App\Models\Branch::class)
-                    <details class="relative">
-                        <summary class="cursor-pointer list-none text-gray-500 hover:text-gray-900">Administración</summary>
-                        <div class="absolute left-0 z-10 mt-2 flex w-56 flex-col rounded-md border border-gray-200 bg-white py-1 shadow-lg">
-                            <a href="{{ route('branches.index') }}" class="px-3 py-2 hover:bg-gray-50">Sucursales</a>
-                            <a href="{{ route('room-types.index') }}" class="px-3 py-2 hover:bg-gray-50">Tipos de habitación</a>
-                            <a href="{{ route('expense-categories.index') }}" class="px-3 py-2 hover:bg-gray-50">Categorías de gasto</a>
-                            <a href="{{ route('users.index') }}" class="px-3 py-2 hover:bg-gray-50">Usuarios</a>
-                        </div>
-                    </details>
+            </div>
+
+            @isset($activeBranch)
+                @can('gestionar', [\App\Models\Room::class, $activeBranch])
+                    <div class="flex flex-col gap-1">
+                        <h2 class="px-3 text-xs font-semibold tracking-wide text-gray-500 uppercase">Configuración</h2>
+                        <x-nav-link :href="route('rooms.index')" :active="request()->routeIs('rooms.*')">Habitaciones</x-nav-link>
+                        @can('gestionar', [\App\Models\RoomRate::class, $activeBranch])
+                            <x-nav-link :href="route('room-rates.index')" :active="request()->routeIs('room-rates.*')">Tarifas</x-nav-link>
+                        @endcan
+                        @can('gestionar', [\App\Models\CashRegister::class, $activeBranch])
+                            <x-nav-link :href="route('cash-registers.create')" :active="request()->routeIs('cash-registers.create', 'cash-registers.edit')">Nueva caja</x-nav-link>
+                        @endcan
+                        @can('gestionarPersonal', [\App\Models\User::class, $activeBranch])
+                            <x-nav-link :href="route('staff-members.index')" :active="request()->routeIs('staff-members.*')">Personal</x-nav-link>
+                        @endcan
+                    </div>
                 @endcan
-            </nav>
+            @endisset
 
-            <div class="flex items-center gap-4 text-sm">
-                @isset($activeBranch)
-                    <a href="{{ route('active-branch.edit') }}" class="rounded-md bg-gray-100 px-2.5 py-1 text-gray-700 hover:bg-gray-200">
-                        {{ $activeBranch->name }} · {{ $activeBranch->current_business_date->format('d/m/Y') }}
-                    </a>
-                @endisset
-                <span class="text-gray-500">{{ auth()->user()->name }}</span>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="text-gray-500 hover:text-gray-900">Salir</button>
-                </form>
-            </div>
+            @can('gestionar', \App\Models\Branch::class)
+                <div class="flex flex-col gap-1">
+                    <h2 class="px-3 text-xs font-semibold tracking-wide text-gray-500 uppercase">Administración</h2>
+                    <x-nav-link :href="route('branches.index')" :active="request()->routeIs('branches.*')">Sucursales</x-nav-link>
+                    <x-nav-link :href="route('room-types.index')" :active="request()->routeIs('room-types.*')">Tipos de habitación</x-nav-link>
+                    <x-nav-link :href="route('expense-categories.index')" :active="request()->routeIs('expense-categories.*')">Categorías de gasto</x-nav-link>
+                    <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">Usuarios</x-nav-link>
+                </div>
+            @endcan
+        </nav>
+
+        <div class="flex items-center justify-between gap-3 border-t border-gray-200 px-3 pt-4 text-sm lg:mt-auto">
+            <span class="truncate text-gray-600">{{ auth()->user()->name }}</span>
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="text-gray-500 hover:text-gray-900">Salir</button>
+            </form>
         </div>
-    </header>
+    </aside>
 
-    <main class="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6">
-        <h1 class="text-xl font-semibold">{{ $title }}</h1>
+    <main class="min-w-0 flex-1">
+        <div class="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 lg:px-8">
+            <h1 class="text-xl font-semibold">{{ $title }}</h1>
 
-        @if (session('status'))
-            <div class="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 print:hidden" role="status">{{ session('status') }}</div>
-        @endif
+            @if (session('status'))
+                <div class="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 print:hidden" role="status">{{ session('status') }}</div>
+            @endif
 
-        @if ($errors->any())
-            <div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
-                <ul class="flex list-inside list-disc flex-col gap-1">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+            @if ($errors->any())
+                <div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+                    <ul class="flex list-inside list-disc flex-col gap-1">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
-        {{ $slot }}
+            {{ $slot }}
+        </div>
     </main>
 </body>
 </html>
